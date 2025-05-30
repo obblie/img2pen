@@ -169,6 +169,12 @@
     </div>
     <div id="canvas-container"></div>
 
+    <!-- Notification System -->
+    <div id="notification" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#4CAF50;color:white;padding:20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:4000;max-width:500px;text-align:center;">
+        <div id="notification-content"></div>
+        <button id="notification-close" style="background:none;border:none;color:white;font-size:18px;cursor:pointer;position:absolute;top:5px;right:10px;">×</button>
+    </div>
+
     <!-- UI Menu -->
     <div id="ui-menu">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -302,6 +308,9 @@
                 <div class="control-group">
                     <label>Camera Distance</label>
                     <input type="range" id="camera-distance" min="10" max="200" value="50">
+                </div>
+                <div class="control-group">
+                    <label><input type="checkbox" id="rotate-toggle"> Rotate Object</label>
                 </div>
             </div>
         </div>

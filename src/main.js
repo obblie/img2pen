@@ -36,6 +36,53 @@ const FINISH_PROPERTIES = {
 
 let cropper = null;
 
+// Notification system
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('notification');
+    const content = document.getElementById('notification-content');
+    const closeBtn = document.getElementById('notification-close');
+    
+    content.innerHTML = message;
+    notification.style.background = type === 'success' ? '#4CAF50' : '#f44336';
+    notification.style.display = 'block';
+    
+    // Auto-hide after 10 seconds for success, 5 seconds for error
+    const autoHideTime = type === 'success' ? 10000 : 5000;
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, autoHideTime);
+    
+    // Close button functionality
+    closeBtn.onclick = () => {
+        notification.style.display = 'none';
+    };
+}
+
+// Function to upload image to GitHub
+async function uploadImageToGitHub(file) {
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch('http://localhost:3001/api/upload-image', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('Image uploaded successfully:', result);
+            return result;
+        } else {
+            throw new Error('Failed to upload image');
+        }
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        showNotification('Failed to upload image to server', 'error');
+        return null;
+    }
+}
+
 // Helper to add a circle overlay to the cropper for circular crops
 function addCircleOverlay(cropper) {
     let observer = null;
@@ -323,6 +370,9 @@ class HeightfieldViewer {
             dropZone.classList.remove('dragover');
             const file = e.dataTransfer.files[0];
             if (file && file.type.startsWith('image/')) {
+                // Upload original image to GitHub first
+                uploadImageToGitHub(file);
+                
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     this.originalImageDataUrl = ev.target.result;
@@ -338,6 +388,9 @@ class HeightfieldViewer {
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
+                // Upload original image to GitHub first
+                uploadImageToGitHub(file);
+                
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     this.originalImageDataUrl = ev.target.result;
@@ -397,6 +450,15 @@ class HeightfieldViewer {
             this.camera.getWorldDirection(direction);
             this.camera.position.copy(this.controls.target).add(direction.multiplyScalar(-distance));
         });
+
+        // Rotate toggle
+        const rotateToggle = document.getElementById('rotate-toggle');
+        this.isRotating = false;
+        if (rotateToggle) {
+            rotateToggle.addEventListener('change', (e) => {
+                this.isRotating = rotateToggle.checked;
+            });
+        }
 
         // Scene settings
         document.getElementById('light-intensity').addEventListener('input', (e) => {
@@ -532,10 +594,59 @@ class HeightfieldViewer {
         });
         updateBorderLabel();
 
-        // Export STL button
-        document.getElementById('export-stl').addEventListener('click', () => {
-            this.exportSTL();
-        });
+        // Change Export STL button to Submit Order
+        const submitOrderBtn = document.getElementById('export-stl');
+        if (submitOrderBtn) {
+            submitOrderBtn.textContent = 'Submit Order';
+            submitOrderBtn.removeEventListener('click', this.exportSTL);
+            submitOrderBtn.addEventListener('click', async () => {
+                // Prompt for user info
+                const name = prompt('Enter your name:');
+                if (!name) return showNotification('Name is required.', 'error');
+                const email = prompt('Enter your email:');
+                if (!email) return showNotification('Email is required.', 'error');
+                
+                // Generate STL
+                const exporter = new STLExporter();
+                const group = new THREE.Group();
+                if (this.heightfield) group.add(this.heightfield.clone());
+                if (this.jumpring) group.add(this.jumpring.clone());
+                const stlString = exporter.parse(group);
+                
+                // Send to backend
+                try {
+                    const res = await fetch('http://localhost:3001/api/submit-order', {
+                        method: 'POST',
+                        headers: {},
+                        body: (() => {
+                            const form = new FormData();
+                            form.append('name', name);
+                            form.append('email', email);
+                            form.append('file', new Blob([stlString], { type: 'text/plain' }), 'pendant.stl');
+                            return form;
+                        })()
+                    });
+                    
+                    if (res.ok) {
+                        const result = await res.json();
+                        const guid = result.guid;
+                        showNotification(
+                            `<h3>🎉 Model uploaded successfully!</h3>
+                            <p>Your order has been submitted and saved to the repository.</p>
+                            <p><strong>Confirmation Number:</strong> <code style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:3px;">${guid}</code></p>
+                            <p>Please save this confirmation number for your records.</p>`,
+                            'success'
+                        );
+                    } else {
+                        const error = await res.json();
+                        showNotification(`Failed to submit order: ${error.error || 'Unknown error'}`, 'error');
+                    }
+                } catch (err) {
+                    console.error('Submit order error:', err);
+                    showNotification('Error submitting order. Please check your connection and try again.', 'error');
+                }
+            });
+        }
 
         const highlightColorInput = document.getElementById('highlight-layer-color');
         highlightColorInput.addEventListener('input', (e) => {
@@ -1086,6 +1197,48 @@ class HeightfieldViewer {
 
     animate() {
         requestAnimationFrame(this.animate.bind(this));
+        if (this.isRotating && this.heightfield) {
+            // Find the bottom edge Y (for circular/rectangular, it's -diameter/2 or -height/2)
+            let pivotY = 0;
+            let pivotZ = 0;
+            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
+                pivotY = -this.pendantDiameter / 2;
+                pivotZ = 0;
+            } else {
+                pivotY = -this.pendantHeight / 2;
+                pivotZ = 0;
+            }
+            // Rotate around Y axis at the bottom edge
+            const angle = 0.01; // radians per frame
+            // Move pivot to origin
+            this.heightfield.position.y = -pivotY;
+            this.heightfield.position.z = -pivotZ;
+            // Apply rotation to heightfield
+            this.heightfield.rotateY(angle);
+            // Move back
+            this.heightfield.position.y = 0;
+            this.heightfield.position.z = 0;
+            // Set jumpring, engravingMesh, and redLayer rotation to match heightfield
+            if (this.jumpring) {
+                this.jumpring.position.y -= pivotY;
+                this.jumpring.position.z -= pivotZ;
+                this.jumpring.rotation.y = this.heightfield.rotation.y;
+                this.jumpring.position.y += pivotY;
+                this.jumpring.position.z += pivotZ;
+            }
+            if (this.engravingMesh) {
+                this.engravingMesh.position.y -= pivotY;
+                this.engravingMesh.position.z -= pivotZ;
+                this.engravingMesh.rotation.y = this.heightfield.rotation.y;
+                this.engravingMesh.position.y += pivotY;
+                this.engravingMesh.position.z += pivotZ;
+            }
+            if (this.redLayer) {
+                this.redLayer.position.y = 0;
+                this.redLayer.position.z = 0;
+                this.redLayer.rotation.y = this.heightfield.rotation.y;
+            }
+        }
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
         // Sync view cube orientation with main camera, only if cube is defined
