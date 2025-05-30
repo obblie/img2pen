@@ -1,10 +1,10 @@
-import * as THREE from 'https://cdn.skypack.dev/three@0.155.0';
-import { OrbitControls } from 'https://cdn.skypack.dev/three@0.155.0/examples/jsm/controls/OrbitControls';
-import { RGBELoader } from 'https://cdn.skypack.dev/three@0.155.0/examples/jsm/loaders/RGBELoader.js';
-import { BoxGeometry, MeshBasicMaterial, Mesh, Scene as ThreeScene, PerspectiveCamera, WebGLRenderer, Raycaster, Vector2 } from 'https://cdn.skypack.dev/three@0.155.0';
-import { STLExporter } from 'https://cdn.skypack.dev/three@0.155.0/examples/jsm/exporters/STLExporter.js';
-import { FontLoader } from 'https://cdn.skypack.dev/three@0.155.0/examples/jsm/loaders/FontLoader.js';
-import { TextGeometry } from 'https://cdn.skypack.dev/three@0.155.0/examples/jsm/geometries/TextGeometry.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/controls/OrbitControls.js';
+import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/loaders/RGBELoader.js';
+import { BoxGeometry, MeshBasicMaterial, Mesh, Scene as ThreeScene, PerspectiveCamera, WebGLRenderer, Raycaster, Vector2 } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js';
+import { STLExporter } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/exporters/STLExporter.js';
+import { FontLoader } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/geometries/TextGeometry.js';
 
 // Constants for physical dimensions
 const MAX_DEPTH = 1.3; // mm
