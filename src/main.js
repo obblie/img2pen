@@ -1,0 +1,1411 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { BoxGeometry, MeshBasicMaterial, Mesh, Scene as ThreeScene, PerspectiveCamera, WebGLRenderer, Raycaster, Vector2 } from 'three';
+import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+
+// Constants for physical dimensions
+const MAX_DEPTH = 1.3; // mm
+const FIXED_WIDTH = 25; // mm
+const RESOLUTION = 1000; // Number of segments in X direction
+
+// Metal material properties
+const METAL_MATERIALS = {
+    'sterling-silver': {
+        color: 0xE8E8E8,
+        metalness: 1.0,
+        roughness: 0.1,
+        envMapIntensity: 1.0
+    },
+    'gold-18k': {
+        color: 0xFFD700,
+        metalness: 1.0,
+        roughness: 0.1,
+        envMapIntensity: 1.0
+    }
+};
+
+// Finish properties
+const FINISH_PROPERTIES = {
+    'polished': { roughness: 0.1 },
+    'brushed': { roughness: 0.3 },
+    'matte': { roughness: 0.7 }
+};
+
+let cropper = null;
+
+// Helper to add a circle overlay to the cropper for circular crops
+function addCircleOverlay(cropper) {
+    let observer = null;
+    function updateEllipse() {
+        const cropBox = cropper.cropper.querySelector('.cropper-crop-box');
+        if (!cropBox) return;
+        let overlay = cropBox.querySelector('.circle-crop-overlay');
+        if (overlay) overlay.remove();
+        const w = cropBox.offsetWidth;
+        const h = cropBox.offsetHeight;
+        overlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        overlay.classList.add('circle-crop-overlay');
+        overlay.setAttribute('width', w);
+        overlay.setAttribute('height', h);
+        overlay.style.position = 'absolute';
+        overlay.style.left = '0';
+        overlay.style.top = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.zIndex = '20';
+        // White outline
+        const ellipseOutline = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        ellipseOutline.setAttribute('cx', w/2);
+        ellipseOutline.setAttribute('cy', h/2);
+        ellipseOutline.setAttribute('rx', w/2 - 3);
+        ellipseOutline.setAttribute('ry', h/2 - 3);
+        ellipseOutline.setAttribute('fill', 'none');
+        ellipseOutline.setAttribute('stroke', 'white');
+        ellipseOutline.setAttribute('stroke-width', '7');
+        ellipseOutline.setAttribute('stroke-dasharray', '0');
+        ellipseOutline.setAttribute('opacity', '0.8');
+        overlay.appendChild(ellipseOutline);
+        // Blue dashed
+        const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        ellipse.setAttribute('cx', w/2);
+        ellipse.setAttribute('cy', h/2);
+        ellipse.setAttribute('rx', w/2 - 3);
+        ellipse.setAttribute('ry', h/2 - 3);
+        ellipse.setAttribute('fill', 'none');
+        ellipse.setAttribute('stroke', '#4af');
+        ellipse.setAttribute('stroke-width', '5');
+        ellipse.setAttribute('stroke-dasharray', '10,8');
+        ellipse.setAttribute('opacity', '1');
+        overlay.appendChild(ellipse);
+        cropBox.appendChild(overlay);
+    }
+    // Initial draw
+    updateEllipse();
+    // Listen for crop events using addEventListener
+    const cropperElem = cropper.cropper;
+    cropperElem.addEventListener('crop', updateEllipse);
+    cropperElem.addEventListener('cropmove', updateEllipse);
+    cropperElem.addEventListener('cropend', updateEllipse);
+    // Store listeners for cleanup
+    cropperElem._ellipseUpdateEllipse = updateEllipse;
+    // MutationObserver for crop box size/position
+    const cropBox = cropper.cropper.querySelector('.cropper-crop-box');
+    if (cropBox) {
+        observer = new MutationObserver(() => { updateEllipse(); });
+        observer.observe(cropBox, { attributes: true, attributeFilter: ['style', 'class'] });
+        cropBox._ellipseObserver = observer;
+    }
+}
+
+function removeCircleOverlay(cropper) {
+    const cropperElem = cropper.cropper;
+    const cropBox = cropperElem.querySelector('.cropper-crop-box');
+    if (cropBox) {
+        const overlay = cropBox.querySelector('.circle-crop-overlay');
+        if (overlay) overlay.remove();
+        if (cropBox._ellipseObserver) {
+            cropBox._ellipseObserver.disconnect();
+            cropBox._ellipseObserver = null;
+        }
+    }
+    // Remove event listeners
+    if (cropperElem._ellipseUpdateEllipse) {
+        cropperElem.removeEventListener('crop', cropperElem._ellipseUpdateEllipse);
+        cropperElem.removeEventListener('cropmove', cropperElem._ellipseUpdateEllipse);
+        cropperElem.removeEventListener('cropend', cropperElem._ellipseUpdateEllipse);
+        cropperElem._ellipseUpdateEllipse = null;
+    }
+}
+
+// Enhanced showCropperModal to support circle overlay
+function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
+    const modal = document.getElementById('cropper-modal');
+    const img = document.getElementById('cropper-image');
+    const confirmBtn = document.getElementById('cropper-confirm');
+    const cancelBtn = document.getElementById('cropper-cancel');
+    img.src = imageSrc;
+    modal.style.display = 'flex';
+    if (cropper) { cropper.destroy(); cropper = null; }
+    cropper = new Cropper(img, {
+        viewMode: 1,
+        aspectRatio: (cropShape === 'circle') ? 1 : NaN,
+        autoCropArea: 1,
+        movable: true,
+        zoomable: true,
+        scalable: true,
+        rotatable: false,
+        ready() {
+            if (cropShape === 'circle') addCircleOverlay(cropper);
+        }
+    });
+    confirmBtn.onclick = () => {
+        // For circle, mask the square crop to a circle
+        if (cropShape === 'circle') {
+            const canvas = cropper.getCroppedCanvas();
+            const size = Math.min(canvas.width, canvas.height);
+            const circleCanvas = document.createElement('canvas');
+            circleCanvas.width = size;
+            circleCanvas.height = size;
+            const ctx = circleCanvas.getContext('2d');
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(canvas, 0, 0, size, size, 0, 0, size, size);
+            ctx.restore();
+            circleCanvas.toBlob(blob => {
+                modal.style.display = 'none';
+                cropper.destroy(); cropper = null;
+                onCrop(blob);
+            });
+        } else {
+            cropper.getCroppedCanvas().toBlob(blob => {
+                modal.style.display = 'none';
+                cropper.destroy(); cropper = null;
+                onCrop(blob);
+            });
+        }
+    };
+    cancelBtn.onclick = () => {
+        modal.style.display = 'none';
+        cropper.destroy(); cropper = null;
+        if (onCancel) onCancel();
+    };
+}
+
+function showLoadingOverlay() {
+    const overlay = document.getElementById('loading-overlay');
+    const status = document.getElementById('loading-status');
+    const bar = document.getElementById('loading-progress-bar');
+    overlay.style.display = 'flex';
+    status.textContent = 'Analyzing image...';
+    bar.style.width = '0%';
+    let steps = [
+        { t: 0, text: 'Analyzing image...', pct: 10 },
+        { t: 1200, text: 'Detecting features...', pct: 30 },
+        { t: 2500, text: 'Processing image...', pct: 55 },
+        { t: 4000, text: 'Generating 3D Geometries...', pct: 80 },
+        { t: 6000, text: 'Finalizing model...', pct: 100 }
+    ];
+    steps.forEach(step => {
+        setTimeout(() => {
+            status.textContent = step.text;
+            bar.style.width = step.pct + '%';
+        }, step.t);
+    });
+}
+function hideLoadingOverlay() {
+    document.getElementById('loading-overlay').style.display = 'none';
+}
+
+// Add font URLs for all options
+const ENGRAVING_FONTS = {
+    helvetiker: 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/fonts/helvetiker_regular.typeface.json',
+    optimer: 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/fonts/optimer_regular.typeface.json',
+    gentilis: 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/fonts/gentilis_regular.typeface.json',
+    droid_sans: 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/fonts/droid_sans_regular.typeface.json',
+    droid_serif: 'https://cdn.jsdelivr.net/npm/three@0.150.1/examples/fonts/droid_serif_regular.typeface.json',
+};
+
+class HeightfieldViewer {
+    constructor() {
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.controls = null;
+        this.heightfield = null;
+        this.jumpring = null;
+        this.directionalLight = null;
+        this.currentObjectType = 'circular-pendant';
+        this.imageTransform = {
+            offsetX: 0,
+            offsetY: 0,
+            scale: 1,
+            rotation: 0
+        };
+        this.pendantDiameter = 25;
+        this.pendantWidth = 25;
+        this.pendantHeight = 25;
+        this.aspectLocked = true;
+        this.grid = null;
+        this.envMapLoaded = false;
+        this.defaultCameraPosition = new THREE.Vector3(0, 0, 50);
+        this.jumpringOffset = { x: 0, y: -3.5, z: -15 };
+        this.pendantThickness = 1.5; // mm, default thickness for solid pendant
+        this.borderThickness = 1.0;
+        this.engravingMesh = null;
+        this.engravingFont = null;
+        this.engravingFontName = 'helvetiker';
+        this.engravingFontCache = {};
+        
+        this.init();
+        this.setupEventListeners();
+        this.setupUIControls();
+        this.addViewCube();
+        this.loadEngravingFont(this.engravingFontName);
+    }
+
+    init() {
+        // Setup renderer with improved quality settings
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setClearColor(0x333333);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.0;
+        document.getElementById('canvas-container').appendChild(this.renderer.domElement);
+
+        // Setup camera
+        this.camera.position.set(0, 0, 50);
+        this.camera.lookAt(0, 0, 0);
+
+        // Setup controls
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.05;
+
+        // Use Poly Haven HDRI for environment map
+        const rgbeLoader = new RGBELoader();
+        rgbeLoader.load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/venice_sunset_1k.hdr', (texture) => {
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            this.scene.environment = texture;
+            this.envMapLoaded = true;
+            this.updateEnvMapStatus();
+            if (this.heightfield) {
+                this.heightfield.material.metalness = 1.0;
+                this.heightfield.material.roughness = 0.1;
+                this.heightfield.material.envMapIntensity = 1.0;
+            }
+        }, undefined, (err) => {
+            this.envMapLoaded = false;
+            this.updateEnvMapStatus();
+            if (this.heightfield) {
+                this.heightfield.material.metalness = 0.2;
+                this.heightfield.material.roughness = 0.7;
+                this.heightfield.material.envMapIntensity = 0.0;
+            }
+            console.warn('HDRI environment map failed to load. Falling back to non-metallic material.');
+        });
+
+        // Restore original light intensities
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        this.scene.add(ambientLight);
+
+        this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        this.directionalLight.position.set(1, 1, 1);
+        this.scene.add(this.directionalLight);
+
+        // Start animation loop
+        this.animate();
+    }
+
+    setupEventListeners() {
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        // Handle drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    this.originalImageDataUrl = ev.target.result;
+                    showCropperModal(ev.target.result, (croppedBlob) => {
+                        this.processImage(croppedBlob);
+                    }, null, this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle file input
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    this.originalImageDataUrl = ev.target.result;
+                    showCropperModal(ev.target.result, (croppedBlob) => {
+                        this.processImage(croppedBlob);
+                    }, null, this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    }
+
+    setupUIControls() {
+        // Setup menu toggles
+        document.querySelectorAll('.menu-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.nextElementSibling;
+                content.classList.toggle('active');
+                const button = header.querySelector('.toggle-button');
+                button.textContent = content.classList.contains('active') ? '▼' : '▶';
+            });
+        });
+
+        // Object type selection
+        document.getElementById('object-type').addEventListener('change', (e) => {
+            this.currentObjectType = e.target.value;
+            if (this.originalImageDataUrl) {
+                showCropperModal(
+                    this.originalImageDataUrl,
+                    (croppedBlob) => {
+                        this.processImage(croppedBlob);
+                    },
+                    null,
+                    this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect'
+                );
+            } else if (this.heightfield) {
+                this.updateObjectShape();
+            }
+        });
+
+        // Camera controls
+        document.getElementById('fov').addEventListener('input', (e) => {
+            this.camera.fov = parseFloat(e.target.value);
+            this.camera.updateProjectionMatrix();
+        });
+
+        document.getElementById('camera-distance').addEventListener('input', (e) => {
+            const distance = parseFloat(e.target.value);
+            const direction = new THREE.Vector3();
+            this.camera.getWorldDirection(direction);
+            this.camera.position.copy(this.controls.target).add(direction.multiplyScalar(-distance));
+        });
+
+        // Scene settings
+        document.getElementById('light-intensity').addEventListener('input', (e) => {
+            this.directionalLight.intensity = parseFloat(e.target.value);
+        });
+
+        document.getElementById('material-color').addEventListener('input', (e) => {
+            if (this.heightfield) {
+                this.heightfield.material.color.set(e.target.value);
+            }
+        });
+
+        document.getElementById('material-shine').addEventListener('input', (e) => {
+            if (this.heightfield) {
+                this.heightfield.material.shininess = parseFloat(e.target.value);
+            }
+        });
+
+        // Image position controls
+        document.getElementById('image-offset-x').addEventListener('input', (e) => {
+            this.imageTransform.offsetX = parseFloat(e.target.value);
+            this.updateImagePosition();
+        });
+
+        document.getElementById('image-offset-y').addEventListener('input', (e) => {
+            this.imageTransform.offsetY = parseFloat(e.target.value);
+            this.updateImagePosition();
+        });
+
+        document.getElementById('image-scale').addEventListener('input', (e) => {
+            this.imageTransform.scale = parseFloat(e.target.value);
+            this.updateImagePosition();
+        });
+
+        document.getElementById('image-rotation').addEventListener('input', (e) => {
+            this.imageTransform.rotation = parseFloat(e.target.value);
+            this.updateImagePosition();
+        });
+
+        // Metal type controls
+        document.getElementById('metal-type').addEventListener('change', (e) => {
+            this.updateMetalMaterial(e.target.value);
+        });
+
+        document.getElementById('metal-finish').addEventListener('change', (e) => {
+            this.updateMetalFinish(e.target.value);
+        });
+
+        // Jumpring controls
+        document.getElementById('jumpring-size').addEventListener('change', (e) => {
+            this.updateJumpring(e.target.value);
+        });
+
+        document.getElementById('jumpring-position').addEventListener('change', (e) => {
+            this.updateJumpringPosition(e.target.value);
+        });
+
+        // Lighting controls
+        document.getElementById('ambient-intensity').addEventListener('input', (e) => {
+            if (this.scene && this.scene.children) {
+                this.scene.children.forEach(obj => {
+                    if (obj.isAmbientLight) obj.intensity = parseFloat(e.target.value);
+                });
+            }
+        });
+        document.getElementById('directional-intensity').addEventListener('input', (e) => {
+            if (this.directionalLight) {
+                this.directionalLight.intensity = parseFloat(e.target.value);
+            }
+        });
+
+        // Pendant size controls
+        const diameterSlider = document.getElementById('pendant-diameter');
+        const widthSlider = document.getElementById('pendant-width');
+        const heightSlider = document.getElementById('pendant-height');
+        const aspectLockBtn = document.getElementById('aspect-lock');
+        const aspectLockIcon = document.getElementById('aspect-lock-icon');
+        const diameterValue = document.getElementById('pendant-diameter-value');
+        const widthValue = document.getElementById('pendant-width-value');
+        const heightValue = document.getElementById('pendant-height-value');
+        const updateSliderLabels = () => {
+            diameterValue.textContent = diameterSlider.value + ' mm';
+            widthValue.textContent = widthSlider.value + ' mm';
+            heightValue.textContent = heightSlider.value + ' mm';
+        };
+        diameterSlider.addEventListener('input', (e) => {
+            this.pendantDiameter = parseFloat(e.target.value);
+            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
+                // Update jumpring Z slider to new default
+                const newDefaultZ = -0.6 * this.pendantDiameter;
+                document.getElementById('jumpring-z').value = newDefaultZ;
+                document.getElementById('jumpring-z-value').textContent = newDefaultZ;
+                this.jumpringOffset.z = newDefaultZ;
+                this.createHeightfieldMesh(this.heightfieldData);
+            }
+            updateSliderLabels();
+        });
+        widthSlider.addEventListener('input', updateSliderLabels);
+        heightSlider.addEventListener('input', updateSliderLabels);
+        updateSliderLabels();
+        aspectLockBtn.addEventListener('click', () => {
+            this.aspectLocked = !this.aspectLocked;
+            aspectLockIcon.textContent = this.aspectLocked ? '🔒' : '🔓';
+        });
+
+        // Reset View button
+        document.getElementById('reset-view').addEventListener('click', () => {
+            this.camera.position.copy(this.defaultCameraPosition);
+            this.camera.lookAt(0, 0, 0);
+            this.controls.target.set(0, 0, 0);
+            this.controls.update();
+        });
+        // Screenshot button
+        document.getElementById('screenshot').addEventListener('click', () => {
+            this.renderer.render(this.scene, this.camera);
+            const dataURL = this.renderer.domElement.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = dataURL;
+            a.download = 'pendant.png';
+            a.click();
+        });
+
+        // Border thickness slider
+        const borderSlider = document.getElementById('border-thickness');
+        const borderValue = document.getElementById('border-thickness-value');
+        const updateBorderLabel = () => { borderValue.textContent = borderSlider.value; };
+        borderSlider.addEventListener('input', (e) => {
+            this.borderThickness = parseFloat(e.target.value);
+            updateBorderLabel();
+            if (this.heightfieldData && this.currentObjectType === 'circular-pendant') {
+                this.createHeightfieldMesh(this.heightfieldData);
+            }
+        });
+        updateBorderLabel();
+
+        // Export STL button
+        document.getElementById('export-stl').addEventListener('click', () => {
+            this.exportSTL();
+        });
+
+        const highlightColorInput = document.getElementById('highlight-layer-color');
+        highlightColorInput.addEventListener('input', (e) => {
+            if (this.redLayer) {
+                this.redLayer.material.color.set(e.target.value);
+            }
+        });
+
+        const antiquingSlider = document.getElementById('antiquing-amount');
+        const antiquingValue = document.getElementById('antiquing-amount-value');
+        antiquingSlider.addEventListener('input', (e) => {
+            antiquingValue.textContent = e.target.value;
+            if (this.heightfieldData) {
+                this.createHeightfieldMesh(this.heightfieldData);
+            }
+        });
+
+        const engravingText = document.getElementById('engraving-text');
+        const engravingCharCount = document.getElementById('engraving-char-count');
+        engravingText.addEventListener('input', (e) => {
+            engravingCharCount.textContent = e.target.value.length;
+            this.updateEngraving(e.target.value);
+        });
+
+        // Engraving options
+        const engravingFont = document.getElementById('engraving-font');
+        const engravingSize = document.getElementById('engraving-size');
+        const engravingSizeValue = document.getElementById('engraving-size-value');
+        const engravingBold = document.getElementById('engraving-bold');
+        const engravingItalic = document.getElementById('engraving-italic');
+        const engravingJustify = document.getElementById('engraving-justify');
+
+        engravingFont.addEventListener('change', (e) => {
+            this.engravingFontName = e.target.value;
+            this.loadEngravingFont(this.engravingFontName, () => {
+                this.updateEngraving(engravingText.value);
+            });
+        });
+        engravingSize.addEventListener('input', (e) => {
+            engravingSizeValue.textContent = e.target.value;
+            this.updateEngraving(engravingText.value);
+        });
+        engravingBold.addEventListener('change', () => this.updateEngraving(engravingText.value));
+        engravingItalic.addEventListener('change', () => this.updateEngraving(engravingText.value));
+        engravingJustify.addEventListener('change', () => this.updateEngraving(engravingText.value));
+    }
+
+    async processImage(file) {
+        showLoadingOverlay();
+        setTimeout(async () => {
+            const image = await this.loadImage(file);
+            const heightfieldData = this.generateHeightfieldData(image);
+            this.createHeightfieldMesh(heightfieldData);
+            document.getElementById('drop-zone').classList.add('hidden');
+            hideLoadingOverlay();
+        }, 7000);
+    }
+
+    loadImage(fileOrBlob) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(fileOrBlob);
+        });
+    }
+
+    generateHeightfieldData(image) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Calculate dimensions maintaining aspect ratio
+        const aspectRatio = image.height / image.width;
+        const width = RESOLUTION; // Using the higher resolution constant
+        const height = Math.round(width * aspectRatio);
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and get image data
+        ctx.drawImage(image, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
+        
+        return {
+            width,
+            height,
+            data: imageData.data,
+            aspectRatio
+        };
+    }
+
+    createHeightfieldMesh(heightfieldData) {
+        let alphaMap = null;
+        let geometry = null;
+        // Always remove the previous red layer at the start
+        if (this.redLayer) {
+            console.log('Removing red layer');
+            this.scene.remove(this.redLayer);
+            this.redLayer.geometry.dispose();
+            this.redLayer.material.dispose();
+            this.redLayer = null;
+        }
+        // Store heightfield data for shape updates
+        this.heightfieldData = heightfieldData;
+
+        // Remove existing heightfield if any
+        if (this.heightfield) {
+            this.scene.remove(this.heightfield);
+        }
+
+        if (this.grid) {
+            this.scene.remove(this.grid);
+        }
+
+        let aspectRatio = heightfieldData.aspectRatio;
+
+        // Create appropriate geometry based on object type
+        switch (this.currentObjectType) {
+            case 'circular-pendant':
+                // Remove any previous pendant meshes
+                if (this.heightfield) this.scene.remove(this.heightfield);
+                if (this.bottomDisc) this.scene.remove(this.bottomDisc);
+                if (this.sideWall) this.scene.remove(this.sideWall);
+                this.heightfield = null;
+                this.bottomDisc = null;
+                this.sideWall = null;
+
+                // Relief (top)
+                const diameter = this.pendantDiameter;
+                const radius = diameter / 2;
+                const widthSegments = heightfieldData.width - 1;
+                const heightSegments = heightfieldData.height - 1;
+                const thickness = this.pendantThickness;
+
+                // Relief positions, normals, uvs
+                const reliefPositions = [];
+                const reliefUVs = [];
+                const gridIdx = (x, y) => y * (widthSegments + 1) + x;
+                const grid = [];
+                for (let y = 0; y <= heightSegments; ++y) {
+                    for (let x = 0; x <= widthSegments; ++x) {
+                        const px = (x / widthSegments - 0.5) * diameter;
+                        const py = (y / heightSegments - 0.5) * diameter;
+                        const dist = Math.sqrt(px * px + py * py);
+                        let z = 0;
+                        let u = (px / radius + 1) / 2;
+                        let v = (py / radius + 1) / 2;
+                        if (dist <= radius) {
+                            const pixelX = Math.floor(u * (heightfieldData.width - 1));
+                            const pixelY = heightfieldData.height - 1 - Math.floor(v * (heightfieldData.height - 1));
+                            const pixelIndex = (pixelY * heightfieldData.width + pixelX) * 4;
+                            const gray = (heightfieldData.data[pixelIndex] * 0.299 +
+                                heightfieldData.data[pixelIndex + 1] * 0.587 +
+                                heightfieldData.data[pixelIndex + 2] * 0.114) / 255;
+                            z = gray * MAX_DEPTH;
+                        }
+                        grid.push({ px, py, z, u, v, inCircle: dist <= radius });
+                    }
+                }
+                // Build positions/uvs for only in-circle vertices, and map old grid index to new
+                const idxMap = new Array(grid.length).fill(-1);
+                let idxCounter = 0;
+                for (let i = 0; i < grid.length; ++i) {
+                    if (grid[i].inCircle) {
+                        reliefPositions.push(grid[i].px, grid[i].py, grid[i].z);
+                        reliefUVs.push(grid[i].u, grid[i].v);
+                        idxMap[i] = idxCounter++;
+                    }
+                }
+                // Build indices for triangles fully inside the circle
+                const reliefIndices = [];
+                for (let y = 0; y < heightSegments; ++y) {
+                    for (let x = 0; x < widthSegments; ++x) {
+                        const a = gridIdx(x, y);
+                        const b = gridIdx(x + 1, y);
+                        const c = gridIdx(x, y + 1);
+                        const d = gridIdx(x + 1, y + 1);
+                        if (grid[a].inCircle && grid[b].inCircle && grid[c].inCircle)
+                            reliefIndices.push(idxMap[a], idxMap[b], idxMap[c]);
+                        if (grid[b].inCircle && grid[d].inCircle && grid[c].inCircle)
+                            reliefIndices.push(idxMap[b], idxMap[d], idxMap[c]);
+                    }
+                }
+                // Find edge points of the relief (for bottom disc and side wall)
+                const edgePoints = [];
+                for (let y = 0; y <= heightSegments; ++y) {
+                    for (let x = 0; x <= widthSegments; ++x) {
+                        const idx = y * (widthSegments + 1) + x;
+                        if (grid[idx].inCircle) {
+                            // Is this an edge? (at least one neighbor is out of circle)
+                            const neighbors = [
+                                gridIdx(x - 1, y), gridIdx(x + 1, y),
+                                gridIdx(x, y - 1), gridIdx(x, y + 1)
+                            ];
+                            if (neighbors.some(n => n < 0 || n >= grid.length || !grid[n] || !grid[n].inCircle)) {
+                                edgePoints.push({ x: grid[idx].px, y: grid[idx].py, z: grid[idx].z });
+                            }
+                        }
+                    }
+                }
+                // Sort edge points by angle from center for a clean bottom disc
+                edgePoints.sort((a, b) => {
+                    const angleA = Math.atan2(a.y, a.x);
+                    const angleB = Math.atan2(b.y, b.x);
+                    return angleA - angleB;
+                });
+                // --- Merge all into a single geometry ---
+                // 1. Relief (top)
+                const allPositions = [...reliefPositions];
+                const allUVs = [...reliefUVs];
+                const allIndices = [...reliefIndices];
+                // 2. Bottom disc (fan from center to edge points)
+                const bottomStartIdx = allPositions.length / 3;
+                allPositions.push(0, 0, -thickness); // center
+                allUVs.push(0.5, 0.5);
+                for (let i = 0; i < edgePoints.length; ++i) {
+                    allPositions.push(edgePoints[i].x, edgePoints[i].y, -thickness);
+                    allUVs.push((edgePoints[i].x / radius + 1) / 2, (edgePoints[i].y / radius + 1) / 2);
+                }
+                for (let i = 1; i <= edgePoints.length; ++i) {
+                    const a = bottomStartIdx;
+                    const b = bottomStartIdx + i;
+                    const c = bottomStartIdx + (i < edgePoints.length ? i + 1 : 1);
+                    allIndices.push(a, b, c);
+                }
+                // 3. Side wall (quads between edge of relief and bottom disc)
+                const wallStartIdx = allPositions.length / 3;
+                for (let i = 0; i < edgePoints.length; ++i) {
+                    // Top edge
+                    const x1 = edgePoints[i].x, y1 = edgePoints[i].y, z1 = edgePoints[i].z;
+                    const x2 = edgePoints[(i + 1) % edgePoints.length].x, y2 = edgePoints[(i + 1) % edgePoints.length].y, z2 = edgePoints[(i + 1) % edgePoints.length].z;
+                    // Bottom edge
+                    const x1b = x1, y1b = y1, z1b = -thickness;
+                    const x2b = x2, y2b = y2, z2b = -thickness;
+                    // Add wall vertices
+                    allPositions.push(x1, y1, z1); // 0 top current
+                    allPositions.push(x2, y2, z2); // 1 top next
+                    allPositions.push(x1b, y1b, z1b); // 2 bottom current
+                    allPositions.push(x2b, y2b, z2b); // 3 bottom next
+                    allUVs.push(0, 0, 0, 0, 0, 0, 0, 0); // dummy UVs
+                    const base = wallStartIdx + i * 4;
+                    allIndices.push(base, base + 2, base + 1);
+                    allIndices.push(base + 1, base + 2, base + 3);
+                }
+                // 4. Border (rim) - vertical wall offset outward by borderThickness, total height 2.1mm
+                const rimStartIdx = allPositions.length / 3;
+                const border = this.borderThickness;
+                // Find maxZ of the relief
+                let maxZ = -Infinity;
+                for (let i = 0; i < grid.length; ++i) {
+                    if (grid[i].inCircle && grid[i].z > maxZ) maxZ = grid[i].z;
+                }
+                const rimTopZ = maxZ + 0.6;
+                for (let i = 0; i < edgePoints.length; ++i) {
+                    const next = (i + 1) % edgePoints.length;
+                    // Outward normal
+                    const dx = edgePoints[i].x;
+                    const dy = edgePoints[i].y;
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    const nx = dx / len;
+                    const ny = dy / len;
+                    // Outer edge points
+                    const ox1 = edgePoints[i].x + nx * border;
+                    const oy1 = edgePoints[i].y + ny * border;
+                    const ox2 = edgePoints[next].x + (edgePoints[next].x / Math.sqrt(edgePoints[next].x ** 2 + edgePoints[next].y ** 2)) * border;
+                    const oy2 = edgePoints[next].y + (edgePoints[next].y / Math.sqrt(edgePoints[next].x ** 2 + edgePoints[next].y ** 2)) * border;
+                    // Top and bottom (rim top always at rimTopZ)
+                    allPositions.push(edgePoints[i].x, edgePoints[i].y, rimTopZ); // 0 inner top
+                    allPositions.push(edgePoints[next].x, edgePoints[next].y, rimTopZ); // 1 inner top next
+                    allPositions.push(ox1, oy1, rimTopZ); // 2 outer top
+                    allPositions.push(ox2, oy2, rimTopZ); // 3 outer top next
+                    allPositions.push(edgePoints[i].x, edgePoints[i].y, -thickness); // 4 inner bottom
+                    allPositions.push(edgePoints[next].x, edgePoints[next].y, -thickness); // 5 inner bottom next
+                    allPositions.push(ox1, oy1, -thickness); // 6 outer bottom
+                    allPositions.push(ox2, oy2, -thickness); // 7 outer bottom next
+                    allUVs.push(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0); // dummy UVs
+                    const b = rimStartIdx + i * 8;
+                    // Top rim quad
+                    allIndices.push(b+2, b+3, b+0);
+                    allIndices.push(b+3, b+1, b+0);
+                    // Bottom rim quad
+                    allIndices.push(b+4, b+6, b+5);
+                    allIndices.push(b+5, b+6, b+7);
+                    // Outer wall
+                    allIndices.push(b+2, b+6, b+3);
+                    allIndices.push(b+3, b+6, b+7);
+                    // Inner wall
+                    allIndices.push(b+0, b+1, b+4);
+                    allIndices.push(b+1, b+5, b+4);
+                }
+                // Add a transparent red-tinted layer from the top of the relief up to the rim
+                const redLayerPositions = [];
+                const redLayerIndices = [];
+                for (let i = 0; i < edgePoints.length; ++i) {
+                    const next = (i + 1) % edgePoints.length;
+                    // Top edge (relief)
+                    const x1 = edgePoints[i].x, y1 = edgePoints[i].y, z1 = edgePoints[i].z;
+                    const x2 = edgePoints[next].x, y2 = edgePoints[next].y, z2 = edgePoints[next].z;
+                    // Rim edge
+                    const x1r = x1, y1r = y1, z1r = rimTopZ;
+                    const x2r = x2, y2r = y2, z2r = rimTopZ;
+                    // Add quad (two triangles)
+                    const base = redLayerPositions.length / 3;
+                    redLayerPositions.push(x1, y1, z1, x2, y2, z2, x1r, y1r, z1r, x2r, y2r, z2r);
+                    redLayerIndices.push(base, base+1, base+2, base+1, base+3, base+2);
+                }
+                // Add a top cap at rimTopZ
+                const capStartIdx = redLayerPositions.length / 3;
+                // Center point
+                redLayerPositions.push(0, 0, rimTopZ);
+                for (let i = 0; i < edgePoints.length; ++i) {
+                    redLayerPositions.push(edgePoints[i].x, edgePoints[i].y, rimTopZ);
+                }
+                for (let i = 1; i <= edgePoints.length; ++i) {
+                    const a = capStartIdx;
+                    const b = capStartIdx + i;
+                    const c = capStartIdx + (i < edgePoints.length ? i + 1 : 1);
+                    redLayerIndices.push(a, b, c);
+                }
+                const redLayerGeometry = new THREE.BufferGeometry();
+                redLayerGeometry.setAttribute('position', new THREE.Float32BufferAttribute(redLayerPositions, 3));
+                redLayerGeometry.setIndex(redLayerIndices);
+                redLayerGeometry.computeVertexNormals();
+                const highlightColor = document.getElementById('highlight-layer-color')?.value || '#ff0000';
+                const redLayerMaterial = new THREE.MeshStandardMaterial({
+                    color: highlightColor,
+                    transparent: true,
+                    opacity: 0.35,
+                    metalness: 0,
+                    roughness: 0.7,
+                    side: THREE.DoubleSide,
+                    depthWrite: false
+                });
+                const redLayerMesh = new THREE.Mesh(redLayerGeometry, redLayerMaterial);
+                redLayerMesh.rotation.x = -Math.PI / 2;
+                this.scene.add(redLayerMesh);
+                this.redLayer = redLayerMesh;
+                // Compute antiquing vertex colors based on Z height
+                let minZCirc = Infinity, maxZCirc = -Infinity;
+                let antiquingColorsCirc = [];
+                for (let i = 2; i < allPositions.length; i += 3) {
+                    if (allPositions[i] < minZCirc) minZCirc = allPositions[i];
+                    if (allPositions[i] > maxZCirc) maxZCirc = allPositions[i];
+                }
+                const antiquingAmount = parseFloat(document.getElementById('antiquing-amount')?.value || 0.5);
+                for (let i = 2; i < allPositions.length; i += 3) {
+                    const z = allPositions[i];
+                    const t = (z - minZCirc) / (maxZCirc - minZCirc + 1e-6);
+                    const antiqued = 0.15 + (1 - 0.15) * ((1 - antiquingAmount) * t + antiquingAmount * (1 - t));
+                    antiquingColorsCirc.push(antiqued, antiqued, antiqued);
+                }
+                // Build BufferGeometry
+                geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.Float32BufferAttribute(allPositions, 3));
+                geometry.setAttribute('uv', new THREE.Float32BufferAttribute(allUVs, 2));
+                geometry.setAttribute('color', new THREE.Float32BufferAttribute(antiquingColorsCirc, 3));
+                geometry.setIndex(allIndices);
+                geometry.computeVertexNormals();
+                // Single material for all
+                const material = new THREE.MeshStandardMaterial({
+                    color: METAL_MATERIALS['sterling-silver'].color,
+                    metalness: this.envMapLoaded ? 1.0 : 0.2,
+                    roughness: this.envMapLoaded ? 0.1 : 0.7,
+                    side: THREE.DoubleSide,
+                    envMapIntensity: this.envMapLoaded ? 1.0 : 0.0,
+                    transparent: !!alphaMap,
+                    alphaMap: alphaMap,
+                    alphaTest: alphaMap ? 0.5 : 0,
+                    vertexColors: true
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.rotation.x = -Math.PI / 2;
+                this.scene.add(mesh);
+                this.heightfield = mesh;
+                this.createJumpring('small');
+                this.updateJumpringPosition();
+                // Ensure the correct metal material is applied on first render
+                const metalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+                this.updateMetalMaterial(metalType);
+                console.log('Adding red layer');
+                console.log('Scene children:', this.scene.children.length);
+                const engravingTextValue = document.getElementById('engraving-text')?.value || '';
+                this.updateEngraving(engravingTextValue);
+                this.heightfield.material.transparent = true;
+                this.heightfield.material.opacity = 0.5;
+                return;
+            case 'rectangular-pendant':
+                geometry = new THREE.PlaneGeometry(
+                    this.pendantWidth,
+                    this.pendantHeight,
+                    heightfieldData.width - 1,
+                    heightfieldData.height - 1
+                );
+                break;
+            case 'circular-stud':
+                geometry = new THREE.PlaneGeometry(
+                    this.pendantDiameter / 2,
+                    this.pendantDiameter / 2,
+                    heightfieldData.width - 1,
+                    heightfieldData.height - 1
+                );
+                break;
+            case 'bracelet':
+                geometry = new THREE.PlaneGeometry(
+                    this.pendantWidth * 0.8,
+                    this.pendantHeight,
+                    heightfieldData.width - 1,
+                    heightfieldData.height - 1
+                );
+                break;
+        }
+
+        if (!geometry) return;
+
+        const positions = geometry.attributes.position.array;
+        const uvs = geometry.attributes.uv.array;
+
+        // Apply height data to vertices
+        for (let i = 0; i < positions.length; i += 3) {
+            let u, v;
+            
+            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
+                // For circular shapes, convert position to UV coordinates
+                const x = positions[i];
+                const y = positions[i + 1];
+                const radius = (this.currentObjectType === 'circular-pendant') ? this.pendantDiameter / 2 : this.pendantDiameter / 4;
+                u = (x / (this.pendantDiameter / 2) + 1) / 2;
+                v = (y / (this.pendantDiameter / 2) + 1) / 2;
+                // Mask out vertices outside the circle
+                const dist = Math.sqrt(x * x + y * y);
+                if (dist > radius) {
+                    positions[i + 2] = 0;
+                    continue;
+                }
+            } else {
+                // For rectangular shapes, use existing UVs
+                u = uvs[i / 3 * 2];
+                v = uvs[i / 3 * 2 + 1];
+            }
+
+            // Sample image data
+            const pixelX = Math.floor(u * (heightfieldData.width - 1));
+            const pixelY = heightfieldData.height - 1 - Math.floor(v * (heightfieldData.height - 1));
+            const pixelIndex = (pixelY * heightfieldData.width + pixelX) * 4;
+
+            // Convert RGB to grayscale
+            const gray = (heightfieldData.data[pixelIndex] * 0.299 +
+                         heightfieldData.data[pixelIndex + 1] * 0.587 +
+                         heightfieldData.data[pixelIndex + 2] * 0.114) / 255;
+
+            // Apply height
+            positions[i + 2] = gray * MAX_DEPTH;
+        }
+
+        // IMPORTANT: Recompute normals after modifying vertices for correct lighting/reflections
+        geometry.computeVertexNormals();
+
+        // Generate a circular alphaMap for the circular pendant
+        if (this.currentObjectType === 'circular-pendant') {
+            const size = 512;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, size, size);
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.fillStyle = 'white';
+            ctx.fill();
+            alphaMap = new THREE.CanvasTexture(canvas);
+        }
+
+        // Use unique names to avoid redeclaration
+        let minZRect = Infinity, maxZRect = -Infinity;
+        let antiquingColorsRect = [];
+        for (let i = 2; i < positions.length; i += 3) {
+            if (positions[i] < minZRect) minZRect = positions[i];
+            if (positions[i] > maxZRect) maxZRect = positions[i];
+        }
+        const antiquingAmount = parseFloat(document.getElementById('antiquing-amount')?.value || 0.5);
+        for (let i = 2; i < positions.length; i += 3) {
+            const z = positions[i];
+            const t = (z - minZRect) / (maxZRect - minZRect + 1e-6);
+            const antiqued = 0.15 + (1 - 0.15) * ((1 - antiquingAmount) * t + antiquingAmount * (1 - t));
+            antiquingColorsRect.push(antiqued, antiqued, antiqued);
+        }
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(antiquingColorsRect, 3));
+
+        // Use the same MeshStandardMaterial settings as the jumpring, with envMapIntensity
+        const material = new THREE.MeshStandardMaterial({
+            color: METAL_MATERIALS['sterling-silver'].color,
+            metalness: this.envMapLoaded ? 1.0 : 0.2,
+            roughness: this.envMapLoaded ? 0.1 : 0.7,
+            side: THREE.DoubleSide,
+            envMapIntensity: this.envMapLoaded ? 1.0 : 0.0,
+            transparent: !!alphaMap,
+            alphaMap: alphaMap,
+            alphaTest: alphaMap ? 0.5 : 0,
+            vertexColors: true
+        });
+
+        // Create mesh
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.rotation.x = -Math.PI / 2;
+        this.scene.add(mesh);
+        this.heightfield = mesh;
+        this.createJumpring('small');
+        this.updateJumpringPosition();
+        // Ensure the correct metal material is applied on first render
+        const metalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+        this.updateMetalMaterial(metalType);
+        console.log('Adding red layer');
+        console.log('Scene children:', this.scene.children.length);
+        const engravingTextValue = document.getElementById('engraving-text')?.value || '';
+        this.updateEngraving(engravingTextValue);
+        this.heightfield.material.transparent = true;
+        this.heightfield.material.opacity = 0.5;
+        return;
+    }
+
+    updateObjectShape() {
+        if (!this.heightfield) return;
+
+        // Recreate the mesh with the new object type
+        this.createHeightfieldMesh(this.heightfieldData);
+    }
+
+    fitCameraToObject(object) {
+        const box = new THREE.Box3().setFromObject(object);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const fov = this.camera.fov * (Math.PI / 180);
+        let cameraZ = Math.abs(maxDim / Math.sin(fov / 2));
+        
+        this.camera.position.set(center.x, center.y, center.z + cameraZ * 1.5);
+        this.camera.lookAt(center);
+        
+        this.controls.target.copy(center);
+        this.controls.update();
+    }
+
+    animate() {
+        requestAnimationFrame(this.animate.bind(this));
+        this.controls.update();
+        this.renderer.render(this.scene, this.camera);
+        // Sync view cube orientation with main camera, only if cube is defined
+        if (this.cube && this.cubeRenderer && this.cubeScene && this.cubeCamera) {
+            this.cube.quaternion.copy(this.camera.quaternion);
+            this.cubeRenderer.render(this.cubeScene, this.cubeCamera);
+        }
+    }
+
+    updateImagePosition() {
+        if (!this.heightfield) return;
+
+        const geometry = this.heightfield.geometry;
+        const positions = geometry.attributes.position.array;
+        const uvs = geometry.attributes.uv.array;
+        const aspectRatio = this.heightfieldData.aspectRatio;
+
+        for (let i = 0; i < positions.length; i += 3) {
+            let x = positions[i];
+            let y = positions[i + 1];
+
+            // Apply transformations
+            const angle = this.imageTransform.rotation * Math.PI / 180;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+
+            // Scale
+            x *= this.imageTransform.scale;
+            y *= this.imageTransform.scale;
+
+            // Rotate
+            const xRot = x * cos - y * sin;
+            const yRot = x * sin + y * cos;
+            x = xRot;
+            y = yRot;
+
+            // Offset
+            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
+                const radius = (this.currentObjectType === 'circular-pendant') ? this.pendantDiameter / 2 : this.pendantDiameter / 4;
+                x += this.imageTransform.offsetX * radius;
+                y += this.imageTransform.offsetY * radius;
+            } else {
+                x += this.imageTransform.offsetX * this.pendantWidth;
+                y += this.imageTransform.offsetY * this.pendantHeight;
+            }
+
+            // Update position
+            positions[i] = x;
+            positions[i + 1] = y;
+
+            // Update UVs for proper texture mapping
+            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
+                const radius = (this.currentObjectType === 'circular-pendant') ? this.pendantDiameter / 2 : this.pendantDiameter / 4;
+                uvs[i / 3 * 2] = (x / radius + 1) / 2;
+                uvs[i / 3 * 2 + 1] = (y / radius + 1) / 2;
+            }
+        }
+
+        geometry.attributes.position.needsUpdate = true;
+        geometry.attributes.uv.needsUpdate = true;
+        geometry.computeVertexNormals();
+    }
+
+    updateMetalMaterial(metalType) {
+        if (!this.heightfield) return;
+
+        const materialProps = METAL_MATERIALS[metalType];
+        this.heightfield.material.color.set(materialProps.color);
+        this.heightfield.material.metalness = materialProps.metalness;
+        this.heightfield.material.roughness = materialProps.roughness;
+        this.heightfield.material.envMapIntensity = materialProps.envMapIntensity;
+
+        if (this.jumpring) {
+            this.jumpring.material.color.set(materialProps.color);
+            this.jumpring.material.metalness = materialProps.metalness;
+            this.jumpring.material.roughness = materialProps.roughness;
+            this.jumpring.material.envMapIntensity = materialProps.envMapIntensity;
+        }
+    }
+
+    updateMetalFinish(finish) {
+        if (!this.heightfield) return;
+
+        const finishProps = FINISH_PROPERTIES[finish];
+        this.heightfield.material.roughness = finishProps.roughness;
+
+        if (this.jumpring) {
+            this.jumpring.material.roughness = finishProps.roughness;
+        }
+    }
+
+    createJumpring(size) {
+        if (this.jumpring) {
+            this.scene.remove(this.jumpring);
+        }
+        const ringRadius = {
+            'small': 2,
+            'medium': 3,
+            'large': 4
+        }[size];
+        const ringGeometry = new THREE.TorusGeometry(ringRadius, 0.5, 16, 32);
+        const ringMaterial = new THREE.MeshStandardMaterial({
+            color: METAL_MATERIALS['sterling-silver'].color,
+            metalness: 1.0,
+            roughness: 0.1,
+            envMapIntensity: 1.0
+        });
+        this.jumpring = new THREE.Mesh(ringGeometry, ringMaterial);
+        this.scene.add(this.jumpring);
+        console.log('Creating jumpring');
+    }
+
+    updateJumpring(size) {
+        this.createJumpring(size);
+    }
+
+    updateJumpringPosition() {
+        if (!this.jumpring || !this.heightfield) return;
+        const heightfieldBounds = new THREE.Box3().setFromObject(this.heightfield);
+        const heightfieldSize = heightfieldBounds.getSize(new THREE.Vector3());
+        const heightfieldCenter = heightfieldBounds.getCenter(new THREE.Vector3());
+        // Place jumpring just above the rim
+        let x = heightfieldCenter.x;
+        let y = heightfieldCenter.y + heightfieldSize.y / 2 + 2 - 3.5; // adjust as needed
+        let z = heightfieldCenter.z + (-0.6 * this.pendantDiameter);
+        this.jumpring.position.set(x, y, z);
+        this.jumpring.rotation.set(Math.PI / 2, 0, 0);
+    }
+
+    addScaleGrid() {
+        // Remove previous grid if any
+        if (this.grid) {
+            this.scene.remove(this.grid);
+        }
+        // 1mm per block
+        let gridSize = 60;
+        let divisions = 60;
+        if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
+            gridSize = Math.ceil(this.pendantDiameter * 1.2);
+            divisions = gridSize;
+        } else {
+            gridSize = Math.ceil(Math.max(this.pendantWidth, this.pendantHeight) * 1.2);
+            divisions = gridSize;
+        }
+        const gridHelper = new THREE.GridHelper(gridSize, divisions, 0xffffff, 0x888888);
+        gridHelper.position.y = -0.7; // Slightly below the pendant
+        gridHelper.material.opacity = 0.5;
+        gridHelper.material.transparent = true;
+        this.grid = gridHelper;
+        this.scene.add(this.grid);
+    }
+
+    updateEnvMapStatus() {
+        const bar = document.getElementById('envmap-status');
+        if (!bar) return;
+        if (this.envMapLoaded) {
+            bar.textContent = 'Environment map loaded: metals will look realistic.';
+            bar.style.background = 'rgba(40,180,40,0.9)';
+        } else {
+            bar.textContent = 'Environment map missing: metals will look dull. Place px.jpg, nx.jpg, ... in /public.';
+            bar.style.background = 'rgba(200,60,60,0.9)';
+        }
+        bar.style.display = 'block';
+    }
+
+    addViewCube() {
+        // Create a small scene for the view cube
+        this.cubeScene = new ThreeScene();
+        this.cubeCamera = new PerspectiveCamera(50, 1, 0.1, 10);
+        this.cubeCamera.position.set(2, 2, 2);
+        this.cubeCamera.lookAt(0, 0, 0);
+        // Create the cube
+        const cube = new Mesh(
+            new BoxGeometry(1, 1, 1),
+            [
+                new MeshBasicMaterial({ color: 0xff4444 }), // right (X+)
+                new MeshBasicMaterial({ color: 0x4444ff }), // left (X-)
+                new MeshBasicMaterial({ color: 0x44ff44 }), // top (Y+)
+                new MeshBasicMaterial({ color: 0xff44ff }), // bottom (Y-)
+                new MeshBasicMaterial({ color: 0xffff44 }), // front (Z+)
+                new MeshBasicMaterial({ color: 0x44ffff })  // back (Z-)
+            ]
+        );
+        this.cube = cube;
+        this.cubeScene.add(cube);
+        // Overlay renderer
+        this.cubeRenderer = new WebGLRenderer({ alpha: true });
+        this.cubeRenderer.setSize(240, 240);
+        this.cubeRenderer.setClearColor(0x000000, 0);
+        this.cubeRenderer.domElement.style.position = 'absolute';
+        this.cubeRenderer.domElement.style.top = '20px';
+        this.cubeRenderer.domElement.style.left = '20px';
+        this.cubeRenderer.domElement.style.zIndex = '2001';
+        document.body.appendChild(this.cubeRenderer.domElement);
+        // Raycaster for picking
+        this.cubeRaycaster = new Raycaster();
+        this.cubePointer = new Vector2();
+        this.cubeRenderer.domElement.addEventListener('pointerdown', (event) => {
+            const rect = this.cubeRenderer.domElement.getBoundingClientRect();
+            this.cubePointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            this.cubePointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            this.cubeRaycaster.setFromCamera(this.cubePointer, this.cubeCamera);
+            const intersects = this.cubeRaycaster.intersectObject(this.cube, true);
+            if (intersects.length > 0) {
+                const faceIndex = Math.floor(intersects[0].faceIndex / 2);
+                this.setCameraToCubeFace(faceIndex);
+            }
+        });
+    }
+
+    setCameraToCubeFace(faceIndex) {
+        // 0: right, 1: left, 2: top, 3: bottom, 4: front, 5: back
+        const dist = 50;
+        let pos = { x: 0, y: 0, z: 0 };
+        switch (faceIndex) {
+            case 0: pos = { x: dist, y: 0, z: 0 }; break; // right
+            case 1: pos = { x: -dist, y: 0, z: 0 }; break; // left
+            case 2: pos = { x: 0, y: dist, z: 0 }; break; // top
+            case 3: pos = { x: 0, y: -dist, z: 0 }; break; // bottom
+            case 4: pos = { x: 0, y: 0, z: dist }; break; // front
+            case 5: pos = { x: 0, y: 0, z: -dist }; break; // back
+            default: pos = { x: dist, y: dist, z: dist }; break; // corner
+        }
+        this.camera.position.set(pos.x, pos.y, pos.z);
+        this.camera.lookAt(0, 0, 0);
+        this.controls.target.set(0, 0, 0);
+        this.controls.update();
+    }
+
+    exportSTL() {
+        const exporter = new STLExporter();
+        // Create a group to export both pendant and jumpring
+        const group = new THREE.Group();
+        if (this.heightfield) group.add(this.heightfield.clone());
+        if (this.jumpring) group.add(this.jumpring.clone());
+        const stlString = exporter.parse(group);
+        const blob = new Blob([stlString], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.href = URL.createObjectURL(blob);
+        link.download = 'pendant.stl';
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    loadEngravingFont(fontName, callback) {
+        if (this.engravingFontCache[fontName]) {
+            this.engravingFont = this.engravingFontCache[fontName];
+            if (callback) callback();
+            return;
+        }
+        const loader = new FontLoader();
+        loader.load(ENGRAVING_FONTS[fontName], (font) => {
+            this.engravingFontCache[fontName] = font;
+            this.engravingFont = font;
+            if (callback) callback();
+        });
+    }
+
+    updateEngraving(text) {
+        if (this.engravingMesh) {
+            this.scene.remove(this.engravingMesh);
+            this.engravingMesh.geometry.dispose();
+            this.engravingMesh.material.dispose();
+            this.engravingMesh = null;
+        }
+        if (!this.engravingFont || !text.trim()) return;
+        // Get options
+        const size = parseFloat(document.getElementById('engraving-size')?.value || 5);
+        const isBold = document.getElementById('engraving-bold')?.checked;
+        const isItalic = document.getElementById('engraving-italic')?.checked;
+        const justify = document.getElementById('engraving-justify')?.value || 'center';
+        // Simulate bold by increasing height (not true bold)
+        const fontHeight = isBold ? 1.0 : 0.5;
+        // Simulate italic by skewing geometry after creation
+        const geometry = new TextGeometry(text, {
+            font: this.engravingFont,
+            size: size,
+            height: fontHeight,
+            curveSegments: 8,
+            bevelEnabled: false
+        });
+        geometry.computeBoundingBox();
+        // Center/justify
+        const bbox = geometry.boundingBox;
+        let xOffset = 0;
+        if (justify === 'center') {
+            xOffset = -0.5 * (bbox.max.x - bbox.min.x);
+        } else if (justify === 'right') {
+            xOffset = -(bbox.max.x - bbox.min.x);
+        } // left = 0
+        const yOffset = -0.5 * (bbox.max.y - bbox.min.y);
+        geometry.translate(xOffset, yOffset, 0);
+        // Italic: skew geometry
+        if (isItalic) {
+            const skew = 0.3; // adjust for more/less italic
+            geometry.applyMatrix4(new THREE.Matrix4().set(
+                1, skew, 0, 0,
+                0,   1, 0, 0,
+                0,   0, 1, 0,
+                0,   0, 0, 1
+            ));
+        }
+        // Create material (black)
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x111111,
+            metalness: 0.3,
+            roughness: 0.7
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(0, 0, -this.pendantThickness - 0.1);
+        mesh.rotation.x = Math.PI / 2;
+        mesh.rotation.z = Math.PI;
+        this.scene.add(mesh);
+        this.engravingMesh = mesh;
+        console.log('Engraving mesh created and added to scene');
+        console.log('Engraving mesh position:', mesh.position, 'rotation:', mesh.rotation);
+    }
+}
+
+// Initialize the viewer
+new HeightfieldViewer(); 

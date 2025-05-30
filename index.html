@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metal Memories</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #drop-zone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+        #drop-zone.dragover {
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px dashed #fff;
+        }
+        #drop-zone.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .instructions {
+            text-align: center;
+            padding: 20px;
+        }
+        .instructions p {
+            margin: 10px 0;
+        }
+
+        /* UI Menu Styles */
+        #ui-menu {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            width: 300px;
+            z-index: 1000;
+        }
+        .menu-section {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .menu-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .menu-content {
+            margin-top: 10px;
+            display: none;
+        }
+        .menu-content.active {
+            display: block;
+        }
+        .control-group {
+            margin-bottom: 10px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+        .control-group select {
+            width: 100%;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        .control-group input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        .toggle-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        /* Additional UI styles */
+        .control-group input[type="color"] {
+            width: 100%;
+            height: 30px;
+            padding: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+        .control-group .position-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .control-group .position-controls input {
+            width: 100%;
+        }
+    </style>
+    <!-- Cropper.js CSS -->
+    <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="envmap-status" style="display:none;position:fixed;top:0;left:0;width:100%;z-index:2000;padding:8px 0;text-align:center;font-weight:bold;color:white;transition:background 0.3s;"></div>
+    <div id="drop-zone">
+        <div class="instructions">
+            <h2>Drop your image here</h2>
+            <p>or</p>
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
+            <button onclick="document.getElementById('file-input').click()">Select Image</button>
+            <p>Supported formats: JPG, PNG, BMP</p>
+        </div>
+    </div>
+    <div id="loading-overlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);z-index:3000;justify-content:center;align-items:center;flex-direction:column;">
+        <div style="text-align:center;color:white;">
+            <div style="margin-bottom:30px;">
+                <svg width="60" height="60" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" stroke="#fff" stroke-width="8" fill="none" opacity="0.2"/>
+                    <circle id="loading-spinner" cx="50" cy="50" r="40" stroke="#4af" stroke-width="8" fill="none" stroke-dasharray="251.2" stroke-dashoffset="0">
+                        <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="1s" repeatCount="indefinite"/>
+                    </circle>
+                </svg>
+            </div>
+            <div id="loading-status" style="font-size:1.3em;margin-bottom:18px;">Analyzing image...</div>
+            <div style="width:300px;background:#222;border-radius:8px;overflow:hidden;margin:0 auto;">
+                <div id="loading-progress-bar" style="height:18px;width:0%;background:#4af;transition:width 0.3s;"></div>
+            </div>
+        </div>
+    </div>
+    <div id="canvas-container"></div>
+
+    <!-- UI Menu -->
+    <div id="ui-menu">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span style="font-size:1.3em;font-weight:bold;letter-spacing:1px;">🖼️ Pendant Designer</span>
+            <div>
+                <button id="reset-view" title="Reset View" style="background:none;border:none;color:white;font-size:1.3em;cursor:pointer;">🔄</button>
+                <button id="screenshot" title="Download Screenshot" style="background:none;border:none;color:white;font-size:1.3em;cursor:pointer;">📸</button>
+                <button id="export-stl">Export STL</button>
+            </div>
+        </div>
+        <div class="menu-section">
+            <div class="menu-header">
+                <h3>Object Type</h3>
+                <button class="toggle-button">▼</button>
+            </div>
+            <div class="menu-content">
+                <div class="control-group">
+                    <select id="object-type">
+                        <option value="circular-pendant">Circular Pendant</option>
+                        <option value="rectangular-pendant">Rectangular Pendant</option>
+                        <option value="circular-stud">Circular Stud Earrings</option>
+                        <option value="bracelet">Bracelet</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Image Position</label>
+                    <div class="position-controls">
+                        <div>
+                            <label>X Offset</label>
+                            <input type="range" id="image-offset-x" min="-1" max="1" step="0.01" value="0">
+                        </div>
+                        <div>
+                            <label>Y Offset</label>
+                            <input type="range" id="image-offset-y" min="-1" max="1" step="0.01" value="0">
+                        </div>
+                        <div>
+                            <label>Scale</label>
+                            <input type="range" id="image-scale" min="0.5" max="1.5" step="0.01" value="1">
+                        </div>
+                        <div>
+                            <label>Rotation</label>
+                            <input type="range" id="image-rotation" min="0" max="360" step="1" value="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-header">
+                <h3>Metal Settings</h3>
+                <button class="toggle-button">▼</button>
+            </div>
+            <div class="menu-content">
+                <div class="control-group">
+                    <label>Metal Type</label>
+                    <select id="metal-type">
+                        <option value="sterling-silver">Sterling Silver</option>
+                        <option value="gold-18k">18K Yellow Gold</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Metal Finish</label>
+                    <select id="metal-finish">
+                        <option value="polished">Polished</option>
+                        <option value="brushed">Brushed</option>
+                        <option value="matte">Matte</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Antiquing Amount</label>
+                    <input type="range" id="antiquing-amount" min="0" max="1" step="0.01" value="0.5">
+                    <span class="slider-value" id="antiquing-amount-value">0.5</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-header">
+                <h3>Jumpring Settings</h3>
+                <button class="toggle-button">▼</button>
+            </div>
+            <div class="menu-content">
+                <div class="control-group">
+                    <label>Jumpring Size</label>
+                    <select id="jumpring-size">
+                        <option value="small">Small (4mm)</option>
+                        <option value="medium">Medium (6mm)</option>
+                        <option value="large">Large (8mm)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Jumpring Position</label>
+                    <select id="jumpring-position">
+                        <option value="top">Top</option>
+                        <option value="side">Side</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Jumpring X Offset</label>
+                    <input type="range" id="jumpring-x" min="-10" max="10" step="0.1" value="0">
+                    <span class="slider-value" id="jumpring-x-value">0</span>
+                </div>
+                <div class="control-group">
+                    <label>Jumpring Y Offset</label>
+                    <input type="range" id="jumpring-y" min="-10" max="10" step="0.1" value="0">
+                    <span class="slider-value" id="jumpring-y-value">0</span>
+                </div>
+                <div class="control-group">
+                    <label>Jumpring Z Offset</label>
+                    <input type="range" id="jumpring-z" min="-20" max="-10" step="0.1" value="-15">
+                    <span class="slider-value" id="jumpring-z-value">-15</span>
+                </div>
+                <div class="control-group">
+                    <label>Highlight Layer Color</label>
+                    <input type="color" id="highlight-layer-color" value="#ff0000">
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-header">
+                <h3>Camera Controls</h3>
+                <button class="toggle-button">▼</button>
+            </div>
+            <div class="menu-content">
+                <div class="control-group">
+                    <label>Field of View</label>
+                    <input type="range" id="fov" min="30" max="120" value="75">
+                </div>
+                <div class="control-group">
+                    <label>Camera Distance</label>
+                    <input type="range" id="camera-distance" min="10" max="200" value="50">
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-header">
+                <h3>Scene Settings</h3>
+                <button class="toggle-button">▼</button>
+            </div>
+            <div class="menu-content">
+                <div class="control-group">
+                    <label>Light Intensity</label>
+                    <input type="range" id="light-intensity" min="0" max="2" step="0.1" value="0.8">
+                </div>
+                <div class="control-group">
+                    <label>Material Color</label>
+                    <input type="color" id="material-color" value="#808080">
+                </div>
+                <div class="control-group">
+                    <label>Material Shine</label>
+                    <input type="range" id="material-shine" min="0" max="100" value="30">
+                </div>
+            </div>
+        </div>
+
+        <!-- Lighting Controls -->
+        <div class="menu-section">
+            <div class="menu-header"><span>Lighting</span></div>
+            <div class="menu-content active">
+                <label for="ambient-intensity">Ambient Intensity</label>
+                <input type="range" id="ambient-intensity" min="0" max="2" step="0.01" value="0.5">
+                <label for="directional-intensity">Directional Intensity</label>
+                <input type="range" id="directional-intensity" min="0" max="2" step="0.01" value="0.8">
+            </div>
+        </div>
+
+        <!-- Pendant Size Controls -->
+        <div class="menu-section">
+            <div class="menu-header"><span>Pendant Size</span></div>
+            <div class="menu-content active">
+                <label for="pendant-diameter">Diameter (mm)</label>
+                <input type="range" id="pendant-diameter" min="10" max="50" step="0.1" value="25">
+                <span class="slider-value" id="pendant-diameter-value"></span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label for="pendant-width" style="margin-bottom: 0;">Width (mm)</label>
+                    <input type="range" id="pendant-width" min="10" max="50" step="0.1" value="25" style="flex: 1;">
+                    <button id="aspect-lock" title="Lock aspect ratio" style="background: none; border: none; cursor: pointer; color: white; font-size: 20px;">
+                        <span id="aspect-lock-icon">🔒</span>
+                    </button>
+                </div>
+                <span class="slider-value" id="pendant-width-value"></span>
+                <label for="pendant-height">Height (mm)</label>
+                <input type="range" id="pendant-height" min="10" max="50" step="0.1" value="25">
+                <span class="slider-value" id="pendant-height-value"></span>
+                <label for="border-thickness">Border Thickness (mm)</label>
+                <input type="range" id="border-thickness" min="0.6" max="1.5" step="0.01" value="1.0">
+                <span class="slider-value" id="border-thickness-value">1.0</span>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-header">
+                <h3>Add Engraving (+ $35)</h3>
+                <button class="toggle-button">▼</button>
+            </div>
+            <div class="menu-content active">
+                <div class="control-group">
+                    <label for="engraving-text">Engraving Text (max 50 characters)</label>
+                    <textarea id="engraving-text" maxlength="50" rows="2" style="width:100%;resize:none;"></textarea>
+                    <div style="text-align:right;font-size:0.95em;color:#aaa;">
+                        <span id="engraving-char-count">0</span>/50
+                    </div>
+                </div>
+                <div class="control-group" style="margin-top:10px;">
+                    <label for="engraving-font">Font</label>
+                    <select id="engraving-font">
+                        <option value="helvetiker">Helvetiker</option>
+                        <option value="optimer">Optimer</option>
+                        <option value="gentilis">Gentilis</option>
+                        <option value="droid_sans">Droid Sans</option>
+                        <option value="droid_serif">Droid Serif</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="engraving-size">Font Size</label>
+                    <input type="range" id="engraving-size" min="2" max="10" step="0.1" value="5">
+                    <span class="slider-value" id="engraving-size-value">5</span>
+                </div>
+                <div class="control-group" style="display:flex;align-items:center;gap:10px;">
+                    <label><input type="checkbox" id="engraving-bold"> Bold</label>
+                    <label><input type="checkbox" id="engraving-italic"> Italic</label>
+                    <label for="engraving-justify" style="margin-left:auto;">Justify</label>
+                    <select id="engraving-justify">
+                        <option value="center">Center</option>
+                        <option value="left">Left</option>
+                        <option value="right">Right</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropper Modal -->
+    <div id="cropper-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);z-index:4000;justify-content:center;align-items:center;flex-direction:column;">
+        <div style="background:#222;padding:24px;border-radius:10px;box-shadow:0 2px 16px #000;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;">
+            <img id="cropper-image" src="" style="max-width:70vw;max-height:60vh;display:block;background:#111;"/>
+            <div style="margin-top:18px;display:flex;gap:16px;">
+                <button id="cropper-confirm" style="padding:8px 24px;font-size:1.1em;">Crop & Continue</button>
+                <button id="cropper-cancel" style="padding:8px 24px;font-size:1.1em;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+    <!-- Cropper.js JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <!-- Add this in the <head> or before the closing </body> tag -->
+    <script id="threejs-font-json" type="application/json">
+    // The font will be loaded via JS from the official Three.js CDN
+    </script>
+    <!-- Optionally, add FontLoader via module import in main.js -->
+</body>
+</html> 
