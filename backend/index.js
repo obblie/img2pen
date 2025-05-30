@@ -22,6 +22,12 @@ const GITHUB_PATH = process.env.GITHUB_PATH || 'orders';
 
 // Helper function to upload file to GitHub
 async function uploadToGitHub(fileBuffer, filename, commitMessage) {
+    // Check file size limit (GitHub has a 100MB limit, but we'll set a lower limit for safety)
+    const maxFileSize = 50 * 1024 * 1024; // 50MB
+    if (fileBuffer.length > maxFileSize) {
+        throw new Error(`File too large. Maximum size is ${maxFileSize / (1024 * 1024)}MB`);
+    }
+
     const repoApi = `https://api.github.com/repos/${GITHUB_REPO}`;
     
     // Get current commit SHA and tree SHA
@@ -83,6 +89,14 @@ app.post('/api/upload-image', upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: 'No image file provided' });
         }
         
+        // Check file size
+        const maxImageSize = 10 * 1024 * 1024; // 10MB for images
+        if (file.size > maxImageSize) {
+            return res.status(400).json({ 
+                error: `Image too large. Maximum size is ${maxImageSize / (1024 * 1024)}MB` 
+            });
+        }
+        
         // Create timestamp-based filename
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const fileExtension = path.extname(file.originalname);
@@ -102,7 +116,7 @@ app.post('/api/upload-image', upload.single('image'), async (req, res) => {
         });
     } catch (err) {
         console.error('Image upload error:', err.response?.data || err);
-        res.status(500).json({ error: 'Failed to upload image' });
+        res.status(500).json({ error: err.message || 'Failed to upload image' });
     }
 });
 
@@ -113,6 +127,14 @@ app.post('/api/submit-order', upload.single('file'), async (req, res) => {
         const file = req.file;
         if (!name || !email || !file) {
             return res.status(400).json({ error: 'Missing fields' });
+        }
+        
+        // Check file size
+        const maxModelSize = 50 * 1024 * 1024; // 50MB for STL files
+        if (file.size > maxModelSize) {
+            return res.status(400).json({ 
+                error: `File too large. Maximum size is ${maxModelSize / (1024 * 1024)}MB` 
+            });
         }
         
         // Generate GUID and timestamp
@@ -135,7 +157,7 @@ app.post('/api/submit-order', upload.single('file'), async (req, res) => {
         });
     } catch (err) {
         console.error('Order submission error:', err.response?.data || err);
-        res.status(500).json({ error: 'Failed to submit order' });
+        res.status(500).json({ error: err.message || 'Failed to submit order' });
     }
 });
 
