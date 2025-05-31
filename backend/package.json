@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
+  "author": "[Your Name/Company Name]",
+  "license": "UNLICENSED",
+  "private": true,
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js"

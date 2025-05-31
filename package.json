@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "3D heightfield viewer for image-based relief models",
   "main": "index.js",
+  "author": "[Your Name/Company Name]",
+  "license": "UNLICENSED",
+  "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
