@@ -12,7 +12,7 @@ const app = express();
 const upload = multer();
 
 // Configure axios with timeout
-axios.defaults.timeout = 30000; // 30 second timeout
+axios.defaults.timeout = 120000; // 2 minute timeout for large files
 axios.defaults.headers.common['User-Agent'] = 'img2pen-backend/1.0';
 
 // Add CORS middleware
@@ -55,6 +55,11 @@ async function uploadToGitHub(fileBuffer, filename, commitMessage) {
         throw new Error(`File too large. Maximum size is ${maxFileSize / (1024 * 1024)}MB`);
     }
 
+    // Calculate timeout based on file size (minimum 30s, add 1s per MB)
+    const fileSizeMB = fileBuffer.length / (1024 * 1024);
+    const blobTimeout = Math.max(30000, Math.min(120000, 30000 + (fileSizeMB * 1000))); // 30s to 2min
+    console.log(`[UPLOAD] File size: ${fileSizeMB.toFixed(2)}MB, blob timeout: ${blobTimeout/1000}s`);
+
     const repoApi = `https://api.github.com/repos/${GITHUB_REPO}`;
     const headers = { 
         Authorization: `token ${GITHUB_TOKEN}`,
@@ -66,26 +71,26 @@ async function uploadToGitHub(fileBuffer, filename, commitMessage) {
         console.log(`[UPLOAD] Getting latest commit for ${GITHUB_REPO}/${GITHUB_BRANCH}`);
         const refResponse = await Promise.race([
             axios.get(`${repoApi}/git/ref/heads/${GITHUB_BRANCH}`, { headers }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout getting ref')), 15000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout getting ref')), 30000))
         ]);
         const latestCommitSha = refResponse.data.object.sha;
         console.log(`[UPLOAD] Latest commit SHA: ${latestCommitSha}`);
         
         const commitResponse = await Promise.race([
             axios.get(`${repoApi}/git/commits/${latestCommitSha}`, { headers }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout getting commit')), 15000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout getting commit')), 30000))
         ]);
         const treeSha = commitResponse.data.tree.sha;
         console.log(`[UPLOAD] Tree SHA: ${treeSha}`);
         
-        // Create a new blob for the file with timeout
-        console.log(`[UPLOAD] Creating blob for ${filename}`);
+        // Create a new blob for the file with timeout - this is the longest operation for large files
+        console.log(`[UPLOAD] Creating blob for ${filename} (this may take up to ${blobTimeout/1000}s for large files)`);
         const blobResponse = await Promise.race([
             axios.post(`${repoApi}/git/blobs`, {
                 content: fileBuffer.toString('base64'),
                 encoding: 'base64'
             }, { headers }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout creating blob')), 20000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error(`Timeout creating blob after ${blobTimeout/1000}s`)), blobTimeout))
         ]);
         console.log(`[UPLOAD] Blob created: ${blobResponse.data.sha}`);
         
@@ -103,7 +108,7 @@ async function uploadToGitHub(fileBuffer, filename, commitMessage) {
                     }
                 ]
             }, { headers }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout creating tree')), 15000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout creating tree')), 30000))
         ]);
         console.log(`[UPLOAD] New tree created: ${treeResponse.data.sha}`);
         
@@ -115,7 +120,7 @@ async function uploadToGitHub(fileBuffer, filename, commitMessage) {
                 tree: treeResponse.data.sha,
                 parents: [latestCommitSha]
             }, { headers }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout creating commit')), 15000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout creating commit')), 30000))
         ]);
         console.log(`[UPLOAD] Commit created: ${commitCreateResponse.data.sha}`);
         
@@ -125,7 +130,7 @@ async function uploadToGitHub(fileBuffer, filename, commitMessage) {
             axios.patch(`${repoApi}/git/refs/heads/${GITHUB_BRANCH}`, {
                 sha: commitCreateResponse.data.sha
             }, { headers }),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout updating ref')), 15000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout updating ref')), 30000))
         ]);
         
         console.log(`[UPLOAD] ✅ Successfully uploaded ${filename} to ${GITHUB_REPO}`);
@@ -192,7 +197,8 @@ app.post('/api/submit-order', upload.single('file'), async (req, res) => {
             return res.status(400).json({ error: 'Missing fields' });
         }
         
-        console.log(`[ORDER] Processing order from ${name} <${email}> - File: ${file.originalname} (${file.size} bytes)`);
+        const fileSizeMB = file.size / (1024 * 1024);
+        console.log(`[ORDER] Processing order from ${name} <${email}> - File: ${file.originalname} (${fileSizeMB.toFixed(2)}MB)`);
         
         // Check file size
         const maxModelSize = 50 * 1024 * 1024; // 50MB for STL files
@@ -201,6 +207,11 @@ app.post('/api/submit-order', upload.single('file'), async (req, res) => {
             return res.status(400).json({ 
                 error: `File too large. Maximum size is ${maxModelSize / (1024 * 1024)}MB` 
             });
+        }
+        
+        // Warn about processing time for large files
+        if (fileSizeMB > 10) {
+            console.log(`[ORDER] Large file detected (${fileSizeMB.toFixed(2)}MB) - upload may take several minutes`);
         }
         
         // Generate GUID and timestamp
@@ -224,11 +235,19 @@ app.post('/api/submit-order', upload.single('file'), async (req, res) => {
             guid: guid,
             filename: filename,
             timestamp: timestamp,
-            commitSha: result.commitSha
+            commitSha: result.commitSha,
+            fileSize: fileSizeMB.toFixed(2) + 'MB'
         });
     } catch (err) {
         console.error('[ORDER] ❌ Order submission error:', err.response?.data || err.message);
-        res.status(500).json({ error: err.message || 'Failed to submit order' });
+        
+        // Provide more specific error messages for timeouts
+        let errorMessage = err.message || 'Failed to submit order';
+        if (err.message && err.message.includes('Timeout')) {
+            errorMessage = 'Upload timed out - this can happen with very large files. Please try again or contact support.';
+        }
+        
+        res.status(500).json({ error: errorMessage });
     }
 });
 
