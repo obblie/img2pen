@@ -18,10 +18,33 @@ app.use(express.json());
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_REPO = process.env.GITHUB_REPO;
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
-const GITHUB_PATH = process.env.GITHUB_PATH || 'orders';
+const GITHUB_PATH = process.env.GITHUB_PATH || 'models';
+
+// Add request logging middleware
+app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${req.method} ${req.path} - ${req.ip}`);
+    next();
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'healthy', 
+        timestamp: new Date().toISOString(),
+        config: {
+            repo: GITHUB_REPO,
+            branch: GITHUB_BRANCH,
+            path: GITHUB_PATH,
+            hasToken: !!GITHUB_TOKEN
+        }
+    });
+});
 
 // Helper function to upload file to GitHub
 async function uploadToGitHub(fileBuffer, filename, commitMessage) {
+    console.log(`[UPLOAD] Starting upload: ${filename} (${fileBuffer.length} bytes)`);
+    
     // Check file size limit (GitHub has a 100MB limit, but we'll set a lower limit for safety)
     const maxFileSize = 50 * 1024 * 1024; // 50MB
     if (fileBuffer.length > maxFileSize) {
@@ -30,55 +53,74 @@ async function uploadToGitHub(fileBuffer, filename, commitMessage) {
 
     const repoApi = `https://api.github.com/repos/${GITHUB_REPO}`;
     
-    // Get current commit SHA and tree SHA
-    const { data: refData } = await axios.get(`${repoApi}/git/ref/heads/${GITHUB_BRANCH}`, {
-        headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-    const latestCommitSha = refData.object.sha;
-    
-    const { data: commitData } = await axios.get(`${repoApi}/git/commits/${latestCommitSha}`, {
-        headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-    const treeSha = commitData.tree.sha;
-    
-    // Create a new blob for the file
-    const { data: blobData } = await axios.post(`${repoApi}/git/blobs`, {
-        content: fileBuffer.toString('base64'),
-        encoding: 'base64'
-    }, {
-        headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-    
-    // Create a new tree
-    const { data: newTree } = await axios.post(`${repoApi}/git/trees`, {
-        base_tree: treeSha,
-        tree: [
-            {
-                path: filename,
-                mode: '100644',
-                type: 'blob',
-                sha: blobData.sha
-            }
-        ]
-    }, {
-        headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-    
-    // Create a new commit
-    const { data: newCommit } = await axios.post(`${repoApi}/git/commits`, {
-        message: commitMessage,
-        tree: newTree.sha,
-        parents: [latestCommitSha]
-    }, {
-        headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
-    
-    // Update the branch reference
-    await axios.patch(`${repoApi}/git/refs/heads/${GITHUB_BRANCH}`, {
-        sha: newCommit.sha
-    }, {
-        headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    });
+    try {
+        // Get current commit SHA and tree SHA
+        console.log(`[UPLOAD] Getting latest commit for ${GITHUB_REPO}/${GITHUB_BRANCH}`);
+        const { data: refData } = await axios.get(`${repoApi}/git/ref/heads/${GITHUB_BRANCH}`, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
+        const latestCommitSha = refData.object.sha;
+        console.log(`[UPLOAD] Latest commit SHA: ${latestCommitSha}`);
+        
+        const { data: commitData } = await axios.get(`${repoApi}/git/commits/${latestCommitSha}`, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
+        const treeSha = commitData.tree.sha;
+        console.log(`[UPLOAD] Tree SHA: ${treeSha}`);
+        
+        // Create a new blob for the file
+        console.log(`[UPLOAD] Creating blob for ${filename}`);
+        const { data: blobData } = await axios.post(`${repoApi}/git/blobs`, {
+            content: fileBuffer.toString('base64'),
+            encoding: 'base64'
+        }, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
+        console.log(`[UPLOAD] Blob created: ${blobData.sha}`);
+        
+        // Create a new tree
+        console.log(`[UPLOAD] Creating new tree with file: ${filename}`);
+        const { data: newTree } = await axios.post(`${repoApi}/git/trees`, {
+            base_tree: treeSha,
+            tree: [
+                {
+                    path: filename,
+                    mode: '100644',
+                    type: 'blob',
+                    sha: blobData.sha
+                }
+            ]
+        }, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
+        console.log(`[UPLOAD] New tree created: ${newTree.sha}`);
+        
+        // Create a new commit
+        console.log(`[UPLOAD] Creating commit: ${commitMessage}`);
+        const { data: newCommit } = await axios.post(`${repoApi}/git/commits`, {
+            message: commitMessage,
+            tree: newTree.sha,
+            parents: [latestCommitSha]
+        }, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
+        console.log(`[UPLOAD] Commit created: ${newCommit.sha}`);
+        
+        // Update the branch reference
+        console.log(`[UPLOAD] Updating branch reference`);
+        await axios.patch(`${repoApi}/git/refs/heads/${GITHUB_BRANCH}`, {
+            sha: newCommit.sha
+        }, {
+            headers: { Authorization: `token ${GITHUB_TOKEN}` }
+        });
+        
+        console.log(`[UPLOAD] ✅ Successfully uploaded ${filename} to ${GITHUB_REPO}`);
+        return { success: true, commitSha: newCommit.sha, filename };
+        
+    } catch (error) {
+        console.error(`[UPLOAD] ❌ Failed to upload ${filename}:`, error.response?.data || error.message);
+        throw error;
+    }
 }
 
 // New endpoint for image uploads
@@ -86,12 +128,16 @@ app.post('/api/upload-image', upload.single('image'), async (req, res) => {
     try {
         const file = req.file;
         if (!file) {
+            console.log('[IMAGE] No image file provided');
             return res.status(400).json({ error: 'No image file provided' });
         }
+        
+        console.log(`[IMAGE] Processing image upload: ${file.originalname} (${file.size} bytes)`);
         
         // Check file size
         const maxImageSize = 10 * 1024 * 1024; // 10MB for images
         if (file.size > maxImageSize) {
+            console.log(`[IMAGE] Image too large: ${file.size} bytes`);
             return res.status(400).json({ 
                 error: `Image too large. Maximum size is ${maxImageSize / (1024 * 1024)}MB` 
             });
@@ -103,19 +149,21 @@ app.post('/api/upload-image', upload.single('image'), async (req, res) => {
         const filename = `user images/${timestamp}${fileExtension}`;
         
         // Upload to GitHub
-        await uploadToGitHub(
+        const result = await uploadToGitHub(
             file.buffer, 
             filename, 
             `User uploaded image: ${timestamp}`
         );
         
+        console.log(`[IMAGE] ✅ Image upload successful: ${filename}`);
         res.json({ 
             success: true, 
             filename: filename,
-            timestamp: timestamp 
+            timestamp: timestamp,
+            commitSha: result.commitSha
         });
     } catch (err) {
-        console.error('Image upload error:', err.response?.data || err);
+        console.error('[IMAGE] ❌ Image upload error:', err.response?.data || err.message);
         res.status(500).json({ error: err.message || 'Failed to upload image' });
     }
 });
@@ -126,12 +174,16 @@ app.post('/api/submit-order', upload.single('file'), async (req, res) => {
         const { name, email } = req.body;
         const file = req.file;
         if (!name || !email || !file) {
+            console.log('[ORDER] Missing required fields:', { name: !!name, email: !!email, file: !!file });
             return res.status(400).json({ error: 'Missing fields' });
         }
+        
+        console.log(`[ORDER] Processing order from ${name} <${email}> - File: ${file.originalname} (${file.size} bytes)`);
         
         // Check file size
         const maxModelSize = 50 * 1024 * 1024; // 50MB for STL files
         if (file.size > maxModelSize) {
+            console.log(`[ORDER] STL file too large: ${file.size} bytes`);
             return res.status(400).json({ 
                 error: `File too large. Maximum size is ${maxModelSize / (1024 * 1024)}MB` 
             });
@@ -140,27 +192,37 @@ app.post('/api/submit-order', upload.single('file'), async (req, res) => {
         // Generate GUID and timestamp
         const guid = uuidv4();
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `models/${timestamp}-${guid}.stl`;
+        // Use GITHUB_PATH environment variable consistently
+        const filename = `${GITHUB_PATH}/${timestamp}-${guid}.stl`;
+        
+        console.log(`[ORDER] Generated filename: ${filename}, GUID: ${guid}`);
         
         // Upload to GitHub
-        await uploadToGitHub(
+        const result = await uploadToGitHub(
             file.buffer,
             filename,
             `Order from ${name} <${email}> at ${new Date().toISOString()} - GUID: ${guid}`
         );
         
+        console.log(`[ORDER] ✅ Order submission successful: ${guid}`);
         res.json({ 
             success: true, 
             guid: guid,
             filename: filename,
-            timestamp: timestamp
+            timestamp: timestamp,
+            commitSha: result.commitSha
         });
     } catch (err) {
-        console.error('Order submission error:', err.response?.data || err);
+        console.error('[ORDER] ❌ Order submission error:', err.response?.data || err.message);
         res.status(500).json({ error: err.message || 'Failed to submit order' });
     }
 });
 
 app.listen(process.env.PORT || 3001, () => {
     console.log(`Backend listening on port ${process.env.PORT || 3001}`);
+    console.log(`Configuration:`);
+    console.log(`  - GitHub Repo: ${GITHUB_REPO}`);
+    console.log(`  - GitHub Branch: ${GITHUB_BRANCH}`);
+    console.log(`  - GitHub Path: ${GITHUB_PATH}`);
+    console.log(`  - GitHub Token: ${GITHUB_TOKEN ? 'Set' : 'Missing'}`);
 }); 
