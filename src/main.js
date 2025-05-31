@@ -973,13 +973,14 @@ class HeightfieldViewer {
                 redLayerGeometry.setAttribute('position', new THREE.Float32BufferAttribute(redLayerPositions, 3));
                 redLayerGeometry.setIndex(redLayerIndices);
                 redLayerGeometry.computeVertexNormals();
-                const highlightColor = document.getElementById('highlight-layer-color')?.value || '#ff0000';
+                const highlightColor = document.getElementById('highlight-layer-color')?.value || '#ffffff';
                 const redLayerMaterial = new THREE.MeshStandardMaterial({
                     color: highlightColor,
                     transparent: true,
-                    opacity: 0.35,
-                    metalness: 0,
-                    roughness: 0.7,
+                    opacity: 0.15,
+                    metalness: 0.9,
+                    roughness: 0.05,
+                    envMapIntensity: 2.0,
                     side: THREE.DoubleSide,
                     depthWrite: false
                 });
