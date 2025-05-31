@@ -1,0 +1,25 @@
+{
+  "name": "img2pen-s3-backend",
+  "version": "1.0.0",
+  "description": "S3-based backend for img2pen with signed URL uploads",
+  "main": "s3-backend.js",
+  "type": "module",
+  "scripts": {
+    "start": "node s3-backend.js",
+    "dev": "nodemon s3-backend.js",
+    "test": "node test-s3.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "aws-sdk": "^2.1490.0",
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.1",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
