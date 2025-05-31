@@ -9,7 +9,7 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 // Constants for physical dimensions
 const MAX_DEPTH = 1.3; // mm
 const FIXED_WIDTH = 25; // mm
-const RESOLUTION = 200; // Number of segments in X direction (reduced from 1000 to 1/5th for smaller STL files)
+const RESOLUTION = 1000; // Number of segments in X direction (restored to original resolution for 18MB files)
 
 // Metal material properties
 const METAL_MATERIALS = {
@@ -713,7 +713,6 @@ class HeightfieldViewer {
                 try {
                     const res = await fetch('https://img2pen-backend.onrender.com/api/submit-order', {
                         method: 'POST',
-                        headers: {},
                         body: (() => {
                             const form = new FormData();
                             form.append('name', name);
