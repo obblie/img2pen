@@ -303,8 +303,9 @@ class HeightfieldViewer {
         this.renderer.setClearColor(0x333333);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.0;
+        this.renderer.toneMappingExposure = 1.2;
         document.getElementById('canvas-container').appendChild(this.renderer.domElement);
 
         // Setup camera
@@ -321,12 +322,14 @@ class HeightfieldViewer {
         rgbeLoader.load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/venice_sunset_1k.hdr', (texture) => {
             texture.mapping = THREE.EquirectangularReflectionMapping;
             this.scene.environment = texture;
+            this.scene.background = texture;
+            this.scene.backgroundBlurriness = 0.8;
             this.envMapLoaded = true;
             this.updateEnvMapStatus();
             if (this.heightfield) {
                 this.heightfield.material.metalness = 1.0;
                 this.heightfield.material.roughness = 0.1;
-                this.heightfield.material.envMapIntensity = 1.0;
+                this.heightfield.material.envMapIntensity = 1.5;
             }
         }, undefined, (err) => {
             this.envMapLoaded = false;
@@ -339,13 +342,49 @@ class HeightfieldViewer {
             console.warn('HDRI environment map failed to load. Falling back to non-metallic material.');
         });
 
-        // Restore original light intensities
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        // Enhanced lighting setup for showcasing shine
+        // Main ambient light - softer for better contrast
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
         this.scene.add(ambientLight);
 
-        this.directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        this.directionalLight.position.set(1, 1, 1);
+        // Primary directional light (key light) - from top-right
+        this.directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        this.directionalLight.position.set(2, 3, 2);
+        this.directionalLight.castShadow = true;
+        this.directionalLight.shadow.mapSize.width = 2048;
+        this.directionalLight.shadow.mapSize.height = 2048;
+        this.directionalLight.shadow.camera.near = 0.5;
+        this.directionalLight.shadow.camera.far = 50;
         this.scene.add(this.directionalLight);
+
+        // Secondary directional light (fill light) - from left
+        this.fillLight = new THREE.DirectionalLight(0xffffff, 0.6);
+        this.fillLight.position.set(-2, 1, 1);
+        this.scene.add(this.fillLight);
+
+        // Rim light - from behind to create edge highlights
+        this.rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        this.rimLight.position.set(0, 1, -3);
+        this.scene.add(this.rimLight);
+
+        // Accent lights for extra sparkle
+        this.accentLight1 = new THREE.PointLight(0xffffff, 0.5, 30);
+        this.accentLight1.position.set(3, 2, 3);
+        this.scene.add(this.accentLight1);
+
+        this.accentLight2 = new THREE.PointLight(0xffffff, 0.4, 25);
+        this.accentLight2.position.set(-2, 3, 2);
+        this.scene.add(this.accentLight2);
+
+        // Store all lights for easy control
+        this.lights = {
+            ambient: ambientLight,
+            directional: this.directionalLight,
+            fill: this.fillLight,
+            rim: this.rimLight,
+            accent1: this.accentLight1,
+            accent2: this.accentLight2
+        };
 
         // Start animation loop
         this.animate();
@@ -518,17 +557,74 @@ class HeightfieldViewer {
 
         // Lighting controls
         document.getElementById('ambient-intensity').addEventListener('input', (e) => {
-            if (this.scene && this.scene.children) {
-                this.scene.children.forEach(obj => {
-                    if (obj.isAmbientLight) obj.intensity = parseFloat(e.target.value);
-                });
+            const value = parseFloat(e.target.value);
+            document.getElementById('ambient-intensity-value').textContent = value.toFixed(2);
+            if (this.lights && this.lights.ambient) {
+                this.lights.ambient.intensity = value;
             }
         });
+        
         document.getElementById('directional-intensity').addEventListener('input', (e) => {
-            if (this.directionalLight) {
-                this.directionalLight.intensity = parseFloat(e.target.value);
+            const value = parseFloat(e.target.value);
+            document.getElementById('directional-intensity-value').textContent = value.toFixed(2);
+            if (this.lights && this.lights.directional) {
+                this.lights.directional.intensity = value;
             }
         });
+
+        // Add controls for new lighting system with value updates
+        const fillLightControl = document.getElementById('fill-light-intensity');
+        if (fillLightControl) {
+            fillLightControl.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('fill-light-intensity-value').textContent = value.toFixed(2);
+                if (this.lights && this.lights.fill) {
+                    this.lights.fill.intensity = value;
+                }
+            });
+        }
+
+        const rimLightControl = document.getElementById('rim-light-intensity');
+        if (rimLightControl) {
+            rimLightControl.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('rim-light-intensity-value').textContent = value.toFixed(2);
+                if (this.lights && this.lights.rim) {
+                    this.lights.rim.intensity = value;
+                }
+            });
+        }
+
+        const accentLightControl = document.getElementById('accent-light-intensity');
+        if (accentLightControl) {
+            accentLightControl.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('accent-light-intensity-value').textContent = value.toFixed(2);
+                if (this.lights && this.lights.accent1) {
+                    this.lights.accent1.intensity = value;
+                }
+                if (this.lights && this.lights.accent2) {
+                    this.lights.accent2.intensity = value * 0.8; // Slightly dimmer second accent
+                }
+            });
+        }
+
+        const envMapIntensityControl = document.getElementById('env-map-intensity');
+        if (envMapIntensityControl) {
+            envMapIntensityControl.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('env-map-intensity-value').textContent = value.toFixed(2);
+                if (this.heightfield) {
+                    this.heightfield.material.envMapIntensity = value;
+                }
+                if (this.jumpring) {
+                    this.jumpring.material.envMapIntensity = value;
+                }
+                if (this.redLayer) {
+                    this.redLayer.material.envMapIntensity = value;
+                }
+            });
+        }
 
         // Pendant size controls
         const diameterSlider = document.getElementById('pendant-diameter');

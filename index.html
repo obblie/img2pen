@@ -337,14 +337,43 @@
             </div>
         </div>
 
-        <!-- Lighting Controls -->
+        <!-- Enhanced Lighting Controls for Shine Showcase -->
         <div class="menu-section">
-            <div class="menu-header"><span>Lighting</span></div>
+            <div class="menu-header">
+                <h3>✨ Lighting & Shine</h3>
+                <button class="toggle-button">▼</button>
+            </div>
             <div class="menu-content active">
-                <label for="ambient-intensity">Ambient Intensity</label>
-                <input type="range" id="ambient-intensity" min="0" max="2" step="0.01" value="0.5">
-                <label for="directional-intensity">Directional Intensity</label>
-                <input type="range" id="directional-intensity" min="0" max="2" step="0.01" value="0.8">
+                <div class="control-group">
+                    <label for="ambient-intensity">Ambient Light</label>
+                    <input type="range" id="ambient-intensity" min="0" max="1" step="0.01" value="0.3">
+                    <span class="slider-value" id="ambient-intensity-value">0.3</span>
+                </div>
+                <div class="control-group">
+                    <label for="directional-intensity">Key Light (Main)</label>
+                    <input type="range" id="directional-intensity" min="0" max="2" step="0.01" value="1.2">
+                    <span class="slider-value" id="directional-intensity-value">1.2</span>
+                </div>
+                <div class="control-group">
+                    <label for="fill-light-intensity">Fill Light</label>
+                    <input type="range" id="fill-light-intensity" min="0" max="1.5" step="0.01" value="0.6">
+                    <span class="slider-value" id="fill-light-intensity-value">0.6</span>
+                </div>
+                <div class="control-group">
+                    <label for="rim-light-intensity">Rim Light (Edge Glow)</label>
+                    <input type="range" id="rim-light-intensity" min="0" max="1.5" step="0.01" value="0.8">
+                    <span class="slider-value" id="rim-light-intensity-value">0.8</span>
+                </div>
+                <div class="control-group">
+                    <label for="accent-light-intensity">Accent Lights (Sparkle)</label>
+                    <input type="range" id="accent-light-intensity" min="0" max="1" step="0.01" value="0.5">
+                    <span class="slider-value" id="accent-light-intensity-value">0.5</span>
+                </div>
+                <div class="control-group">
+                    <label for="env-map-intensity">Environment Reflections</label>
+                    <input type="range" id="env-map-intensity" min="0" max="3" step="0.01" value="1.5">
+                    <span class="slider-value" id="env-map-intensity-value">1.5</span>
+                </div>
             </div>
         </div>
 
