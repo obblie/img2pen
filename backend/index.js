@@ -11,6 +11,10 @@ dotenv.config();
 const app = express();
 const upload = multer();
 
+// Configure axios with timeout
+axios.defaults.timeout = 30000; // 30 second timeout
+axios.defaults.headers.common['User-Agent'] = 'img2pen-backend/1.0';
+
 // Add CORS middleware
 app.use(cors());
 app.use(express.json());
@@ -41,7 +45,7 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Helper function to upload file to GitHub
+// Helper function to upload file to GitHub with timeout handling
 async function uploadToGitHub(fileBuffer, filename, commitMessage) {
     console.log(`[UPLOAD] Starting upload: ${filename} (${fileBuffer.length} bytes)`);
     
@@ -52,70 +56,80 @@ async function uploadToGitHub(fileBuffer, filename, commitMessage) {
     }
 
     const repoApi = `https://api.github.com/repos/${GITHUB_REPO}`;
+    const headers = { 
+        Authorization: `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json'
+    };
     
     try {
-        // Get current commit SHA and tree SHA
+        // Get current commit SHA and tree SHA with timeout
         console.log(`[UPLOAD] Getting latest commit for ${GITHUB_REPO}/${GITHUB_BRANCH}`);
-        const { data: refData } = await axios.get(`${repoApi}/git/ref/heads/${GITHUB_BRANCH}`, {
-            headers: { Authorization: `token ${GITHUB_TOKEN}` }
-        });
-        const latestCommitSha = refData.object.sha;
+        const refResponse = await Promise.race([
+            axios.get(`${repoApi}/git/ref/heads/${GITHUB_BRANCH}`, { headers }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout getting ref')), 15000))
+        ]);
+        const latestCommitSha = refResponse.data.object.sha;
         console.log(`[UPLOAD] Latest commit SHA: ${latestCommitSha}`);
         
-        const { data: commitData } = await axios.get(`${repoApi}/git/commits/${latestCommitSha}`, {
-            headers: { Authorization: `token ${GITHUB_TOKEN}` }
-        });
-        const treeSha = commitData.tree.sha;
+        const commitResponse = await Promise.race([
+            axios.get(`${repoApi}/git/commits/${latestCommitSha}`, { headers }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout getting commit')), 15000))
+        ]);
+        const treeSha = commitResponse.data.tree.sha;
         console.log(`[UPLOAD] Tree SHA: ${treeSha}`);
         
-        // Create a new blob for the file
+        // Create a new blob for the file with timeout
         console.log(`[UPLOAD] Creating blob for ${filename}`);
-        const { data: blobData } = await axios.post(`${repoApi}/git/blobs`, {
-            content: fileBuffer.toString('base64'),
-            encoding: 'base64'
-        }, {
-            headers: { Authorization: `token ${GITHUB_TOKEN}` }
-        });
-        console.log(`[UPLOAD] Blob created: ${blobData.sha}`);
+        const blobResponse = await Promise.race([
+            axios.post(`${repoApi}/git/blobs`, {
+                content: fileBuffer.toString('base64'),
+                encoding: 'base64'
+            }, { headers }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout creating blob')), 20000))
+        ]);
+        console.log(`[UPLOAD] Blob created: ${blobResponse.data.sha}`);
         
-        // Create a new tree
+        // Create a new tree with timeout
         console.log(`[UPLOAD] Creating new tree with file: ${filename}`);
-        const { data: newTree } = await axios.post(`${repoApi}/git/trees`, {
-            base_tree: treeSha,
-            tree: [
-                {
-                    path: filename,
-                    mode: '100644',
-                    type: 'blob',
-                    sha: blobData.sha
-                }
-            ]
-        }, {
-            headers: { Authorization: `token ${GITHUB_TOKEN}` }
-        });
-        console.log(`[UPLOAD] New tree created: ${newTree.sha}`);
+        const treeResponse = await Promise.race([
+            axios.post(`${repoApi}/git/trees`, {
+                base_tree: treeSha,
+                tree: [
+                    {
+                        path: filename,
+                        mode: '100644',
+                        type: 'blob',
+                        sha: blobResponse.data.sha
+                    }
+                ]
+            }, { headers }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout creating tree')), 15000))
+        ]);
+        console.log(`[UPLOAD] New tree created: ${treeResponse.data.sha}`);
         
-        // Create a new commit
+        // Create a new commit with timeout
         console.log(`[UPLOAD] Creating commit: ${commitMessage}`);
-        const { data: newCommit } = await axios.post(`${repoApi}/git/commits`, {
-            message: commitMessage,
-            tree: newTree.sha,
-            parents: [latestCommitSha]
-        }, {
-            headers: { Authorization: `token ${GITHUB_TOKEN}` }
-        });
-        console.log(`[UPLOAD] Commit created: ${newCommit.sha}`);
+        const commitCreateResponse = await Promise.race([
+            axios.post(`${repoApi}/git/commits`, {
+                message: commitMessage,
+                tree: treeResponse.data.sha,
+                parents: [latestCommitSha]
+            }, { headers }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout creating commit')), 15000))
+        ]);
+        console.log(`[UPLOAD] Commit created: ${commitCreateResponse.data.sha}`);
         
-        // Update the branch reference
+        // Update the branch reference with timeout
         console.log(`[UPLOAD] Updating branch reference`);
-        await axios.patch(`${repoApi}/git/refs/heads/${GITHUB_BRANCH}`, {
-            sha: newCommit.sha
-        }, {
-            headers: { Authorization: `token ${GITHUB_TOKEN}` }
-        });
+        await Promise.race([
+            axios.patch(`${repoApi}/git/refs/heads/${GITHUB_BRANCH}`, {
+                sha: commitCreateResponse.data.sha
+            }, { headers }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout updating ref')), 15000))
+        ]);
         
         console.log(`[UPLOAD] ✅ Successfully uploaded ${filename} to ${GITHUB_REPO}`);
-        return { success: true, commitSha: newCommit.sha, filename };
+        return { success: true, commitSha: commitCreateResponse.data.sha, filename };
         
     } catch (error) {
         console.error(`[UPLOAD] ❌ Failed to upload ${filename}:`, error.response?.data || error.message);
