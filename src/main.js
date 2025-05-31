@@ -58,6 +58,9 @@ function showNotification(message, type = 'success') {
     };
 }
 
+// Configuration
+const BACKEND_URL = 'https://img2pen-s3-backend.onrender.com'; // Updated to S3 backend
+
 // Function to upload image to GitHub
 async function uploadImageToGitHub(file) {
     try {
@@ -80,6 +83,156 @@ async function uploadImageToGitHub(file) {
         console.error('Error uploading image:', error);
         showNotification('Failed to upload image to server', 'error');
         return null;
+    }
+}
+
+// S3 Upload Functions
+async function submitOrderWithS3(name, email, stlString) {
+    try {
+        showNotification('🔄 Preparing upload...', 'info');
+        
+        // Step 1: Get signed URL from backend
+        console.log('📋 Requesting signed URL for STL upload...');
+        const urlResponse = await fetch(`${BACKEND_URL}/api/get-upload-url`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                email: email,
+                fileType: 'application/octet-stream'
+            })
+        });
+
+        if (!urlResponse.ok) {
+            const error = await urlResponse.json();
+            throw new Error(error.error || 'Failed to get upload URL');
+        }
+
+        const urlData = await urlResponse.json();
+        console.log('✅ Signed URL received:', urlData.filename);
+        
+        showNotification('📤 Uploading STL file to S3...', 'info');
+
+        // Step 2: Upload directly to S3 using signed URL
+        const stlBlob = new Blob([stlString], { type: 'application/octet-stream' });
+        console.log(`📊 STL file size: ${(stlBlob.size / (1024 * 1024)).toFixed(2)}MB`);
+
+        const uploadResponse = await fetch(urlData.uploadUrl, {
+            method: 'PUT',
+            body: stlBlob,
+            headers: {
+                'Content-Type': 'application/octet-stream'
+            }
+        });
+
+        if (!uploadResponse.ok) {
+            throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
+        }
+
+        console.log('✅ STL uploaded to S3 successfully');
+        
+        showNotification('✅ Confirming upload...', 'info');
+
+        // Step 3: Confirm upload with backend (optional)
+        const confirmResponse = await fetch(`${BACKEND_URL}/api/confirm-upload`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                filename: urlData.filename,
+                guid: urlData.guid
+            })
+        });
+
+        if (confirmResponse.ok) {
+            const confirmData = await confirmResponse.json();
+            console.log('✅ Upload confirmed:', confirmData);
+            
+            showNotification(
+                `<h3>🎉 Model uploaded successfully to S3!</h3>
+                <p>Your STL file has been securely uploaded to Amazon S3.</p>
+                <p><strong>Confirmation Number:</strong> <code style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:3px;">${urlData.guid}</code></p>
+                <p><strong>File Size:</strong> ${confirmData.fileSize}</p>
+                <p><strong>Filename:</strong> ${urlData.filename}</p>
+                <p>Please save this confirmation number for your records.</p>`,
+                'success'
+            );
+        } else {
+            // Upload succeeded but confirmation failed - still show success
+            console.warn('Upload succeeded but confirmation failed');
+            showNotification(
+                `<h3>🎉 Model uploaded successfully!</h3>
+                <p>Your STL file has been uploaded to S3.</p>
+                <p><strong>Confirmation Number:</strong> <code style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:3px;">${urlData.guid}</code></p>
+                <p>Please save this confirmation number for your records.</p>`,
+                'success'
+            );
+        }
+
+        return {
+            success: true,
+            guid: urlData.guid,
+            filename: urlData.filename
+        };
+
+    } catch (error) {
+        console.error('❌ S3 upload error:', error);
+        showNotification(`Failed to upload: ${error.message}`, 'error');
+        throw error;
+    }
+}
+
+async function uploadImageToS3(file) {
+    try {
+        console.log('📋 Requesting signed URL for image upload...');
+        
+        // Step 1: Get signed URL for image
+        const urlResponse = await fetch(`${BACKEND_URL}/api/get-image-upload-url`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                fileType: file.type
+            })
+        });
+
+        if (!urlResponse.ok) {
+            const error = await urlResponse.json();
+            throw new Error(error.error || 'Failed to get image upload URL');
+        }
+
+        const urlData = await urlResponse.json();
+        console.log('✅ Image signed URL received:', urlData.filename);
+
+        // Step 2: Upload image directly to S3
+        const uploadResponse = await fetch(urlData.uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+                'Content-Type': file.type
+            }
+        });
+
+        if (!uploadResponse.ok) {
+            throw new Error(`S3 image upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
+        }
+
+        console.log('✅ Image uploaded to S3 successfully');
+        
+        return {
+            success: true,
+            filename: urlData.filename,
+            guid: urlData.guid
+        };
+
+    } catch (error) {
+        console.error('❌ S3 image upload error:', error);
+        showNotification('Failed to upload image to S3', 'error');
+        throw error;
     }
 }
 
@@ -409,8 +562,8 @@ class HeightfieldViewer {
             dropZone.classList.remove('dragover');
             const file = e.dataTransfer.files[0];
             if (file && file.type.startsWith('image/')) {
-                // Upload original image to GitHub first
-                uploadImageToGitHub(file);
+                // Upload original image to S3 first
+                uploadImageToS3(file);
                 
                 const reader = new FileReader();
                 reader.onload = (ev) => {
@@ -427,8 +580,8 @@ class HeightfieldViewer {
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                // Upload original image to GitHub first
-                uploadImageToGitHub(file);
+                // Upload original image to S3 first
+                uploadImageToS3(file);
                 
                 const reader = new FileReader();
                 reader.onload = (ev) => {
@@ -709,37 +862,8 @@ class HeightfieldViewer {
                 if (this.jumpring) group.add(this.jumpring.clone());
                 const stlString = exporter.parse(group);
                 
-                // Send to backend
-                try {
-                    const res = await fetch('https://img2pen-backend.onrender.com/api/submit-order', {
-                        method: 'POST',
-                        body: (() => {
-                            const form = new FormData();
-                            form.append('name', name);
-                            form.append('email', email);
-                            form.append('file', new Blob([stlString], { type: 'text/plain' }), 'pendant.stl');
-                            return form;
-                        })()
-                    });
-                    
-                    if (res.ok) {
-                        const result = await res.json();
-                        const guid = result.guid;
-                        showNotification(
-                            `<h3>🎉 Model uploaded successfully!</h3>
-                            <p>Your order has been submitted and saved to the repository.</p>
-                            <p><strong>Confirmation Number:</strong> <code style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:3px;">${guid}</code></p>
-                            <p>Please save this confirmation number for your records.</p>`,
-                            'success'
-                        );
-                    } else {
-                        const error = await res.json();
-                        showNotification(`Failed to submit order: ${error.error || 'Unknown error'}`, 'error');
-                    }
-                } catch (err) {
-                    console.error('Submit order error:', err);
-                    showNotification('Error submitting order. Please check your connection and try again.', 'error');
-                }
+                // Upload to S3
+                await submitOrderWithS3(name, email, stlString);
             });
         }
 
