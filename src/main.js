@@ -9,7 +9,7 @@ import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 // Constants for physical dimensions
 const MAX_DEPTH = 1.3; // mm
 const FIXED_WIDTH = 25; // mm
-const RESOLUTION = 1000; // Number of segments in X direction
+const RESOLUTION = 200; // Number of segments in X direction (reduced from 1000 to 1/5th for smaller STL files)
 
 // Metal material properties
 const METAL_MATERIALS = {
