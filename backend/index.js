@@ -161,6 +161,6 @@ app.post('/api/submit-order', upload.single('file'), async (req, res) => {
     }
 });
 
-app.listen(3001, () => {
-    console.log('Backend listening on port 3001');
+app.listen(process.env.PORT || 3001, () => {
+    console.log(`Backend listening on port ${process.env.PORT || 3001}`);
 }); 

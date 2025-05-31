@@ -64,7 +64,7 @@ async function uploadImageToGitHub(file) {
         const formData = new FormData();
         formData.append('image', file);
         
-        const response = await fetch('http://localhost:3001/api/upload-image', {
+        const response = await fetch('https://img2pen-backend.onrender.com/api/upload-image', {
             method: 'POST',
             body: formData
         });
@@ -615,7 +615,7 @@ class HeightfieldViewer {
                 
                 // Send to backend
                 try {
-                    const res = await fetch('http://localhost:3001/api/submit-order', {
+                    const res = await fetch('https://img2pen-backend.onrender.com/api/submit-order', {
                         method: 'POST',
                         headers: {},
                         body: (() => {
