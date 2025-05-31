@@ -12,7 +12,7 @@ const app = express();
 const upload = multer();
 
 // Configure axios with timeout
-axios.defaults.timeout = 120000; // 2 minute timeout for large files
+axios.defaults.timeout = 180000; // 3 minute timeout for large files
 axios.defaults.headers.common['User-Agent'] = 'img2pen-backend/1.0';
 
 // Add CORS middleware
@@ -50,14 +50,14 @@ async function uploadToGitHub(fileBuffer, filename, commitMessage) {
     console.log(`[UPLOAD] Starting upload: ${filename} (${fileBuffer.length} bytes)`);
     
     // Check file size limit (GitHub has a 100MB limit, but we'll set a lower limit for safety)
-    const maxFileSize = 50 * 1024 * 1024; // 50MB
+    const maxFileSize = 90 * 1024 * 1024; // 90MB - stay under GitHub's 100MB limit
     if (fileBuffer.length > maxFileSize) {
         throw new Error(`File too large. Maximum size is ${maxFileSize / (1024 * 1024)}MB`);
     }
 
-    // Calculate timeout based on file size (minimum 30s, add 1s per MB)
+    // Calculate timeout based on file size (minimum 30s, add 2s per MB for large files)
     const fileSizeMB = fileBuffer.length / (1024 * 1024);
-    const blobTimeout = Math.max(30000, Math.min(120000, 30000 + (fileSizeMB * 1000))); // 30s to 2min
+    const blobTimeout = Math.max(30000, Math.min(180000, 30000 + (fileSizeMB * 2000))); // 30s to 3min
     console.log(`[UPLOAD] File size: ${fileSizeMB.toFixed(2)}MB, blob timeout: ${blobTimeout/1000}s`);
 
     const repoApi = `https://api.github.com/repos/${GITHUB_REPO}`;
@@ -200,12 +200,15 @@ app.post('/api/submit-order', upload.single('file'), async (req, res) => {
         const fileSizeMB = file.size / (1024 * 1024);
         console.log(`[ORDER] Processing order from ${name} <${email}> - File: ${file.originalname} (${fileSizeMB.toFixed(2)}MB)`);
         
-        // Check file size
-        const maxModelSize = 50 * 1024 * 1024; // 50MB for STL files
+        // Check file size immediately
+        const maxModelSize = 90 * 1024 * 1024; // 90MB for STL files
         if (file.size > maxModelSize) {
-            console.log(`[ORDER] STL file too large: ${file.size} bytes`);
+            const maxSizeMB = maxModelSize / (1024 * 1024);
+            console.log(`[ORDER] STL file too large: ${fileSizeMB.toFixed(2)}MB (max: ${maxSizeMB}MB)`);
             return res.status(400).json({ 
-                error: `File too large. Maximum size is ${maxModelSize / (1024 * 1024)}MB` 
+                error: `File too large (${fileSizeMB.toFixed(1)}MB). Maximum size is ${maxSizeMB}MB. Please reduce your STL file size or contact support for large files.`,
+                fileSize: fileSizeMB.toFixed(2) + 'MB',
+                maxSize: maxSizeMB + 'MB'
             });
         }
         
