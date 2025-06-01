@@ -589,6 +589,10 @@ class HeightfieldViewer {
             accent2: this.accentLight2
         };
 
+        // Setup event listeners and UI controls
+        this.setupEventListeners();
+        this.setupUIControls();
+
         // Start animation loop
         this.animate();
     }
