@@ -687,34 +687,43 @@ class HeightfieldViewer {
         });
 
         // Object type selection
-        document.getElementById('object-type').addEventListener('change', (e) => {
-            this.currentObjectType = e.target.value;
-            if (this.originalImageDataUrl) {
-                showCropperModal(
-                    this.originalImageDataUrl,
-                    (croppedBlob) => {
-                        this.processImage(croppedBlob);
-                    },
-                    null,
-                    this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect'
-                );
-            } else if (this.heightfield) {
-                this.updateObjectShape();
-            }
-        });
+        const objectType = document.getElementById('object-type');
+        if (objectType) {
+            objectType.addEventListener('change', (e) => {
+                this.currentObjectType = e.target.value;
+                if (this.originalImageDataUrl) {
+                    showCropperModal(
+                        this.originalImageDataUrl,
+                        (croppedBlob) => {
+                            this.processImage(croppedBlob);
+                        },
+                        null,
+                        this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect'
+                    );
+                } else if (this.heightfield) {
+                    this.updateObjectShape();
+                }
+            });
+        }
 
         // Camera controls
-        document.getElementById('fov').addEventListener('input', (e) => {
-            this.camera.fov = parseFloat(e.target.value);
-            this.camera.updateProjectionMatrix();
-        });
+        const fov = document.getElementById('fov');
+        if (fov) {
+            fov.addEventListener('input', (e) => {
+                this.camera.fov = parseFloat(e.target.value);
+                this.camera.updateProjectionMatrix();
+            });
+        }
 
-        document.getElementById('camera-distance').addEventListener('input', (e) => {
-            const distance = parseFloat(e.target.value);
-            const direction = new THREE.Vector3();
-            this.camera.getWorldDirection(direction);
-            this.camera.position.copy(this.controls.target).add(direction.multiplyScalar(-distance));
-        });
+        const cameraDistance = document.getElementById('camera-distance');
+        if (cameraDistance) {
+            cameraDistance.addEventListener('input', (e) => {
+                const distance = parseFloat(e.target.value);
+                const direction = new THREE.Vector3();
+                this.camera.getWorldDirection(direction);
+                this.camera.position.copy(this.controls.target).add(direction.multiplyScalar(-distance));
+            });
+        }
 
         // Rotate toggle
         const rotateToggle = document.getElementById('rotate-toggle');
@@ -726,84 +735,132 @@ class HeightfieldViewer {
         }
 
         // Scene settings
-        document.getElementById('light-intensity').addEventListener('input', (e) => {
-            this.directionalLight.intensity = parseFloat(e.target.value);
-        });
+        const lightIntensity = document.getElementById('light-intensity');
+        if (lightIntensity) {
+            lightIntensity.addEventListener('input', (e) => {
+                this.directionalLight.intensity = parseFloat(e.target.value);
+            });
+        }
 
-        document.getElementById('material-color').addEventListener('input', (e) => {
-            if (this.heightfield) {
-                this.heightfield.material.color.set(e.target.value);
-            }
-        });
+        const materialColor = document.getElementById('material-color');
+        if (materialColor) {
+            materialColor.addEventListener('input', (e) => {
+                if (this.heightfield) {
+                    this.heightfield.material.color.set(e.target.value);
+                }
+            });
+        }
 
-        document.getElementById('material-shine').addEventListener('input', (e) => {
-            if (this.heightfield) {
-                this.heightfield.material.shininess = parseFloat(e.target.value);
-            }
-        });
+        const materialShine = document.getElementById('material-shine');
+        if (materialShine) {
+            materialShine.addEventListener('input', (e) => {
+                if (this.heightfield) {
+                    this.heightfield.material.shininess = parseFloat(e.target.value);
+                }
+            });
+        }
 
         // Image position controls
-        document.getElementById('image-offset-x').addEventListener('input', (e) => {
-            this.imageTransform.offsetX = parseFloat(e.target.value);
-            this.updateImagePosition();
-        });
+        const imageOffsetX = document.getElementById('image-offset-x');
+        if (imageOffsetX) {
+            imageOffsetX.addEventListener('input', (e) => {
+                this.imageTransform.offsetX = parseFloat(e.target.value);
+                this.updateImagePosition();
+            });
+        }
 
-        document.getElementById('image-offset-y').addEventListener('input', (e) => {
-            this.imageTransform.offsetY = parseFloat(e.target.value);
-            this.updateImagePosition();
-        });
+        const imageOffsetY = document.getElementById('image-offset-y');
+        if (imageOffsetY) {
+            imageOffsetY.addEventListener('input', (e) => {
+                this.imageTransform.offsetY = parseFloat(e.target.value);
+                this.updateImagePosition();
+            });
+        }
 
-        document.getElementById('image-scale').addEventListener('input', (e) => {
-            this.imageTransform.scale = parseFloat(e.target.value);
-            this.updateImagePosition();
-        });
+        const imageScale = document.getElementById('image-scale');
+        if (imageScale) {
+            imageScale.addEventListener('input', (e) => {
+                this.imageTransform.scale = parseFloat(e.target.value);
+                this.updateImagePosition();
+            });
+        }
 
-        document.getElementById('image-rotation').addEventListener('input', (e) => {
-            this.imageTransform.rotation = parseFloat(e.target.value);
-            this.updateImagePosition();
-        });
+        const imageRotation = document.getElementById('image-rotation');
+        if (imageRotation) {
+            imageRotation.addEventListener('input', (e) => {
+                this.imageTransform.rotation = parseFloat(e.target.value);
+                this.updateImagePosition();
+            });
+        }
 
         // Metal type controls
-        document.getElementById('metal-type').addEventListener('change', (e) => {
-            this.updateMetalMaterial(e.target.value);
-        });
+        const metalType = document.getElementById('metal-type');
+        if (metalType) {
+            metalType.addEventListener('change', (e) => {
+                this.updateMetalMaterial(e.target.value);
+            });
+        }
 
-        document.getElementById('metal-finish').addEventListener('change', (e) => {
-            this.updateMetalFinish(e.target.value);
-        });
+        const metalFinish = document.getElementById('metal-finish');
+        if (metalFinish) {
+            metalFinish.addEventListener('change', (e) => {
+                this.updateMetalFinish(e.target.value);
+            });
+        }
 
         // Jumpring controls
-        document.getElementById('jumpring-size').addEventListener('change', (e) => {
-            this.updateJumpring(e.target.value);
-        });
+        const jumpringSize = document.getElementById('jumpring-size');
+        if (jumpringSize) {
+            jumpringSize.addEventListener('change', (e) => {
+                this.updateJumpring(e.target.value);
+            });
+        }
 
-        document.getElementById('jumpring-position').addEventListener('change', (e) => {
-            this.updateJumpringPosition(e.target.value);
-        });
+        const jumpringPosition = document.getElementById('jumpring-position');
+        if (jumpringPosition) {
+            jumpringPosition.addEventListener('change', (e) => {
+                this.updateJumpringPosition(e.target.value);
+            });
+        }
 
         // Lighting controls
-        document.getElementById('ambient-intensity').addEventListener('input', (e) => {
-            const value = parseFloat(e.target.value);
-            document.getElementById('ambient-intensity-value').textContent = value.toFixed(2);
-            if (this.lights && this.lights.ambient) {
-                this.lights.ambient.intensity = value;
-            }
-        });
+        const ambientIntensity = document.getElementById('ambient-intensity');
+        if (ambientIntensity) {
+            ambientIntensity.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                const valueElement = document.getElementById('ambient-intensity-value');
+                if (valueElement) {
+                    valueElement.textContent = value.toFixed(2);
+                }
+                if (this.lights && this.lights.ambient) {
+                    this.lights.ambient.intensity = value;
+                }
+            });
+        }
         
-        document.getElementById('directional-intensity').addEventListener('input', (e) => {
-            const value = parseFloat(e.target.value);
-            document.getElementById('directional-intensity-value').textContent = value.toFixed(2);
-            if (this.lights && this.lights.directional) {
-                this.lights.directional.intensity = value;
-            }
-        });
+        const directionalIntensity = document.getElementById('directional-intensity');
+        if (directionalIntensity) {
+            directionalIntensity.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                const valueElement = document.getElementById('directional-intensity-value');
+                if (valueElement) {
+                    valueElement.textContent = value.toFixed(2);
+                }
+                if (this.lights && this.lights.directional) {
+                    this.lights.directional.intensity = value;
+                }
+            });
+        }
 
         // Add controls for new lighting system with value updates
         const fillLightControl = document.getElementById('fill-light-intensity');
         if (fillLightControl) {
             fillLightControl.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value);
-                document.getElementById('fill-light-intensity-value').textContent = value.toFixed(2);
+                const valueElement = document.getElementById('fill-light-intensity-value');
+                if (valueElement) {
+                    valueElement.textContent = value.toFixed(2);
+                }
                 if (this.lights && this.lights.fill) {
                     this.lights.fill.intensity = value;
                 }
@@ -814,7 +871,10 @@ class HeightfieldViewer {
         if (rimLightControl) {
             rimLightControl.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value);
-                document.getElementById('rim-light-intensity-value').textContent = value.toFixed(2);
+                const valueElement = document.getElementById('rim-light-intensity-value');
+                if (valueElement) {
+                    valueElement.textContent = value.toFixed(2);
+                }
                 if (this.lights && this.lights.rim) {
                     this.lights.rim.intensity = value;
                 }
@@ -825,7 +885,10 @@ class HeightfieldViewer {
         if (accentLightControl) {
             accentLightControl.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value);
-                document.getElementById('accent-light-intensity-value').textContent = value.toFixed(2);
+                const valueElement = document.getElementById('accent-light-intensity-value');
+                if (valueElement) {
+                    valueElement.textContent = value.toFixed(2);
+                }
                 if (this.lights && this.lights.accent1) {
                     this.lights.accent1.intensity = value;
                 }
@@ -839,7 +902,10 @@ class HeightfieldViewer {
         if (envMapIntensityControl) {
             envMapIntensityControl.addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value);
-                document.getElementById('env-map-intensity-value').textContent = value.toFixed(2);
+                const valueElement = document.getElementById('env-map-intensity-value');
+                if (valueElement) {
+                    valueElement.textContent = value.toFixed(2);
+                }
                 if (this.heightfield) {
                     this.heightfield.material.envMapIntensity = value;
                 }
@@ -861,72 +927,93 @@ class HeightfieldViewer {
         const diameterValue = document.getElementById('pendant-diameter-value');
         const widthValue = document.getElementById('pendant-width-value');
         const heightValue = document.getElementById('pendant-height-value');
-        const updateSliderLabels = () => {
-            diameterValue.textContent = diameterSlider.value + ' mm';
-            widthValue.textContent = widthSlider.value + ' mm';
-            heightValue.textContent = heightSlider.value + ' mm';
-        };
-        diameterSlider.addEventListener('input', (e) => {
-            this.pendantDiameter = parseFloat(e.target.value);
-            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
-                // Update jumpring Z slider to new default
-                const newDefaultZ = -0.6 * this.pendantDiameter;
-                document.getElementById('jumpring-z').value = newDefaultZ;
-                document.getElementById('jumpring-z-value').textContent = newDefaultZ;
-                this.jumpringOffset.z = newDefaultZ;
-                this.createHeightfieldMesh(this.heightfieldData);
-            }
+        
+        if (diameterSlider && widthSlider && heightSlider && diameterValue && widthValue && heightValue) {
+            const updateSliderLabels = () => {
+                diameterValue.textContent = diameterSlider.value + ' mm';
+                widthValue.textContent = widthSlider.value + ' mm';
+                heightValue.textContent = heightSlider.value + ' mm';
+            };
+            diameterSlider.addEventListener('input', (e) => {
+                this.pendantDiameter = parseFloat(e.target.value);
+                if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
+                    // Update jumpring Z slider to new default
+                    const newDefaultZ = -0.6 * this.pendantDiameter;
+                    document.getElementById('jumpring-z').value = newDefaultZ;
+                    document.getElementById('jumpring-z-value').textContent = newDefaultZ;
+                    this.jumpringOffset.z = newDefaultZ;
+                    this.createHeightfieldMesh(this.heightfieldData);
+                }
+                updateSliderLabels();
+            });
+            widthSlider.addEventListener('input', updateSliderLabels);
+            heightSlider.addEventListener('input', updateSliderLabels);
             updateSliderLabels();
-        });
-        widthSlider.addEventListener('input', updateSliderLabels);
-        heightSlider.addEventListener('input', updateSliderLabels);
-        updateSliderLabels();
-        aspectLockBtn.addEventListener('click', () => {
-            this.aspectLocked = !this.aspectLocked;
-            aspectLockIcon.textContent = this.aspectLocked ? '🔒' : '🔓';
-        });
+            aspectLockBtn.addEventListener('click', () => {
+                this.aspectLocked = !this.aspectLocked;
+                aspectLockIcon.textContent = this.aspectLocked ? '🔒' : '🔓';
+            });
+        }
 
         // Reset View button
-        document.getElementById('reset-view').addEventListener('click', () => {
-            this.camera.position.copy(this.defaultCameraPosition);
-            this.camera.lookAt(0, 0, 0);
-            this.controls.target.set(0, 0, 0);
-            this.controls.update();
-        });
+        const resetView = document.getElementById('reset-view');
+        if (resetView) {
+            resetView.addEventListener('click', () => {
+                this.camera.position.copy(this.defaultCameraPosition);
+                this.camera.lookAt(0, 0, 0);
+                this.controls.target.set(0, 0, 0);
+                this.controls.update();
+            });
+        }
+        
         // Screenshot button
-        document.getElementById('screenshot').addEventListener('click', () => {
-            this.renderer.render(this.scene, this.camera);
-            const dataURL = this.renderer.domElement.toDataURL('image/png');
-            const a = document.createElement('a');
-            a.href = dataURL;
-            a.download = 'pendant.png';
-            a.click();
-        });
+        const screenshot = document.getElementById('screenshot');
+        if (screenshot) {
+            screenshot.addEventListener('click', () => {
+                this.renderer.render(this.scene, this.camera);
+                const dataURL = this.renderer.domElement.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = dataURL;
+                a.download = 'pendant.png';
+                a.click();
+            });
+        }
 
         // Replace File button
-        document.getElementById('replace-file').addEventListener('click', () => {
-            // Reset the scene to initial state
-            this.resetScene();
-            // Show the drop zone again
-            document.getElementById('drop-zone').classList.remove('hidden');
-            // Clear the file input
-            document.getElementById('file-input').value = '';
-            // Show notification
-            showNotification('Ready for new image upload', 'info');
-        });
+        const replaceFile = document.getElementById('replace-file');
+        if (replaceFile) {
+            replaceFile.addEventListener('click', () => {
+                // Reset the scene to initial state
+                this.resetScene();
+                // Show the drop zone again
+                const dropZone = document.getElementById('drop-zone');
+                if (dropZone) {
+                    dropZone.classList.remove('hidden');
+                }
+                // Clear the file input
+                const fileInput = document.getElementById('file-input');
+                if (fileInput) {
+                    fileInput.value = '';
+                }
+                // Show notification
+                showNotification('Ready for new image upload', 'info');
+            });
+        }
 
         // Border thickness slider
         const borderSlider = document.getElementById('border-thickness');
         const borderValue = document.getElementById('border-thickness-value');
-        const updateBorderLabel = () => { borderValue.textContent = borderSlider.value; };
-        borderSlider.addEventListener('input', (e) => {
-            this.borderThickness = parseFloat(e.target.value);
+        if (borderSlider && borderValue) {
+            const updateBorderLabel = () => { borderValue.textContent = borderSlider.value; };
+            borderSlider.addEventListener('input', (e) => {
+                this.borderThickness = parseFloat(e.target.value);
+                updateBorderLabel();
+                if (this.heightfieldData && this.currentObjectType === 'circular-pendant') {
+                    this.createHeightfieldMesh(this.heightfieldData);
+                }
+            });
             updateBorderLabel();
-            if (this.heightfieldData && this.currentObjectType === 'circular-pendant') {
-                this.createHeightfieldMesh(this.heightfieldData);
-            }
-        });
-        updateBorderLabel();
+        }
 
         // Change Export STL button to Submit Order
         const submitOrderBtn = document.getElementById('export-stl');
@@ -953,52 +1040,27 @@ class HeightfieldViewer {
         }
 
         const highlightColorInput = document.getElementById('highlight-layer-color');
-        highlightColorInput.addEventListener('input', (e) => {
-            if (this.redLayer) {
-                this.redLayer.material.color.set(e.target.value);
-            }
-        });
+        if (highlightColorInput) {
+            highlightColorInput.addEventListener('input', (e) => {
+                if (this.redLayer) {
+                    this.redLayer.material.color.set(e.target.value);
+                }
+            });
+        }
 
         // Antiquing controls
         const antiquingSlider = document.getElementById('antiquing-amount');
         const antiquingValue = document.getElementById('antiquing-amount-value');
-        antiquingSlider.addEventListener('input', (e) => {
-            antiquingValue.textContent = e.target.value;
-            if (this.heightfieldData) {
-                this.createHeightfieldMesh(this.heightfieldData);
-            }
-        });
-
-        const engravingText = document.getElementById('engraving-text');
-        const engravingCharCount = document.getElementById('engraving-char-count');
-        engravingText.addEventListener('input', (e) => {
-            engravingCharCount.textContent = e.target.value.length;
-            this.updateEngraving(e.target.value);
-        });
-
-        // Engraving options
-        const engravingFont = document.getElementById('engraving-font');
-        const engravingSize = document.getElementById('engraving-size');
-        const engravingSizeValue = document.getElementById('engraving-size-value');
-        const engravingBold = document.getElementById('engraving-bold');
-        const engravingItalic = document.getElementById('engraving-italic');
-        const engravingJustify = document.getElementById('engraving-justify');
-
-        engravingFont.addEventListener('change', (e) => {
-            this.engravingFontName = e.target.value;
-            this.loadEngravingFont(this.engravingFontName, () => {
-                this.updateEngraving(engravingText.value);
+        if (antiquingSlider && antiquingValue) {
+            antiquingSlider.addEventListener('input', (e) => {
+                antiquingValue.textContent = e.target.value;
+                if (this.heightfieldData) {
+                    this.createHeightfieldMesh(this.heightfieldData);
+                }
             });
-        });
-        engravingSize.addEventListener('input', (e) => {
-            engravingSizeValue.textContent = e.target.value;
-            this.updateEngraving(engravingText.value);
-        });
-        engravingBold.addEventListener('change', () => this.updateEngraving(engravingText.value));
-        engravingItalic.addEventListener('change', () => this.updateEngraving(engravingText.value));
-        engravingJustify.addEventListener('change', () => this.updateEngraving(engravingText.value));
+        }
 
-        // Text Box controls
+        // Text box controls
         const addTextBoxBtn = document.getElementById('add-text-box');
         if (addTextBoxBtn) {
             addTextBoxBtn.addEventListener('click', () => {
