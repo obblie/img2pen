@@ -7,7 +7,7 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 // Constants for physical dimensions
-const MAX_DEPTH = 1.3; // mm
+const MAX_DEPTH = 0.8; // mm (reduced from 1.3mm)
 const FIXED_WIDTH = 25; // mm
 const RESOLUTION = 1000; // Number of segments in X direction (restored to original resolution for 18MB files)
 
@@ -462,7 +462,7 @@ class HeightfieldViewer {
         this.envMapLoaded = false;
         this.defaultCameraPosition = new THREE.Vector3(0, 0, 50);
         this.jumpringOffset = { x: 0, y: -3.5, z: -15 };
-        this.pendantThickness = 1.5; // mm, default thickness for solid pendant
+        this.pendantThickness = 1.0; // mm, default thickness for solid pendant (reduced from 1.5mm)
         this.borderThickness = 1.0;
         this.engravingMesh = null;
         this.engravingFont = null;
@@ -1167,7 +1167,7 @@ class HeightfieldViewer {
                 for (let i = 0; i < grid.length; ++i) {
                     if (grid[i].inCircle && grid[i].z > maxZ) maxZ = grid[i].z;
                 }
-                const rimTopZ = maxZ + 0.6;
+                const rimTopZ = maxZ + 0.4; // reduced from 0.6mm to 0.4mm
                 for (let i = 0; i < edgePoints.length; ++i) {
                     const next = (i + 1) % edgePoints.length;
                     // Outward normal
