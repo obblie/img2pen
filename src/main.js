@@ -43,11 +43,40 @@ function showNotification(message, type = 'success') {
     const closeBtn = document.getElementById('notification-close');
     
     content.innerHTML = message;
-    notification.style.background = type === 'success' ? '#4CAF50' : '#f44336';
+    
+    // Set background color based on type
+    switch(type) {
+        case 'success':
+            notification.style.background = '#4CAF50';
+            break;
+        case 'error':
+            notification.style.background = '#f44336';
+            break;
+        case 'info':
+            notification.style.background = '#2196F3';
+            break;
+        default:
+            notification.style.background = '#4CAF50';
+    }
+    
     notification.style.display = 'block';
     
-    // Auto-hide after 10 seconds for success, 5 seconds for error
-    const autoHideTime = type === 'success' ? 10000 : 5000;
+    // Auto-hide after different times based on type
+    let autoHideTime;
+    switch(type) {
+        case 'success':
+            autoHideTime = 10000;
+            break;
+        case 'error':
+            autoHideTime = 8000;
+            break;
+        case 'info':
+            autoHideTime = 3000; // Shorter for info messages
+            break;
+        default:
+            autoHideTime = 5000;
+    }
+    
     setTimeout(() => {
         notification.style.display = 'none';
     }, autoHideTime);
@@ -1672,36 +1701,56 @@ class HeightfieldViewer {
 
     addViewCube() {
         // Create a small scene for the view cube
-        this.cubeScene = new ThreeScene();
-        this.cubeCamera = new PerspectiveCamera(50, 1, 0.1, 10);
+        this.cubeScene = new THREE.Scene();
+        this.cubeCamera = new THREE.PerspectiveCamera(50, 1, 0.1, 10);
         this.cubeCamera.position.set(2, 2, 2);
         this.cubeCamera.lookAt(0, 0, 0);
-        // Create the cube
-        const cube = new Mesh(
-            new BoxGeometry(1, 1, 1),
-            [
-                new MeshBasicMaterial({ color: 0xff4444 }), // right (X+)
-                new MeshBasicMaterial({ color: 0x4444ff }), // left (X-)
-                new MeshBasicMaterial({ color: 0x44ff44 }), // top (Y+)
-                new MeshBasicMaterial({ color: 0xff44ff }), // bottom (Y-)
-                new MeshBasicMaterial({ color: 0xffff44 }), // front (Z+)
-                new MeshBasicMaterial({ color: 0x44ffff })  // back (Z-)
-            ]
-        );
-        this.cube = cube;
-        this.cubeScene.add(cube);
+        
+        // Create the cube with labeled faces
+        const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+        
+        // Create materials with labels and better colors
+        const materials = [
+            new THREE.MeshBasicMaterial({ color: 0x4a90e2, transparent: true, opacity: 0.8 }), // right (X+) - blue
+            new THREE.MeshBasicMaterial({ color: 0xe24a4a, transparent: true, opacity: 0.8 }), // left (X-) - red  
+            new THREE.MeshBasicMaterial({ color: 0x4ae24a, transparent: true, opacity: 0.8 }), // top (Y+) - green
+            new THREE.MeshBasicMaterial({ color: 0xe2e24a, transparent: true, opacity: 0.8 }), // bottom (Y-) - yellow
+            new THREE.MeshBasicMaterial({ color: 0xe24ae2, transparent: true, opacity: 0.8 }), // front (Z+) - magenta
+            new THREE.MeshBasicMaterial({ color: 0x4ae2e2, transparent: true, opacity: 0.8 })  // back (Z-) - cyan
+        ];
+        
+        this.cube = new THREE.Mesh(cubeGeometry, materials);
+        this.cubeScene.add(this.cube);
+        
+        // Add text labels to each face
+        this.addCubeLabels();
+        
+        // Add wireframe outline
+        const wireframe = new THREE.WireframeGeometry(cubeGeometry);
+        const wireframeMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+        const wireframeMesh = new THREE.LineSegments(wireframe, wireframeMaterial);
+        this.cube.add(wireframeMesh);
+        
         // Overlay renderer
-        this.cubeRenderer = new WebGLRenderer({ alpha: true });
-        this.cubeRenderer.setSize(240, 240);
+        this.cubeRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        this.cubeRenderer.setSize(120, 120);
         this.cubeRenderer.setClearColor(0x000000, 0);
         this.cubeRenderer.domElement.style.position = 'absolute';
         this.cubeRenderer.domElement.style.top = '20px';
-        this.cubeRenderer.domElement.style.left = '20px';
+        this.cubeRenderer.domElement.style.right = '20px';
         this.cubeRenderer.domElement.style.zIndex = '2001';
+        this.cubeRenderer.domElement.style.border = '2px solid rgba(255,255,255,0.3)';
+        this.cubeRenderer.domElement.style.borderRadius = '8px';
+        this.cubeRenderer.domElement.style.cursor = 'pointer';
+        this.cubeRenderer.domElement.style.background = 'rgba(0,0,0,0.2)';
         document.body.appendChild(this.cubeRenderer.domElement);
+        
         // Raycaster for picking
-        this.cubeRaycaster = new Raycaster();
-        this.cubePointer = new Vector2();
+        this.cubeRaycaster = new THREE.Raycaster();
+        this.cubePointer = new THREE.Vector2();
+        this.hoveredFace = -1;
+        
+        // Mouse events for interaction
         this.cubeRenderer.domElement.addEventListener('pointerdown', (event) => {
             const rect = this.cubeRenderer.domElement.getBoundingClientRect();
             this.cubePointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -1713,25 +1762,219 @@ class HeightfieldViewer {
                 this.setCameraToCubeFace(faceIndex);
             }
         });
+        
+        // Hover effects
+        this.cubeRenderer.domElement.addEventListener('pointermove', (event) => {
+            const rect = this.cubeRenderer.domElement.getBoundingClientRect();
+            this.cubePointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            this.cubePointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            this.cubeRaycaster.setFromCamera(this.cubePointer, this.cubeCamera);
+            const intersects = this.cubeRaycaster.intersectObject(this.cube, true);
+            
+            const newHoveredFace = intersects.length > 0 ? Math.floor(intersects[0].faceIndex / 2) : -1;
+            
+            if (newHoveredFace !== this.hoveredFace) {
+                // Reset previous face
+                if (this.hoveredFace >= 0) {
+                    this.cube.material[this.hoveredFace].opacity = 0.8;
+                }
+                
+                // Highlight new face
+                this.hoveredFace = newHoveredFace;
+                if (this.hoveredFace >= 0) {
+                    this.cube.material[this.hoveredFace].opacity = 1.0;
+                }
+            }
+        });
+        
+        this.cubeRenderer.domElement.addEventListener('pointerleave', () => {
+            // Reset all face opacities when leaving the cube
+            if (this.hoveredFace >= 0) {
+                this.cube.material[this.hoveredFace].opacity = 0.8;
+                this.hoveredFace = -1;
+            }
+        });
+        
+        // Add view preset buttons
+        this.addViewPresetButtons();
+    }
+    
+    addCubeLabels() {
+        // Create text labels for each face
+        const labels = ['R', 'L', 'T', 'B', 'F', 'K']; // Right, Left, Top, Bottom, Front, bacK
+        const positions = [
+            [0.51, 0, 0],    // Right
+            [-0.51, 0, 0],   // Left  
+            [0, 0.51, 0],    // Top
+            [0, -0.51, 0],   // Bottom
+            [0, 0, 0.51],    // Front
+            [0, 0, -0.51]    // Back
+        ];
+        
+        // Create canvas for text texture
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const context = canvas.getContext('2d');
+        
+        labels.forEach((label, index) => {
+            // Clear canvas
+            context.clearRect(0, 0, 64, 64);
+            
+            // Draw text
+            context.fillStyle = 'white';
+            context.font = 'bold 32px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(label, 32, 32);
+            
+            // Create texture
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            
+            // Create sprite
+            const spriteMaterial = new THREE.SpriteMaterial({ 
+                map: texture,
+                transparent: true,
+                alphaTest: 0.1
+            });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(0.3, 0.3, 1);
+            sprite.position.set(...positions[index]);
+            
+            this.cube.add(sprite);
+        });
+    }
+    
+    addViewPresetButtons() {
+        // Create a container for view preset buttons
+        const container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.top = '150px';
+        container.style.right = '20px';
+        container.style.zIndex = '2001';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.gap = '5px';
+        
+        const presets = [
+            { name: 'ISO', position: [35, 35, 35], icon: '⬚' },
+            { name: 'Front', position: [0, 0, 50], icon: '⬜' },
+            { name: 'Back', position: [0, 0, -50], icon: '⬛' },
+            { name: 'Left', position: [-50, 0, 0], icon: '◀' },
+            { name: 'Right', position: [50, 0, 0], icon: '▶' },
+            { name: 'Top', position: [0, 50, 0], icon: '▲' },
+            { name: 'Bottom', position: [0, -50, 0], icon: '▼' }
+        ];
+        
+        presets.forEach(preset => {
+            const button = document.createElement('button');
+            button.textContent = `${preset.icon} ${preset.name}`;
+            button.style.cssText = `
+                background: rgba(0,0,0,0.7);
+                color: white;
+                border: 1px solid rgba(255,255,255,0.3);
+                border-radius: 4px;
+                padding: 4px 8px;
+                font-size: 11px;
+                cursor: pointer;
+                transition: all 0.2s;
+                white-space: nowrap;
+            `;
+            
+            button.addEventListener('mouseenter', () => {
+                button.style.background = 'rgba(255,255,255,0.2)';
+                button.style.borderColor = 'rgba(255,255,255,0.6)';
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                button.style.background = 'rgba(0,0,0,0.7)';
+                button.style.borderColor = 'rgba(255,255,255,0.3)';
+            });
+            
+            button.addEventListener('click', () => {
+                this.camera.position.set(...preset.position);
+                this.camera.lookAt(0, 0, 0);
+                this.controls.target.set(0, 0, 0);
+                this.controls.update();
+            });
+            
+            container.appendChild(button);
+        });
+        
+        document.body.appendChild(container);
+        this.viewPresetContainer = container;
     }
 
     setCameraToCubeFace(faceIndex) {
-        // 0: right, 1: left, 2: top, 3: bottom, 4: front, 5: back
+        // Enhanced camera positioning with smooth transitions
         const dist = 50;
         let pos = { x: 0, y: 0, z: 0 };
+        let name = '';
+        
         switch (faceIndex) {
-            case 0: pos = { x: dist, y: 0, z: 0 }; break; // right
-            case 1: pos = { x: -dist, y: 0, z: 0 }; break; // left
-            case 2: pos = { x: 0, y: dist, z: 0 }; break; // top
-            case 3: pos = { x: 0, y: -dist, z: 0 }; break; // bottom
-            case 4: pos = { x: 0, y: 0, z: dist }; break; // front
-            case 5: pos = { x: 0, y: 0, z: -dist }; break; // back
-            default: pos = { x: dist, y: dist, z: dist }; break; // corner
+            case 0: // Right
+                pos = { x: dist, y: 0, z: 0 };
+                name = 'Right View';
+                break;
+            case 1: // Left
+                pos = { x: -dist, y: 0, z: 0 };
+                name = 'Left View';
+                break;
+            case 2: // Top
+                pos = { x: 0, y: dist, z: 0 };
+                name = 'Top View';
+                break;
+            case 3: // Bottom
+                pos = { x: 0, y: -dist, z: 0 };
+                name = 'Bottom View';
+                break;
+            case 4: // Front
+                pos = { x: 0, y: 0, z: dist };
+                name = 'Front View';
+                break;
+            case 5: // Back
+                pos = { x: 0, y: 0, z: -dist };
+                name = 'Back View';
+                break;
+            default:
+                pos = { x: dist, y: dist, z: dist };
+                name = 'Isometric View';
+                break;
         }
-        this.camera.position.set(pos.x, pos.y, pos.z);
-        this.camera.lookAt(0, 0, 0);
-        this.controls.target.set(0, 0, 0);
-        this.controls.update();
+        
+        // Smooth camera transition
+        this.animateCameraTo(pos.x, pos.y, pos.z);
+        
+        // Show view name notification
+        showNotification(`Switched to ${name}`, 'info');
+    }
+    
+    animateCameraTo(targetX, targetY, targetZ) {
+        // Smooth camera animation using TWEEN or simple interpolation
+        const startPos = this.camera.position.clone();
+        const targetPos = new THREE.Vector3(targetX, targetY, targetZ);
+        const duration = 500; // milliseconds
+        const startTime = Date.now();
+        
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function (ease-out)
+            const eased = 1 - Math.pow(1 - progress, 3);
+            
+            this.camera.position.lerpVectors(startPos, targetPos, eased);
+            this.camera.lookAt(0, 0, 0);
+            this.controls.target.set(0, 0, 0);
+            this.controls.update();
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        
+        animate();
     }
 
     exportSTL() {
@@ -1823,6 +2066,41 @@ class HeightfieldViewer {
         this.engravingMesh = mesh;
         console.log('Engraving mesh created and added to scene');
         console.log('Engraving mesh position:', mesh.position, 'rotation:', mesh.rotation);
+    }
+    
+    // Cleanup method for proper disposal
+    dispose() {
+        // Remove view preset container
+        if (this.viewPresetContainer && this.viewPresetContainer.parentNode) {
+            this.viewPresetContainer.parentNode.removeChild(this.viewPresetContainer);
+        }
+        
+        // Remove cube renderer
+        if (this.cubeRenderer && this.cubeRenderer.domElement && this.cubeRenderer.domElement.parentNode) {
+            this.cubeRenderer.domElement.parentNode.removeChild(this.cubeRenderer.domElement);
+            this.cubeRenderer.dispose();
+        }
+        
+        // Dispose of geometries and materials
+        if (this.heightfield) {
+            this.heightfield.geometry.dispose();
+            this.heightfield.material.dispose();
+        }
+        
+        if (this.jumpring) {
+            this.jumpring.geometry.dispose();
+            this.jumpring.material.dispose();
+        }
+        
+        if (this.engravingMesh) {
+            this.engravingMesh.geometry.dispose();
+            this.engravingMesh.material.dispose();
+        }
+        
+        // Dispose of renderer
+        if (this.renderer) {
+            this.renderer.dispose();
+        }
     }
 }
 
