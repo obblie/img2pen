@@ -2052,7 +2052,7 @@ class HeightfieldViewer {
         // Position at the back surface of the pendant
         // The pendant thickness extends from 0 to -pendantThickness
         // Position the engraving at the back surface (bottom of the pendant)
-        mesh.position.set(0, 0, -this.pendantThickness + fontHeight * 0.5);
+        mesh.position.set(0, 0, -this.pendantThickness - fontHeight * 0.1);
         mesh.rotation.x = Math.PI / 2;
         mesh.rotation.z = Math.PI;
         
