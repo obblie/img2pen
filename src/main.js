@@ -2009,7 +2009,12 @@ class HeightfieldViewer {
             return;
         }
         const loader = new FontLoader();
-        loader.load(`fonts/${fontName}_regular.typeface.json`, (font) => {
+        const fontUrl = ENGRAVING_FONTS[fontName];
+        if (!fontUrl) {
+            console.error(`Font ${fontName} not found in ENGRAVING_FONTS`);
+            return;
+        }
+        loader.load(fontUrl, (font) => {
             this.fontCache[fontName] = font;
             this.engravingFont = font;
             if (callback) callback();
