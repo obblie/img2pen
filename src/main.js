@@ -489,7 +489,7 @@ class HeightfieldViewer {
         this.aspectLocked = true;
         this.grid = null;
         this.envMapLoaded = false;
-        this.defaultCameraPosition = new THREE.Vector3(0, 0, 50);
+        this.defaultCameraPosition = new THREE.Vector3(0, 50, 0); // Changed to top view
         this.jumpringOffset = { x: 0, y: -3.5, z: -15 };
         this.pendantThickness = 1.0; // mm, default thickness for solid pendant (reduced from 1.5mm)
         this.borderThickness = 1.0;
@@ -516,8 +516,8 @@ class HeightfieldViewer {
         this.renderer.toneMappingExposure = 1.2;
         document.getElementById('canvas-container').appendChild(this.renderer.domElement);
 
-        // Setup camera
-        this.camera.position.set(0, 0, 50);
+        // Setup camera - changed to top view
+        this.camera.position.set(0, 50, 0);
         this.camera.lookAt(0, 0, 0);
 
         // Setup controls
