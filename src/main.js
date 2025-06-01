@@ -2053,8 +2053,8 @@ class HeightfieldViewer {
         // The pendant is rotated -90 degrees around X, so Z becomes Y in world space
         // Position the engraving on the back surface (negative Y after rotation)
         mesh.position.set(0, -this.pendantThickness - fontHeight * 0.2, 0);
-        mesh.rotation.x = 0;  // No rotation needed since pendant is already rotated
-        mesh.rotation.z = 0;
+        mesh.rotation.x = Math.PI;  // 180 degrees around X to flip vertically
+        mesh.rotation.z = Math.PI;  // 180 degrees around Z to flip horizontally
         
         this.scene.add(mesh);
         this.engravingMesh = mesh;
