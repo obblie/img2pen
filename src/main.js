@@ -464,38 +464,42 @@ class HeightfieldViewer {
     constructor() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.controls = null;
         this.heightfield = null;
+        this.heightfieldData = null;
+        this.originalImageDataUrl = null;
         this.jumpring = null;
-        this.directionalLight = null;
+        this.grid = null;
+        this.redLayer = null;
+        this.lights = {};
+        this.isRotating = false;
+        this.rotationSpeed = 0.01;
         this.currentObjectType = 'circular-pendant';
+        this.pendantDiameter = 25;
+        this.pendantWidth = 25;
+        this.pendantHeight = 25;
+        this.pendantThickness = 2;
+        this.borderThickness = 1.0;
+        this.aspectLocked = true;
+        this.jumpringOffset = { x: 0, y: 0, z: -15 };
         this.imageTransform = {
             offsetX: 0,
             offsetY: 0,
             scale: 1,
             rotation: 0
         };
-        this.pendantDiameter = 25;
-        this.pendantWidth = 25;
-        this.pendantHeight = 25;
-        this.aspectLocked = true;
-        this.grid = null;
-        this.envMapLoaded = false;
-        this.defaultCameraPosition = new THREE.Vector3(0, 50, 0); // Changed to top view
-        this.jumpringOffset = { x: 0, y: -3.5, z: -15 };
-        this.pendantThickness = 1.0; // mm, default thickness for solid pendant (reduced from 1.5mm)
-        this.borderThickness = 1.0;
-        this.engravingMesh = null;
-        this.engravingFont = null;
-        this.engravingFontName = 'helvetiker';
-        this.engravingFontCache = {};
+        
+        // Text box system
+        this.textBoxes = [];
+        this.textBoxCounter = 0;
+        this.fontCache = {};
+        this.defaultFontName = 'helvetiker';
+        
+        // Load default font
+        this.loadEngravingFont(this.defaultFontName);
         
         this.init();
-        this.setupEventListeners();
-        this.setupUIControls();
-        this.addViewCube();
-        this.loadEngravingFont(this.engravingFontName);
     }
 
     init() {
@@ -979,6 +983,14 @@ class HeightfieldViewer {
         engravingBold.addEventListener('change', () => this.updateEngraving(engravingText.value));
         engravingItalic.addEventListener('change', () => this.updateEngraving(engravingText.value));
         engravingJustify.addEventListener('change', () => this.updateEngraving(engravingText.value));
+
+        // Text Box controls
+        const addTextBoxBtn = document.getElementById('add-text-box');
+        if (addTextBoxBtn) {
+            addTextBoxBtn.addEventListener('click', () => {
+                this.addTextBox();
+            });
+        }
     }
 
     async processImage(file) {
@@ -1319,8 +1331,6 @@ class HeightfieldViewer {
                 this.updateMetalMaterial(metalType);
                 console.log('Adding red layer');
                 console.log('Scene children:', this.scene.children.length);
-                const engravingTextValue = document.getElementById('engraving-text')?.value || '';
-                this.updateEngraving(engravingTextValue);
                 return;
             case 'rectangular-pendant':
                 geometry = new THREE.PlaneGeometry(
@@ -1451,8 +1461,6 @@ class HeightfieldViewer {
         this.updateMetalMaterial(metalType);
         console.log('Adding red layer');
         console.log('Scene children:', this.scene.children.length);
-        const engravingTextValue = document.getElementById('engraving-text')?.value || '';
-        this.updateEngraving(engravingTextValue);
         return;
     }
 
@@ -1994,14 +2002,14 @@ class HeightfieldViewer {
     }
 
     loadEngravingFont(fontName, callback) {
-        if (this.engravingFontCache[fontName]) {
-            this.engravingFont = this.engravingFontCache[fontName];
+        if (this.fontCache[fontName]) {
+            this.engravingFont = this.fontCache[fontName];
             if (callback) callback();
             return;
         }
         const loader = new FontLoader();
-        loader.load(ENGRAVING_FONTS[fontName], (font) => {
-            this.engravingFontCache[fontName] = font;
+        loader.load(`fonts/${fontName}_regular.typeface.json`, (font) => {
+            this.fontCache[fontName] = font;
             this.engravingFont = font;
             if (callback) callback();
         });
@@ -2075,6 +2083,468 @@ class HeightfieldViewer {
         console.log('Engraving mesh position:', mesh.position, 'rotation:', mesh.rotation);
     }
 
+    // Text Box Management System
+    addTextBox() {
+        const textBoxId = ++this.textBoxCounter;
+        const textBox = {
+            id: textBoxId,
+            text: '',
+            font: this.defaultFontName,
+            size: 5,
+            bold: false,
+            italic: false,
+            justify: 'center',
+            positionX: 0,
+            positionY: 0,
+            positionZ: 0,
+            rotationX: 0,
+            rotationY: 0,
+            rotationZ: 0,
+            isArched: false,
+            archRadius: 10,
+            archAngle: 180,
+            archDirection: 1, // 1 for normal, -1 for inverted
+            mesh: null
+        };
+        
+        this.textBoxes.push(textBox);
+        this.createTextBoxUI(textBox);
+        this.updateNoTextBoxesMessage();
+        
+        return textBox;
+    }
+
+    removeTextBox(textBoxId) {
+        const index = this.textBoxes.findIndex(tb => tb.id === textBoxId);
+        if (index === -1) return;
+        
+        const textBox = this.textBoxes[index];
+        
+        // Remove mesh from scene
+        if (textBox.mesh) {
+            this.scene.remove(textBox.mesh);
+            textBox.mesh.geometry.dispose();
+            textBox.mesh.material.dispose();
+        }
+        
+        // Remove from array
+        this.textBoxes.splice(index, 1);
+        
+        // Remove UI element
+        const uiElement = document.getElementById(`text-box-${textBoxId}`);
+        if (uiElement) {
+            uiElement.remove();
+        }
+        
+        this.updateNoTextBoxesMessage();
+    }
+
+    createTextBoxUI(textBox) {
+        const container = document.getElementById('text-boxes-container');
+        const textBoxElement = document.createElement('div');
+        textBoxElement.className = 'text-box-item';
+        textBoxElement.id = `text-box-${textBox.id}`;
+        
+        textBoxElement.innerHTML = `
+            <div class="text-box-header">
+                <div class="text-box-title">Text Box ${textBox.id}</div>
+                <div>
+                    <button class="text-box-toggle">▼</button>
+                    <button class="text-box-delete" onclick="viewer.removeTextBox(${textBox.id})">🗑️</button>
+                </div>
+            </div>
+            <div class="text-box-controls active">
+                <div class="control-row full-width">
+                    <div>
+                        <label>Text (max 50 characters)</label>
+                        <textarea id="text-${textBox.id}" maxlength="50" rows="2" style="width:100%;resize:none;"></textarea>
+                        <div class="char-counter">
+                            <span id="char-count-${textBox.id}">0</span>/50
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-row">
+                    <div>
+                        <label>Font</label>
+                        <select id="font-${textBox.id}">
+                            <option value="helvetiker">Helvetiker</option>
+                            <option value="optimer">Optimer</option>
+                            <option value="gentilis">Gentilis</option>
+                            <option value="droid_sans">Droid Sans</option>
+                            <option value="droid_serif">Droid Serif</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Size</label>
+                        <input type="range" id="size-${textBox.id}" min="2" max="10" step="0.1" value="5">
+                        <span class="slider-value" id="size-value-${textBox.id}">5</span>
+                    </div>
+                </div>
+                
+                <div class="control-row">
+                    <div>
+                        <label><input type="checkbox" id="bold-${textBox.id}"> Bold</label>
+                        <label><input type="checkbox" id="italic-${textBox.id}"> Italic</label>
+                    </div>
+                    <div>
+                        <label>Justify</label>
+                        <select id="justify-${textBox.id}">
+                            <option value="center">Center</option>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="control-row">
+                    <div>
+                        <label>Position X</label>
+                        <input type="range" id="pos-x-${textBox.id}" min="-15" max="15" step="0.1" value="0">
+                        <span class="slider-value" id="pos-x-value-${textBox.id}">0</span>
+                    </div>
+                    <div>
+                        <label>Position Y</label>
+                        <input type="range" id="pos-y-${textBox.id}" min="-15" max="15" step="0.1" value="0">
+                        <span class="slider-value" id="pos-y-value-${textBox.id}">0</span>
+                    </div>
+                </div>
+                
+                <div class="control-row">
+                    <div>
+                        <label>Position Z</label>
+                        <input type="range" id="pos-z-${textBox.id}" min="-5" max="5" step="0.1" value="0">
+                        <span class="slider-value" id="pos-z-value-${textBox.id}">0</span>
+                    </div>
+                    <div>
+                        <label>Rotation</label>
+                        <input type="range" id="rotation-${textBox.id}" min="0" max="360" step="1" value="0">
+                        <span class="slider-value" id="rotation-value-${textBox.id}">0°</span>
+                    </div>
+                </div>
+                
+                <div class="control-row full-width">
+                    <div>
+                        <label><input type="checkbox" id="arched-${textBox.id}"> Arched Text</label>
+                    </div>
+                </div>
+                
+                <div id="arch-controls-${textBox.id}" style="display: none;">
+                    <div class="control-row">
+                        <div>
+                            <label>Arch Radius</label>
+                            <input type="range" id="arch-radius-${textBox.id}" min="5" max="25" step="0.5" value="10">
+                            <span class="slider-value" id="arch-radius-value-${textBox.id}">10</span>
+                        </div>
+                        <div>
+                            <label>Arch Angle</label>
+                            <input type="range" id="arch-angle-${textBox.id}" min="30" max="360" step="5" value="180">
+                            <span class="slider-value" id="arch-angle-value-${textBox.id}">180°</span>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div>
+                            <label>Direction</label>
+                            <select id="arch-direction-${textBox.id}">
+                                <option value="1">Normal</option>
+                                <option value="-1">Inverted</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(textBoxElement);
+        this.setupTextBoxEventListeners(textBox);
+    }
+
+    setupTextBoxEventListeners(textBox) {
+        const id = textBox.id;
+        
+        // Toggle controls
+        const header = document.querySelector(`#text-box-${id} .text-box-header`);
+        const controls = document.querySelector(`#text-box-${id} .text-box-controls`);
+        const toggleBtn = document.querySelector(`#text-box-${id} .text-box-toggle`);
+        
+        header.addEventListener('click', (e) => {
+            if (e.target.classList.contains('text-box-delete')) return;
+            controls.classList.toggle('active');
+            toggleBtn.textContent = controls.classList.contains('active') ? '▼' : '▶';
+        });
+        
+        // Text input
+        const textInput = document.getElementById(`text-${id}`);
+        const charCount = document.getElementById(`char-count-${id}`);
+        textInput.addEventListener('input', (e) => {
+            textBox.text = e.target.value;
+            charCount.textContent = e.target.value.length;
+            this.updateTextBoxMesh(textBox);
+        });
+        
+        // Font selection
+        document.getElementById(`font-${id}`).addEventListener('change', (e) => {
+            textBox.font = e.target.value;
+            this.loadEngravingFont(textBox.font, () => {
+                this.updateTextBoxMesh(textBox);
+            });
+        });
+        
+        // Size control
+        const sizeSlider = document.getElementById(`size-${id}`);
+        const sizeValue = document.getElementById(`size-value-${id}`);
+        sizeSlider.addEventListener('input', (e) => {
+            textBox.size = parseFloat(e.target.value);
+            sizeValue.textContent = e.target.value;
+            this.updateTextBoxMesh(textBox);
+        });
+        
+        // Style controls
+        document.getElementById(`bold-${id}`).addEventListener('change', (e) => {
+            textBox.bold = e.target.checked;
+            this.updateTextBoxMesh(textBox);
+        });
+        
+        document.getElementById(`italic-${id}`).addEventListener('change', (e) => {
+            textBox.italic = e.target.checked;
+            this.updateTextBoxMesh(textBox);
+        });
+        
+        document.getElementById(`justify-${id}`).addEventListener('change', (e) => {
+            textBox.justify = e.target.value;
+            this.updateTextBoxMesh(textBox);
+        });
+        
+        // Position controls
+        this.setupSliderControl(`pos-x-${id}`, `pos-x-value-${id}`, (value) => {
+            textBox.positionX = value;
+            this.updateTextBoxMesh(textBox);
+        });
+        
+        this.setupSliderControl(`pos-y-${id}`, `pos-y-value-${id}`, (value) => {
+            textBox.positionY = value;
+            this.updateTextBoxMesh(textBox);
+        });
+        
+        this.setupSliderControl(`pos-z-${id}`, `pos-z-value-${id}`, (value) => {
+            textBox.positionZ = value;
+            this.updateTextBoxMesh(textBox);
+        });
+        
+        this.setupSliderControl(`rotation-${id}`, `rotation-value-${id}`, (value) => {
+            textBox.rotationZ = value;
+            this.updateTextBoxMesh(textBox);
+        }, '°');
+        
+        // Arched text controls
+        const archedCheckbox = document.getElementById(`arched-${id}`);
+        const archControls = document.getElementById(`arch-controls-${id}`);
+        
+        archedCheckbox.addEventListener('change', (e) => {
+            textBox.isArched = e.target.checked;
+            archControls.style.display = e.target.checked ? 'block' : 'none';
+            this.updateTextBoxMesh(textBox);
+        });
+        
+        this.setupSliderControl(`arch-radius-${id}`, `arch-radius-value-${id}`, (value) => {
+            textBox.archRadius = value;
+            this.updateTextBoxMesh(textBox);
+        });
+        
+        this.setupSliderControl(`arch-angle-${id}`, `arch-angle-value-${id}`, (value) => {
+            textBox.archAngle = value;
+            this.updateTextBoxMesh(textBox);
+        }, '°');
+        
+        document.getElementById(`arch-direction-${id}`).addEventListener('change', (e) => {
+            textBox.archDirection = parseInt(e.target.value);
+            this.updateTextBoxMesh(textBox);
+        });
+    }
+
+    setupSliderControl(sliderId, valueId, callback, suffix = '') {
+        const slider = document.getElementById(sliderId);
+        const valueSpan = document.getElementById(valueId);
+        
+        slider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            valueSpan.textContent = value + suffix;
+            callback(value);
+        });
+    }
+
+    updateTextBoxMesh(textBox) {
+        // Remove existing mesh
+        if (textBox.mesh) {
+            this.scene.remove(textBox.mesh);
+            textBox.mesh.geometry.dispose();
+            textBox.mesh.material.dispose();
+            textBox.mesh = null;
+        }
+        
+        if (!textBox.text.trim()) return;
+        
+        const font = this.fontCache[textBox.font];
+        if (!font) {
+            this.loadEngravingFont(textBox.font, () => {
+                this.updateTextBoxMesh(textBox);
+            });
+            return;
+        }
+        
+        if (textBox.isArched) {
+            this.createArchedTextMesh(textBox, font);
+        } else {
+            this.createStraightTextMesh(textBox, font);
+        }
+    }
+
+    createStraightTextMesh(textBox, font) {
+        const fontHeight = textBox.bold ? 0.3 : 0.2;
+        
+        const geometry = new TextGeometry(textBox.text, {
+            font: font,
+            size: textBox.size,
+            height: fontHeight,
+            curveSegments: 8,
+            bevelEnabled: false
+        });
+        
+        geometry.computeBoundingBox();
+        const bbox = geometry.boundingBox;
+        
+        // Apply justification
+        let xOffset = 0;
+        if (textBox.justify === 'center') {
+            xOffset = -0.5 * (bbox.max.x - bbox.min.x);
+        } else if (textBox.justify === 'right') {
+            xOffset = -(bbox.max.x - bbox.min.x);
+        }
+        const yOffset = -0.5 * (bbox.max.y - bbox.min.y);
+        geometry.translate(xOffset, yOffset, 0);
+        
+        // Apply italic effect
+        if (textBox.italic) {
+            const skew = 0.3;
+            geometry.applyMatrix4(new THREE.Matrix4().set(
+                1, skew, 0, 0,
+                0,   1, 0, 0,
+                0,   0, 1, 0,
+                0,   0, 0, 1
+            ));
+        }
+        
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x222222,
+            metalness: 0.1,
+            roughness: 0.9,
+            transparent: true,
+            opacity: 0.8
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        
+        // Position the text
+        mesh.position.set(
+            textBox.positionX,
+            -this.pendantThickness - fontHeight * 0.2 + textBox.positionY,
+            textBox.positionZ
+        );
+        
+        // Apply rotations
+        mesh.rotation.x = -Math.PI / 2;
+        mesh.rotation.y = Math.PI;
+        mesh.rotation.z = (textBox.rotationZ * Math.PI) / 180;
+        
+        this.scene.add(mesh);
+        textBox.mesh = mesh;
+    }
+
+    createArchedTextMesh(textBox, font) {
+        const characters = textBox.text.split('');
+        const group = new THREE.Group();
+        
+        const totalAngle = (textBox.archAngle * Math.PI) / 180;
+        const angleStep = totalAngle / Math.max(1, characters.length - 1);
+        const startAngle = -totalAngle / 2;
+        
+        characters.forEach((char, index) => {
+            if (char === ' ') return; // Skip spaces
+            
+            const fontHeight = textBox.bold ? 0.3 : 0.2;
+            
+            const geometry = new TextGeometry(char, {
+                font: font,
+                size: textBox.size,
+                height: fontHeight,
+                curveSegments: 8,
+                bevelEnabled: false
+            });
+            
+            geometry.computeBoundingBox();
+            const bbox = geometry.boundingBox;
+            const charWidth = bbox.max.x - bbox.min.x;
+            const charHeight = bbox.max.y - bbox.min.y;
+            
+            // Center the character
+            geometry.translate(-charWidth / 2, -charHeight / 2, 0);
+            
+            // Apply italic effect
+            if (textBox.italic) {
+                const skew = 0.3;
+                geometry.applyMatrix4(new THREE.Matrix4().set(
+                    1, skew, 0, 0,
+                    0,   1, 0, 0,
+                    0,   0, 1, 0,
+                    0,   0, 0, 1
+                ));
+            }
+            
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x222222,
+                metalness: 0.1,
+                roughness: 0.9,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const charMesh = new THREE.Mesh(geometry, material);
+            
+            // Calculate position on arc
+            const angle = startAngle + (index * angleStep);
+            const x = Math.cos(angle) * textBox.archRadius * textBox.archDirection;
+            const y = Math.sin(angle) * textBox.archRadius * textBox.archDirection;
+            
+            charMesh.position.set(x, y, 0);
+            
+            // Rotate character to follow the curve
+            charMesh.rotation.z = angle + (textBox.archDirection === -1 ? Math.PI : 0);
+            
+            group.add(charMesh);
+        });
+        
+        // Position the entire group
+        group.position.set(
+            textBox.positionX,
+            -this.pendantThickness - 0.2 + textBox.positionY,
+            textBox.positionZ
+        );
+        
+        // Apply rotations to the group
+        group.rotation.x = -Math.PI / 2;
+        group.rotation.y = Math.PI;
+        group.rotation.z = (textBox.rotationZ * Math.PI) / 180;
+        
+        this.scene.add(group);
+        textBox.mesh = group;
+    }
+
+    updateNoTextBoxesMessage() {
+        const noTextBoxesMsg = document.getElementById('no-text-boxes');
+        const hasTextBoxes = this.textBoxes.length > 0;
+        noTextBoxesMsg.style.display = hasTextBoxes ? 'none' : 'block';
+    }
+
     resetScene() {
         // Remove heightfield
         if (this.heightfield) {
@@ -2099,6 +2569,35 @@ class HeightfieldViewer {
             this.engravingMesh.material.dispose();
             this.engravingMesh = null;
         }
+
+        // Remove all text boxes
+        this.textBoxes.forEach(textBox => {
+            if (textBox.mesh) {
+                this.scene.remove(textBox.mesh);
+                if (textBox.mesh.geometry) {
+                    textBox.mesh.geometry.dispose();
+                }
+                if (textBox.mesh.material) {
+                    textBox.mesh.material.dispose();
+                }
+                // Handle groups (arched text)
+                if (textBox.mesh.children) {
+                    textBox.mesh.children.forEach(child => {
+                        if (child.geometry) child.geometry.dispose();
+                        if (child.material) child.material.dispose();
+                    });
+                }
+            }
+        });
+        
+        // Clear text boxes array and UI
+        this.textBoxes = [];
+        this.textBoxCounter = 0;
+        const textBoxContainer = document.getElementById('text-boxes-container');
+        if (textBoxContainer) {
+            textBoxContainer.innerHTML = '';
+        }
+        this.updateNoTextBoxesMessage();
 
         // Remove red layer
         if (this.redLayer) {
@@ -2129,8 +2628,6 @@ class HeightfieldViewer {
         document.getElementById('image-offset-y').value = 0;
         document.getElementById('image-scale').value = 1;
         document.getElementById('image-rotation').value = 0;
-        document.getElementById('engraving-text').value = '';
-        document.getElementById('engraving-char-count').textContent = '0';
 
         // Reset image transform
         this.imageTransform = {
@@ -2178,4 +2675,4 @@ class HeightfieldViewer {
 }
 
 // Initialize the viewer
-new HeightfieldViewer(); 
+window.viewer = new HeightfieldViewer(); 

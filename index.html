@@ -137,6 +137,72 @@
         .control-group .position-controls input {
             width: 100%;
         }
+
+        /* Text Box Styles */
+        .text-box-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .text-box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .text-box-title {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .text-box-controls {
+            display: none;
+        }
+        .text-box-controls.active {
+            display: block;
+        }
+        .text-box-delete {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .text-box-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .control-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .control-row.full-width {
+            grid-template-columns: 1fr;
+        }
+        .control-row label {
+            font-size: 0.85em;
+            margin-bottom: 3px;
+        }
+        .control-row input, .control-row select, .control-row textarea {
+            font-size: 0.85em;
+            padding: 4px;
+        }
+        .char-counter {
+            text-align: right;
+            font-size: 0.8em;
+            color: #aaa;
+            margin-top: 2px;
+        }
     </style>
     <!-- Cropper.js CSS -->
     <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
@@ -403,41 +469,21 @@
 
         <div class="menu-section">
             <div class="menu-header">
-                <h3>Add Engraving (+ $35)</h3>
+                <h3>Text Boxes</h3>
                 <button class="toggle-button">▼</button>
             </div>
             <div class="menu-content active">
-                <div class="control-group">
-                    <label for="engraving-text">Engraving Text (max 50 characters)</label>
-                    <textarea id="engraving-text" maxlength="50" rows="2" style="width:100%;resize:none;"></textarea>
-                    <div style="text-align:right;font-size:0.95em;color:#aaa;">
-                        <span id="engraving-char-count">0</span>/50
-                    </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <button id="add-text-box" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
+                        ➕ Add Text Box
+                    </button>
+                    <span style="color: #aaa; font-size: 0.8em;">Each text box: +$35</span>
                 </div>
-                <div class="control-group" style="margin-top:10px;">
-                    <label for="engraving-font">Font</label>
-                    <select id="engraving-font">
-                        <option value="helvetiker">Helvetiker</option>
-                        <option value="optimer">Optimer</option>
-                        <option value="gentilis">Gentilis</option>
-                        <option value="droid_sans">Droid Sans</option>
-                        <option value="droid_serif">Droid Serif</option>
-                    </select>
+                <div id="text-boxes-container">
+                    <!-- Text boxes will be dynamically added here -->
                 </div>
-                <div class="control-group">
-                    <label for="engraving-size">Font Size</label>
-                    <input type="range" id="engraving-size" min="2" max="10" step="0.1" value="5">
-                    <span class="slider-value" id="engraving-size-value">5</span>
-                </div>
-                <div class="control-group" style="display:flex;align-items:center;gap:10px;">
-                    <label><input type="checkbox" id="engraving-bold"> Bold</label>
-                    <label><input type="checkbox" id="engraving-italic"> Italic</label>
-                    <label for="engraving-justify" style="margin-left:auto;">Justify</label>
-                    <select id="engraving-justify">
-                        <option value="center">Center</option>
-                        <option value="left">Left</option>
-                        <option value="right">Right</option>
-                    </select>
+                <div id="no-text-boxes" style="text-align: center; color: #666; padding: 20px; font-style: italic;">
+                    No text boxes added yet.<br>Click "Add Text Box" to start.
                 </div>
             </div>
         </div>
