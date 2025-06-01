@@ -617,19 +617,16 @@ class HeightfieldViewer {
             dropZone.classList.remove('dragover');
             const file = e.dataTransfer.files[0];
             if (file && file.type.startsWith('image/')) {
-                try {
-                    // Upload original image to S3 first and wait for completion
-                    console.log('🖼️ Starting image upload to S3...');
-                    showNotification('📤 Uploading image to S3...', 'info');
-                    const uploadResult = await uploadImageToS3(file);
-                    console.log('✅ Image upload completed:', uploadResult);
-                    showNotification('✅ Image uploaded successfully!', 'success');
-                } catch (error) {
-                    console.error('❌ Image upload failed:', error);
-                    showNotification(`Image upload failed: ${error.message}`, 'error');
-                    // Continue with local processing even if upload fails
-                }
+                // Start S3 upload in background (non-blocking)
+                uploadImageToS3(file).then(uploadResult => {
+                    console.log('✅ Background image upload completed:', uploadResult);
+                    showNotification('✅ Image uploaded to cloud successfully!', 'success');
+                }).catch(error => {
+                    console.error('❌ Background image upload failed:', error);
+                    showNotification(`Cloud upload failed: ${error.message}`, 'error');
+                });
                 
+                // Immediately proceed with local processing
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     this.originalImageDataUrl = ev.target.result;
@@ -645,19 +642,16 @@ class HeightfieldViewer {
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (file) {
-                try {
-                    // Upload original image to S3 first and wait for completion
-                    console.log('🖼️ Starting image upload to S3...');
-                    showNotification('📤 Uploading image to S3...', 'info');
-                    const uploadResult = await uploadImageToS3(file);
-                    console.log('✅ Image upload completed:', uploadResult);
-                    showNotification('✅ Image uploaded successfully!', 'success');
-                } catch (error) {
-                    console.error('❌ Image upload failed:', error);
-                    showNotification(`Image upload failed: ${error.message}`, 'error');
-                    // Continue with local processing even if upload fails
-                }
+                // Start S3 upload in background (non-blocking)
+                uploadImageToS3(file).then(uploadResult => {
+                    console.log('✅ Background image upload completed:', uploadResult);
+                    showNotification('✅ Image uploaded to cloud successfully!', 'success');
+                }).catch(error => {
+                    console.error('❌ Background image upload failed:', error);
+                    showNotification(`Cloud upload failed: ${error.message}`, 'error');
+                });
                 
+                // Immediately proceed with local processing
                 const reader = new FileReader();
                 reader.onload = (ev) => {
                     this.originalImageDataUrl = ev.target.result;
