@@ -886,6 +886,18 @@ class HeightfieldViewer {
             a.click();
         });
 
+        // Replace File button
+        document.getElementById('replace-file').addEventListener('click', () => {
+            // Reset the scene to initial state
+            this.resetScene();
+            // Show the drop zone again
+            document.getElementById('drop-zone').classList.remove('hidden');
+            // Clear the file input
+            document.getElementById('file-input').value = '';
+            // Show notification
+            showNotification('Ready for new image upload', 'info');
+        });
+
         // Border thickness slider
         const borderSlider = document.getElementById('border-thickness');
         const borderValue = document.getElementById('border-thickness-value');
@@ -2061,6 +2073,72 @@ class HeightfieldViewer {
         this.engravingMesh = mesh;
         console.log('Engraving mesh created and positioned at back surface');
         console.log('Engraving mesh position:', mesh.position, 'rotation:', mesh.rotation);
+    }
+
+    resetScene() {
+        // Remove heightfield
+        if (this.heightfield) {
+            this.scene.remove(this.heightfield);
+            this.heightfield.geometry.dispose();
+            this.heightfield.material.dispose();
+            this.heightfield = null;
+        }
+
+        // Remove jumpring
+        if (this.jumpring) {
+            this.scene.remove(this.jumpring);
+            this.jumpring.geometry.dispose();
+            this.jumpring.material.dispose();
+            this.jumpring = null;
+        }
+
+        // Remove engraving
+        if (this.engravingMesh) {
+            this.scene.remove(this.engravingMesh);
+            this.engravingMesh.geometry.dispose();
+            this.engravingMesh.material.dispose();
+            this.engravingMesh = null;
+        }
+
+        // Remove red layer
+        if (this.redLayer) {
+            this.scene.remove(this.redLayer);
+            this.redLayer.geometry.dispose();
+            this.redLayer.material.dispose();
+            this.redLayer = null;
+        }
+
+        // Remove grid
+        if (this.grid) {
+            this.scene.remove(this.grid);
+            this.grid = null;
+        }
+
+        // Clear heightfield data
+        this.heightfieldData = null;
+        this.originalImageDataUrl = null;
+
+        // Reset camera to default position
+        this.camera.position.copy(this.defaultCameraPosition);
+        this.camera.lookAt(0, 0, 0);
+        this.controls.target.set(0, 0, 0);
+        this.controls.update();
+
+        // Reset UI controls to default values
+        document.getElementById('image-offset-x').value = 0;
+        document.getElementById('image-offset-y').value = 0;
+        document.getElementById('image-scale').value = 1;
+        document.getElementById('image-rotation').value = 0;
+        document.getElementById('engraving-text').value = '';
+        document.getElementById('engraving-char-count').textContent = '0';
+
+        // Reset image transform
+        this.imageTransform = {
+            offsetX: 0,
+            offsetY: 0,
+            scale: 1,
+            rotation: 0
+        };
     }
     
     // Cleanup method for proper disposal
