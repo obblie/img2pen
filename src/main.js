@@ -2022,7 +2022,7 @@ class HeightfieldViewer {
         const isItalic = document.getElementById('engraving-italic')?.checked;
         const justify = document.getElementById('engraving-justify')?.value || 'center';
         // Simulate bold by increasing height (not true bold)
-        const fontHeight = isBold ? 1.0 : 0.5;
+        const fontHeight = isBold ? 0.3 : 0.2; // Reduced height for engraving effect
         // Simulate italic by skewing geometry after creation
         const geometry = new TextGeometry(text, {
             font: this.engravingFont,
@@ -2052,19 +2052,26 @@ class HeightfieldViewer {
                 0,   0, 0, 1
             ));
         }
-        // Create material (black)
+        // Create material for engraved text - darker and more matte
         const material = new THREE.MeshStandardMaterial({
-            color: 0x111111,
-            metalness: 0.3,
-            roughness: 0.7
+            color: 0x222222,
+            metalness: 0.1,
+            roughness: 0.9,
+            transparent: true,
+            opacity: 0.8
         });
         const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(0, 0, -this.pendantThickness - 0.1);
+        
+        // Position at the back surface of the pendant
+        // The pendant thickness extends from 0 to -pendantThickness
+        // Position the engraving at the back surface (bottom of the pendant)
+        mesh.position.set(0, 0, -this.pendantThickness + fontHeight * 0.5);
         mesh.rotation.x = Math.PI / 2;
         mesh.rotation.z = Math.PI;
+        
         this.scene.add(mesh);
         this.engravingMesh = mesh;
-        console.log('Engraving mesh created and added to scene');
+        console.log('Engraving mesh created and positioned at back surface');
         console.log('Engraving mesh position:', mesh.position, 'rotation:', mesh.rotation);
     }
     
