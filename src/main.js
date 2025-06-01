@@ -633,8 +633,11 @@ class HeightfieldViewer {
 
         // Handle file input
         fileInput.addEventListener('change', async (e) => {
+            console.log('File input change event triggered');
             const file = e.target.files[0];
+            console.log('Selected file:', file);
             if (file) {
+                console.log('File type:', file.type);
                 // Start S3 upload in background (non-blocking)
                 uploadImageToS3(file).then(uploadResult => {
                     console.log('✅ Background image upload completed:', uploadResult);
@@ -645,12 +648,18 @@ class HeightfieldViewer {
                 // Immediately proceed with local processing
                 const reader = new FileReader();
                 reader.onload = (ev) => {
+                    console.log('FileReader onload triggered');
                     this.originalImageDataUrl = ev.target.result;
+                    console.log('About to show cropper modal');
                     showCropperModal(ev.target.result, (croppedBlob) => {
+                        console.log('Cropper modal callback triggered');
                         this.processImage(croppedBlob);
                     }, null, this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect');
                 };
+                console.log('About to read file as data URL');
                 reader.readAsDataURL(file);
+            } else {
+                console.log('No file selected');
             }
         });
 
