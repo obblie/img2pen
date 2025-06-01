@@ -1488,6 +1488,16 @@ class HeightfieldViewer {
 
     animate() {
         requestAnimationFrame(this.animate.bind(this));
+        
+        // Slowly rotate the main directional light for dynamic reflections
+        if (this.directionalLight) {
+            const time = Date.now() * 0.0005; // Slow rotation speed
+            const radius = 5;
+            this.directionalLight.position.x = Math.cos(time) * radius;
+            this.directionalLight.position.z = Math.sin(time) * radius;
+            this.directionalLight.position.y = 3; // Keep height constant
+        }
+        
         if (this.isRotating && this.heightfield) {
             // Find the bottom edge Y (for circular/rectangular, it's -diameter/2 or -height/2)
             let pivotY = 0;
