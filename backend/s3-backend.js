@@ -142,25 +142,43 @@ app.get('/api/list-uploads', async (req, res) => {
         
         console.log(`[LIST] Listing recent uploads (limit: ${limit})`);
 
-        const listResult = await s3.listObjectsV2({
-            Bucket: BUCKET_NAME,
-            Prefix: 'models/',
-            MaxKeys: limit
-        }).promise();
+        // Get both models and images
+        const [modelsResult, imagesResult] = await Promise.all([
+            s3.listObjectsV2({
+                Bucket: BUCKET_NAME,
+                Prefix: 'models/',
+                MaxKeys: Math.ceil(limit / 2)
+            }).promise(),
+            s3.listObjectsV2({
+                Bucket: BUCKET_NAME,
+                Prefix: 'images/',
+                MaxKeys: Math.ceil(limit / 2)
+            }).promise()
+        ]);
 
-        const files = listResult.Contents.map(obj => ({
+        // Combine and sort by last modified date
+        const allFiles = [
+            ...(modelsResult.Contents || []),
+            ...(imagesResult.Contents || [])
+        ].map(obj => ({
             filename: obj.Key,
             size: `${(obj.Size / (1024 * 1024)).toFixed(2)}MB`,
             lastModified: obj.LastModified,
-            etag: obj.ETag
-        }));
+            etag: obj.ETag,
+            type: obj.Key.startsWith('models/') ? 'model' : 'image'
+        })).sort((a, b) => new Date(b.lastModified) - new Date(a.lastModified))
+          .slice(0, limit);
 
-        console.log(`[LIST] ✅ Found ${files.length} files`);
+        console.log(`[LIST] ✅ Found ${allFiles.length} files (${modelsResult.Contents?.length || 0} models, ${imagesResult.Contents?.length || 0} images)`);
 
         res.json({
             success: true,
-            files: files,
-            count: files.length
+            files: allFiles,
+            count: allFiles.length,
+            breakdown: {
+                models: modelsResult.Contents?.length || 0,
+                images: imagesResult.Contents?.length || 0
+            }
         });
 
     } catch (error) {
