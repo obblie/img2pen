@@ -61,27 +61,53 @@ function showNotification(message, type = 'success') {
 // Configuration
 const BACKEND_URL = 'https://img2pen-s3-backend.onrender.com'; // Updated to S3 backend
 
-// Function to upload image to GitHub
+// Function to upload image to S3 (updated from GitHub)
 async function uploadImageToGitHub(file) {
     try {
-        const formData = new FormData();
-        formData.append('image', file);
+        console.log('📋 Requesting signed URL for image upload...');
         
-        const response = await fetch('https://img2pen-backend.onrender.com/api/upload-image', {
+        // Step 1: Get signed URL for image
+        const urlResponse = await fetch(`${BACKEND_URL}/api/get-image-upload-url`, {
             method: 'POST',
-            body: formData
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                fileType: file.type
+            })
         });
-        
-        if (response.ok) {
-            const result = await response.json();
-            console.log('Image uploaded successfully:', result);
-            return result;
-        } else {
-            throw new Error('Failed to upload image');
+
+        if (!urlResponse.ok) {
+            const error = await urlResponse.json();
+            throw new Error(error.error || 'Failed to get image upload URL');
         }
+
+        const urlData = await urlResponse.json();
+        console.log('✅ Image signed URL received:', urlData.filename);
+
+        // Step 2: Upload image directly to S3
+        const uploadResponse = await fetch(urlData.uploadUrl, {
+            method: 'PUT',
+            body: file,
+            headers: {
+                'Content-Type': file.type
+            }
+        });
+
+        if (!uploadResponse.ok) {
+            throw new Error(`S3 image upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
+        }
+
+        console.log('✅ Image uploaded to S3 successfully');
+        
+        return {
+            success: true,
+            filename: urlData.filename,
+            guid: urlData.guid
+        };
     } catch (error) {
         console.error('Error uploading image:', error);
-        showNotification('Failed to upload image to server', 'error');
+        showNotification('Failed to upload image to S3', 'error');
         return null;
     }
 }
