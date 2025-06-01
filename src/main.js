@@ -946,6 +946,7 @@ class HeightfieldViewer {
             }
         });
 
+        // Antiquing controls
         const antiquingSlider = document.getElementById('antiquing-amount');
         const antiquingValue = document.getElementById('antiquing-amount-value');
         antiquingSlider.addEventListener('input', (e) => {
