@@ -2050,11 +2050,11 @@ class HeightfieldViewer {
         const mesh = new THREE.Mesh(geometry, material);
         
         // Position at the back surface of the pendant
-        // The pendant thickness extends from 0 to -pendantThickness
-        // Position the engraving at the back surface (bottom of the pendant)
-        mesh.position.set(0, 0, -this.pendantThickness - fontHeight * 0.1);
-        mesh.rotation.x = Math.PI / 2;
-        mesh.rotation.z = Math.PI;
+        // The pendant is rotated -90 degrees around X, so Z becomes Y in world space
+        // Position the engraving on the back surface (negative Y after rotation)
+        mesh.position.set(0, -this.pendantThickness - fontHeight * 0.2, 0);
+        mesh.rotation.x = 0;  // No rotation needed since pendant is already rotated
+        mesh.rotation.z = 0;
         
         this.scene.add(mesh);
         this.engravingMesh = mesh;
