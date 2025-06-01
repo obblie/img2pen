@@ -1328,8 +1328,6 @@ class HeightfieldViewer {
                 console.log('Scene children:', this.scene.children.length);
                 const engravingTextValue = document.getElementById('engraving-text')?.value || '';
                 this.updateEngraving(engravingTextValue);
-                this.heightfield.material.transparent = true;
-                this.heightfield.material.opacity = 0.5;
                 return;
             case 'rectangular-pendant':
                 geometry = new THREE.PlaneGeometry(
@@ -1462,8 +1460,6 @@ class HeightfieldViewer {
         console.log('Scene children:', this.scene.children.length);
         const engravingTextValue = document.getElementById('engraving-text')?.value || '';
         this.updateEngraving(engravingTextValue);
-        this.heightfield.material.transparent = true;
-        this.heightfield.material.opacity = 0.5;
         return;
     }
 
