@@ -513,9 +513,12 @@ class HeightfieldViewer {
         this.renderer.toneMappingExposure = 1.2;
         document.getElementById('canvas-container').appendChild(this.renderer.domElement);
 
-        // Setup camera - changed to top view
-        this.camera.position.set(0, 50, 0);
+        // Setup camera - angled view to show pendant standing upright on platform
+        this.camera.position.set(25, 15, 35);
         this.camera.lookAt(0, 0, 0);
+        
+        // Store default camera position for reset functionality
+        this.defaultCameraPosition = new THREE.Vector3(25, 15, 35);
 
         // Setup controls
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -1397,7 +1400,16 @@ class HeightfieldViewer {
                     vertexColors: true
                 });
                 const mesh = new THREE.Mesh(geometry, material);
-                mesh.rotation.x = -Math.PI / 2;
+                
+                if (this.currentObjectType === 'circular-pendant') {
+                    // For circular pendant, rotate to stand upright and position bottom edge at y=0
+                    mesh.rotation.x = 0; // Remove the flat rotation
+                    mesh.position.y = this.pendantThickness / 2;
+                } else {
+                    // Position so the bottom edge sits on the platform (y=0)
+                    mesh.position.y = this.pendantThickness / 2;
+                }
+                
                 this.scene.add(mesh);
                 this.heightfield = mesh;
                 this.createJumpring('small');
@@ -1525,9 +1537,18 @@ class HeightfieldViewer {
             vertexColors: true
         });
 
-        // Create mesh
+        // Create mesh and position it upright like jewelry sitting on a platform
         const mesh = new THREE.Mesh(geometry, material);
-        mesh.rotation.x = -Math.PI / 2;
+        
+        if (this.currentObjectType === 'circular-pendant') {
+            // For circular pendant, rotate to stand upright and position bottom edge at y=0
+            mesh.rotation.x = 0; // Remove the flat rotation
+            mesh.position.y = this.pendantThickness / 2;
+        } else {
+            // Position so the bottom edge sits on the platform (y=0)
+            mesh.position.y = this.pendantThickness / 2;
+        }
+        
         this.scene.add(mesh);
         this.heightfield = mesh;
         this.createJumpring('small');
@@ -1762,7 +1783,8 @@ class HeightfieldViewer {
             divisions = gridSize;
         }
         const gridHelper = new THREE.GridHelper(gridSize, divisions, 0xffffff, 0x888888);
-        gridHelper.position.y = -0.7; // Slightly below the pendant
+        // Position grid horizontally like a platform - pendant will sit on top
+        gridHelper.position.y = -this.pendantThickness / 2 - 0.5; // Just below the pendant bottom
         gridHelper.material.opacity = 0.5;
         gridHelper.material.transparent = true;
         this.grid = gridHelper;
