@@ -144,8 +144,6 @@ async function uploadImageToGitHub(file) {
 // S3 Upload Functions
 async function submitOrderWithS3(name, email, stlString) {
     try {
-        showNotification('🔄 Preparing upload...', 'info');
-        
         // Step 1: Get signed URL from backend
         console.log('📋 Requesting signed URL for STL upload...');
         const urlResponse = await fetch(`${BACKEND_URL}/api/get-upload-url`, {
@@ -167,8 +165,6 @@ async function submitOrderWithS3(name, email, stlString) {
 
         const urlData = await urlResponse.json();
         console.log('✅ Signed URL received:', urlData.filename);
-        
-        showNotification('📤 Uploading STL file to S3...', 'info');
 
         // Step 2: Upload directly to S3 using signed URL
         const stlBlob = new Blob([stlString], { type: 'application/octet-stream' });
@@ -187,8 +183,6 @@ async function submitOrderWithS3(name, email, stlString) {
         }
 
         console.log('✅ STL uploaded to S3 successfully');
-        
-        showNotification('✅ Confirming upload...', 'info');
 
         // Step 3: Confirm upload with backend (optional)
         const confirmResponse = await fetch(`${BACKEND_URL}/api/confirm-upload`, {
@@ -286,7 +280,6 @@ async function uploadImageToS3(file) {
 
     } catch (error) {
         console.error('❌ S3 image upload error:', error);
-        showNotification('Failed to upload image to S3', 'error');
         throw error;
     }
 }
@@ -533,7 +526,6 @@ class HeightfieldViewer {
             this.scene.background = texture;
             this.scene.backgroundBlurriness = 0.8;
             this.envMapLoaded = true;
-            this.updateEnvMapStatus();
             if (this.heightfield) {
                 this.heightfield.material.metalness = 1.0;
                 this.heightfield.material.roughness = 0.1;
@@ -541,7 +533,6 @@ class HeightfieldViewer {
             }
         }, undefined, (err) => {
             this.envMapLoaded = false;
-            this.updateEnvMapStatus();
             if (this.heightfield) {
                 this.heightfield.material.metalness = 0.2;
                 this.heightfield.material.roughness = 0.7;
@@ -620,10 +611,8 @@ class HeightfieldViewer {
                 // Start S3 upload in background (non-blocking)
                 uploadImageToS3(file).then(uploadResult => {
                     console.log('✅ Background image upload completed:', uploadResult);
-                    showNotification('✅ Image uploaded to cloud successfully!', 'success');
                 }).catch(error => {
                     console.error('❌ Background image upload failed:', error);
-                    showNotification(`Cloud upload failed: ${error.message}`, 'error');
                 });
                 
                 // Immediately proceed with local processing
@@ -645,10 +634,8 @@ class HeightfieldViewer {
                 // Start S3 upload in background (non-blocking)
                 uploadImageToS3(file).then(uploadResult => {
                     console.log('✅ Background image upload completed:', uploadResult);
-                    showNotification('✅ Image uploaded to cloud successfully!', 'success');
                 }).catch(error => {
                     console.error('❌ Background image upload failed:', error);
-                    showNotification(`Cloud upload failed: ${error.message}`, 'error');
                 });
                 
                 // Immediately proceed with local processing
@@ -1686,18 +1673,18 @@ class HeightfieldViewer {
         this.scene.add(this.grid);
     }
 
-    updateEnvMapStatus() {
-        const bar = document.getElementById('envmap-status');
-        if (!bar) return;
-        if (this.envMapLoaded) {
-            bar.textContent = 'Environment map loaded: metals will look realistic.';
-            bar.style.background = 'rgba(40,180,40,0.9)';
-        } else {
-            bar.textContent = 'Environment map missing: metals will look dull. Place px.jpg, nx.jpg, ... in /public.';
-            bar.style.background = 'rgba(200,60,60,0.9)';
-        }
-        bar.style.display = 'block';
-    }
+    // updateEnvMapStatus() {
+    //     const bar = document.getElementById('envmap-status');
+    //     if (!bar) return;
+    //     if (this.envMapLoaded) {
+    //         bar.textContent = 'Environment map loaded: metals will look realistic.';
+    //         bar.style.background = 'rgba(40,180,40,0.9)';
+    //     } else {
+    //         bar.textContent = 'Environment map missing: metals will look dull. Place px.jpg, nx.jpg, ... in /public.';
+    //         bar.style.background = 'rgba(200,60,60,0.9)';
+    //     }
+    //     bar.style.display = 'block';
+    // }
 
     addViewCube() {
         // Create a small scene for the view cube
