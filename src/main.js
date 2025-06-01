@@ -1743,7 +1743,7 @@ class HeightfieldViewer {
         this.cubeRenderer.setClearColor(0x000000, 0);
         this.cubeRenderer.domElement.style.position = 'absolute';
         this.cubeRenderer.domElement.style.top = '20px';
-        this.cubeRenderer.domElement.style.right = '20px';
+        this.cubeRenderer.domElement.style.left = '20px'; // Changed from right to left
         this.cubeRenderer.domElement.style.zIndex = '2001';
         this.cubeRenderer.domElement.style.border = '2px solid rgba(255,255,255,0.3)';
         this.cubeRenderer.domElement.style.borderRadius = '8px';
@@ -1857,7 +1857,7 @@ class HeightfieldViewer {
         const container = document.createElement('div');
         container.style.position = 'absolute';
         container.style.top = '150px';
-        container.style.right = '20px';
+        container.style.left = '20px'; // Changed from right to left
         container.style.zIndex = '2001';
         container.style.display = 'flex';
         container.style.flexDirection = 'column';
