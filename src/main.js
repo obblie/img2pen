@@ -1363,7 +1363,14 @@ class HeightfieldViewer {
                     depthWrite: false
                 });
                 const redLayerMesh = new THREE.Mesh(redLayerGeometry, redLayerMaterial);
-                redLayerMesh.rotation.x = -Math.PI / 2;
+                if (this.currentObjectType === 'circular-pendant') {
+                    // For upright circular pendant, no rotation needed
+                    redLayerMesh.rotation.x = 0;
+                    redLayerMesh.position.y = this.pendantThickness / 2;
+                } else {
+                    // For other shapes, keep original flat rotation
+                    redLayerMesh.rotation.x = -Math.PI / 2;
+                }
                 this.scene.add(redLayerMesh);
                 this.redLayer = redLayerMesh;
                 // Compute antiquing vertex colors based on Z height
@@ -1759,12 +1766,23 @@ class HeightfieldViewer {
         const heightfieldBounds = new THREE.Box3().setFromObject(this.heightfield);
         const heightfieldSize = heightfieldBounds.getSize(new THREE.Vector3());
         const heightfieldCenter = heightfieldBounds.getCenter(new THREE.Vector3());
-        // Place jumpring just above the rim
-        let x = heightfieldCenter.x;
-        let y = heightfieldCenter.y + heightfieldSize.y / 2 + 2 - 3.5; // adjust as needed
-        let z = heightfieldCenter.z + (-0.6 * this.pendantDiameter);
-        this.jumpring.position.set(x, y, z);
-        this.jumpring.rotation.set(Math.PI / 2, 0, 0);
+        
+        if (this.currentObjectType === 'circular-pendant') {
+            // For upright circular pendant, position jumpring at the top
+            let x = heightfieldCenter.x;
+            let y = heightfieldCenter.y + heightfieldSize.y / 2 + 2; // Above the pendant
+            let z = heightfieldCenter.z;
+            this.jumpring.position.set(x, y, z);
+            // No rotation needed for upright pendant - jumpring naturally hangs down
+            this.jumpring.rotation.set(0, 0, 0);
+        } else {
+            // For other shapes, keep original positioning
+            let x = heightfieldCenter.x;
+            let y = heightfieldCenter.y + heightfieldSize.y / 2 + 2 - 3.5;
+            let z = heightfieldCenter.z + (-0.6 * this.pendantDiameter);
+            this.jumpring.position.set(x, y, z);
+            this.jumpring.rotation.set(Math.PI / 2, 0, 0);
+        }
     }
 
     addScaleGrid() {
@@ -2173,12 +2191,19 @@ class HeightfieldViewer {
         const mesh = new THREE.Mesh(geometry, material);
         
         // Position at the back surface of the pendant
-        // The pendant is rotated -90 degrees around X, so Z becomes Y in world space
-        // Position the engraving on the back surface (negative Y after rotation)
-        mesh.position.set(0, -this.pendantThickness - fontHeight * 0.2, 0);
-        mesh.rotation.x = -Math.PI / 2;  // -90 degrees to align with pendant's back surface
-        mesh.rotation.y = Math.PI;       // 180 degrees around Y-axis for proper orientation
-        mesh.rotation.z = 0;             // No Z rotation needed
+        if (this.currentObjectType === 'circular-pendant') {
+            // For upright circular pendant, position text on the back face
+            mesh.position.set(0, 0, -this.pendantThickness / 2 - fontHeight * 0.5);
+            mesh.rotation.x = 0;  // No rotation needed for upright pendant
+            mesh.rotation.y = Math.PI;  // 180 degrees to face backward
+            mesh.rotation.z = 0;
+        } else {
+            // For other shapes, keep original positioning
+            mesh.position.set(0, -this.pendantThickness - fontHeight * 0.2, 0);
+            mesh.rotation.x = -Math.PI / 2;  // -90 degrees to align with pendant's back surface
+            mesh.rotation.y = Math.PI;       // 180 degrees around Y-axis for proper orientation
+            mesh.rotation.z = 0;             // No Z rotation needed
+        }
         
         this.scene.add(mesh);
         this.engravingMesh = mesh;
@@ -2548,16 +2573,31 @@ class HeightfieldViewer {
         const mesh = new THREE.Mesh(geometry, material);
         
         // Position the text
-        mesh.position.set(
-            textBox.positionX,
-            -this.pendantThickness - fontHeight * 0.2 + textBox.positionY,
-            textBox.positionZ
-        );
-        
-        // Apply rotations
-        mesh.rotation.x = -Math.PI / 2;
-        mesh.rotation.y = Math.PI;
-        mesh.rotation.z = (textBox.rotationZ * Math.PI) / 180;
+        if (this.currentObjectType === 'circular-pendant') {
+            // For upright circular pendant, position text on the front face
+            mesh.position.set(
+                textBox.positionX,
+                textBox.positionY,
+                this.pendantThickness / 2 + fontHeight * 0.5 + textBox.positionZ
+            );
+            
+            // No rotation needed for upright pendant - text faces forward
+            mesh.rotation.x = 0;
+            mesh.rotation.y = 0;
+            mesh.rotation.z = (textBox.rotationZ * Math.PI) / 180;
+        } else {
+            // For other shapes, keep original positioning
+            mesh.position.set(
+                textBox.positionX,
+                -this.pendantThickness - fontHeight * 0.2 + textBox.positionY,
+                textBox.positionZ
+            );
+            
+            // Apply rotations for flat layout
+            mesh.rotation.x = -Math.PI / 2;
+            mesh.rotation.y = Math.PI;
+            mesh.rotation.z = (textBox.rotationZ * Math.PI) / 180;
+        }
         
         this.scene.add(mesh);
         textBox.mesh = mesh;
@@ -2627,16 +2667,31 @@ class HeightfieldViewer {
         });
         
         // Position the entire group
-        group.position.set(
-            textBox.positionX,
-            -this.pendantThickness - 0.2 + textBox.positionY,
-            textBox.positionZ
-        );
-        
-        // Apply rotations to the group
-        group.rotation.x = -Math.PI / 2;
-        group.rotation.y = Math.PI;
-        group.rotation.z = (textBox.rotationZ * Math.PI) / 180;
+        if (this.currentObjectType === 'circular-pendant') {
+            // For upright circular pendant, position text on the front face
+            group.position.set(
+                textBox.positionX,
+                textBox.positionY,
+                this.pendantThickness / 2 + 0.3 + textBox.positionZ
+            );
+            
+            // No rotation needed for upright pendant - text faces forward
+            group.rotation.x = 0;
+            group.rotation.y = 0;
+            group.rotation.z = (textBox.rotationZ * Math.PI) / 180;
+        } else {
+            // For other shapes, keep original positioning
+            group.position.set(
+                textBox.positionX,
+                -this.pendantThickness - 0.2 + textBox.positionY,
+                textBox.positionZ
+            );
+            
+            // Apply rotations to the group for flat layout
+            group.rotation.x = -Math.PI / 2;
+            group.rotation.y = Math.PI;
+            group.rotation.z = (textBox.rotationZ * Math.PI) / 180;
+        }
         
         this.scene.add(group);
         textBox.mesh = group;
