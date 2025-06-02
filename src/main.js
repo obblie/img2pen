@@ -1573,6 +1573,9 @@ class HeightfieldViewer {
 
         // Recreate the mesh with the new object type
         this.createHeightfieldMesh(this.heightfieldData);
+        
+        // Refresh all text boxes to use new positioning
+        this.refreshAllTextBoxes();
     }
 
     fitCameraToObject(object) {
@@ -2590,7 +2593,7 @@ class HeightfieldViewer {
             mesh.position.set(
                 textBox.positionX,
                 textBox.positionY,
-                -this.pendantThickness / 2 - fontHeight * 0.5 + textBox.positionZ
+                -this.pendantThickness / 2 - fontHeight - 1.0 + textBox.positionZ
             );
             
             // Rotate to face backward (like an engraving on the back)
@@ -2841,6 +2844,13 @@ class HeightfieldViewer {
         if (this.renderer) {
             this.renderer.dispose();
         }
+    }
+
+    refreshAllTextBoxes() {
+        // Force regeneration of all text box meshes
+        this.textBoxes.forEach(textBox => {
+            this.updateTextBoxMesh(textBox);
+        });
     }
 }
 
