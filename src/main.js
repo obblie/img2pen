@@ -1766,9 +1766,9 @@ class HeightfieldViewer {
         const heightfieldSize = heightfieldBounds.getSize(new THREE.Vector3());
         const heightfieldCenter = heightfieldBounds.getCenter(new THREE.Vector3());
         
-        // Position jumpring to intersect with the top edge of the pendant
+        // Position jumpring slightly above the top edge for minimal intersection
         let x = 0; // Always center
-        let y = heightfieldCenter.y + heightfieldSize.y / 2; // At the top edge, not above it
+        let y = heightfieldCenter.y + heightfieldSize.y / 2 + 1; // 1mm above the top edge for minimal intersection
         let z = 0; // Always center
         
         this.jumpring.position.set(x, y, z);
