@@ -2586,16 +2586,16 @@ class HeightfieldViewer {
         
         // Position the text
         if (this.currentObjectType === 'circular-pendant') {
-            // For upright circular pendant, position text on the front face
+            // For upright circular pendant, position text on the back face
             mesh.position.set(
                 textBox.positionX,
                 textBox.positionY,
-                this.pendantThickness / 2 + fontHeight * 0.5 + textBox.positionZ
+                -this.pendantThickness / 2 - fontHeight * 0.5 + textBox.positionZ
             );
             
-            // No rotation needed for upright pendant - text faces forward
+            // Rotate to face backward (like an engraving on the back)
             mesh.rotation.x = 0;
-            mesh.rotation.y = 0;
+            mesh.rotation.y = Math.PI; // 180 degrees to face backward
             mesh.rotation.z = (textBox.rotationZ * Math.PI) / 180;
         } else {
             // For other shapes, keep original positioning
