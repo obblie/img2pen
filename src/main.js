@@ -2196,7 +2196,7 @@ class HeightfieldViewer {
             mesh.position.set(
                 textBox.positionX,
                 textBox.positionY,
-                -this.pendantThickness / 2 - fontHeight * 0.5 + textBox.positionZ
+                -this.pendantThickness / 2 - fontHeight - 0.5 + textBox.positionZ
             );
             
             // Rotate to face backward (like an engraving on the back)
@@ -2684,7 +2684,7 @@ class HeightfieldViewer {
             group.position.set(
                 textBox.positionX,
                 textBox.positionY,
-                -this.pendantThickness / 2 - 0.3 + textBox.positionZ
+                -this.pendantThickness / 2 - 0.8 + textBox.positionZ
             );
             
             // Rotate to face backward (like an engraving on the back)
