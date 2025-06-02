@@ -2193,16 +2193,28 @@ class HeightfieldViewer {
         // Position at the back surface of the pendant
         if (this.currentObjectType === 'circular-pendant') {
             // For upright circular pendant, position text on the back face
-            mesh.position.set(0, 0, -this.pendantThickness / 2 - fontHeight * 0.5);
-            mesh.rotation.x = 0;  // No rotation needed for upright pendant
-            mesh.rotation.y = Math.PI;  // 180 degrees to face backward
-            mesh.rotation.z = 0;
+            mesh.position.set(
+                textBox.positionX,
+                textBox.positionY,
+                -this.pendantThickness / 2 - fontHeight * 0.5 + textBox.positionZ
+            );
+            
+            // Rotate to face backward (like an engraving on the back)
+            mesh.rotation.x = 0;
+            mesh.rotation.y = Math.PI; // 180 degrees to face backward
+            mesh.rotation.z = (textBox.rotationZ * Math.PI) / 180;
         } else {
             // For other shapes, keep original positioning
-            mesh.position.set(0, -this.pendantThickness - fontHeight * 0.2, 0);
-            mesh.rotation.x = -Math.PI / 2;  // -90 degrees to align with pendant's back surface
-            mesh.rotation.y = Math.PI;       // 180 degrees around Y-axis for proper orientation
-            mesh.rotation.z = 0;             // No Z rotation needed
+            mesh.position.set(
+                textBox.positionX,
+                -this.pendantThickness - fontHeight * 0.2 + textBox.positionY,
+                textBox.positionZ
+            );
+            
+            // Apply rotations for flat layout
+            mesh.rotation.x = -Math.PI / 2;
+            mesh.rotation.y = Math.PI;
+            mesh.rotation.z = (textBox.rotationZ * Math.PI) / 180;
         }
         
         this.scene.add(mesh);
@@ -2668,16 +2680,16 @@ class HeightfieldViewer {
         
         // Position the entire group
         if (this.currentObjectType === 'circular-pendant') {
-            // For upright circular pendant, position text on the front face
+            // For upright circular pendant, position text on the back face
             group.position.set(
                 textBox.positionX,
                 textBox.positionY,
-                this.pendantThickness / 2 + 0.3 + textBox.positionZ
+                -this.pendantThickness / 2 - 0.3 + textBox.positionZ
             );
             
-            // No rotation needed for upright pendant - text faces forward
+            // Rotate to face backward (like an engraving on the back)
             group.rotation.x = 0;
-            group.rotation.y = 0;
+            group.rotation.y = Math.PI; // 180 degrees to face backward
             group.rotation.z = (textBox.rotationZ * Math.PI) / 180;
         } else {
             // For other shapes, keep original positioning
