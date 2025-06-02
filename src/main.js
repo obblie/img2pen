@@ -2675,8 +2675,8 @@ class HeightfieldViewer {
             
             charMesh.position.set(x, y, 0);
             
-            // Rotate character to follow the curve
-            charMesh.rotation.z = angle + (textBox.archDirection === -1 ? Math.PI : 0);
+            // Keep letters horizontal - don't rotate them to follow the curve
+            // charMesh.rotation.z = angle + (textBox.archDirection === -1 ? Math.PI : 0);
             
             group.add(charMesh);
         });
