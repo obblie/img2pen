@@ -1757,6 +1757,7 @@ class HeightfieldViewer {
 
     updateJumpring(size) {
         this.createJumpring(size);
+        this.updateJumpringPosition(); // Ensure jumpring stays at the top after size change
     }
 
     updateJumpringPosition() {
