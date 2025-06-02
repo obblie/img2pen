@@ -940,11 +940,6 @@ class HeightfieldViewer {
             diameterSlider.addEventListener('input', (e) => {
                 this.pendantDiameter = parseFloat(e.target.value);
                 if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
-                    // Update jumpring Z slider to new default
-                    const newDefaultZ = -0.6 * this.pendantDiameter;
-                    document.getElementById('jumpring-z').value = newDefaultZ;
-                    document.getElementById('jumpring-z-value').textContent = newDefaultZ;
-                    this.jumpringOffset.z = newDefaultZ;
                     this.createHeightfieldMesh(this.heightfieldData);
                 }
                 updateSliderLabels();
@@ -1770,22 +1765,15 @@ class HeightfieldViewer {
         const heightfieldSize = heightfieldBounds.getSize(new THREE.Vector3());
         const heightfieldCenter = heightfieldBounds.getCenter(new THREE.Vector3());
         
-        if (this.currentObjectType === 'circular-pendant') {
-            // For upright circular pendant, position jumpring at the top
-            let x = heightfieldCenter.x;
-            let y = heightfieldCenter.y + heightfieldSize.y / 2 + 2; // Above the pendant
-            let z = heightfieldCenter.z;
-            this.jumpring.position.set(x, y, z);
-            // No rotation needed for upright pendant - jumpring naturally hangs down
-            this.jumpring.rotation.set(0, 0, 0);
-        } else {
-            // For other shapes, keep original positioning
-            let x = heightfieldCenter.x;
-            let y = heightfieldCenter.y + heightfieldSize.y / 2 + 2 - 3.5;
-            let z = heightfieldCenter.z + (-0.6 * this.pendantDiameter);
-            this.jumpring.position.set(x, y, z);
-            this.jumpring.rotation.set(Math.PI / 2, 0, 0);
-        }
+        // Always position jumpring at the top center, with a fixed offset above the pendant
+        // This ensures consistent positioning regardless of pendant size
+        let x = 0; // Always center
+        let y = heightfieldCenter.y + heightfieldSize.y / 2 + 3; // Fixed 3mm above the pendant
+        let z = 0; // Always center
+        
+        this.jumpring.position.set(x, y, z);
+        // No rotation needed - jumpring naturally hangs down
+        this.jumpring.rotation.set(0, 0, 0);
     }
 
     addScaleGrid() {
