@@ -1767,9 +1767,9 @@ class HeightfieldViewer {
         const heightfieldCenter = heightfieldBounds.getCenter(new THREE.Vector3());
         
         // Position jumpring slightly above the top edge for minimal intersection
-        let x = 0; // Always center
+        let x = heightfieldCenter.x; // Use actual center X coordinate
         let y = heightfieldCenter.y + heightfieldSize.y / 2 + 1; // 1mm above the top edge for minimal intersection
-        let z = 0; // Always center
+        let z = heightfieldCenter.z; // Use actual center Z coordinate
         
         this.jumpring.position.set(x, y, z);
         // No rotation needed - jumpring naturally hangs down
