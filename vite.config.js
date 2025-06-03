@@ -12,5 +12,8 @@ export default {
   base: '/img2pen/',
   define: {
     '__GIT_TIMESTAMP__': JSON.stringify(getGitTimestamp())
+  },
+  build: {
+    minify: false
   }
 }; 
