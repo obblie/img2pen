@@ -1540,8 +1540,10 @@ class HeightfieldViewer {
         let aspectRatio = heightfieldData.aspectRatio;
 
         // Create appropriate geometry based on object type
+        console.log('createHeightfieldMesh: currentObjectType =', this.currentObjectType);
         switch (this.currentObjectType) {
             case 'circular-pendant':
+                console.log('Entering circular-pendant case');
                 // Remove any previous pendant meshes
                 if (this.heightfield) this.scene.remove(this.heightfield);
                 if (this.bottomDisc) this.scene.remove(this.bottomDisc);
@@ -1821,6 +1823,7 @@ class HeightfieldViewer {
                 this.updateMetalMaterial(metalType);
                 console.log('Adding red layer');
                 console.log('Scene children:', this.scene.children.length);
+                console.log('About to return from circular-pendant case');
                 return;
             case 'rectangular-pendant':
                 geometry = new THREE.PlaneGeometry(
@@ -1848,6 +1851,7 @@ class HeightfieldViewer {
                 break;
         }
 
+        console.log('After switch statement - this should not execute for circular-pendant');
         if (!geometry) return;
 
         const positions = geometry.attributes.position.array;
