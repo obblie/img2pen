@@ -369,347 +369,66 @@ function removeCircleOverlay(cropper) {
     }
 }
 
-// Enhanced showCropperModal to support advanced cropping features
+// Enhanced showCropperModal to support circle overlay
 function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
     const modal = document.getElementById('cropper-modal');
     const img = document.getElementById('cropper-image');
     const confirmBtn = document.getElementById('cropper-confirm');
     const cancelBtn = document.getElementById('cropper-cancel');
+    // Toolbar controls
+    const aspectSelect = document.getElementById('cropper-aspect');
+    const rotateLeftBtn = document.getElementById('cropper-rotate-left');
+    const rotateRightBtn = document.getElementById('cropper-rotate-right');
+    const flipHBtn = document.getElementById('cropper-flip-h');
+    const flipVBtn = document.getElementById('cropper-flip-v');
+    const zoomInBtn = document.getElementById('cropper-zoom-in');
+    const zoomOutBtn = document.getElementById('cropper-zoom-out');
     const resetBtn = document.getElementById('cropper-reset');
-    
-    // Get all the new control elements
-    const zoomSlider = document.getElementById('zoom-slider');
-    const zoomValue = document.getElementById('zoom-value');
-    const zoomInBtn = document.getElementById('zoom-in');
-    const zoomOutBtn = document.getElementById('zoom-out');
-    
-    const rotationSlider = document.getElementById('rotation-slider');
-    const rotationValue = document.getElementById('rotation-value');
-    const rotateLeftBtn = document.getElementById('rotate-left');
-    const rotateRightBtn = document.getElementById('rotate-right');
-    
-    const aspectRatioPreset = document.getElementById('aspect-ratio-preset');
-    const flipHorizontalBtn = document.getElementById('flip-horizontal');
-    const flipVerticalBtn = document.getElementById('flip-vertical');
-    
-    const moveLeftBtn = document.getElementById('move-left');
-    const moveRightBtn = document.getElementById('move-right');
-    const moveUpBtn = document.getElementById('move-up');
-    const moveDownBtn = document.getElementById('move-down');
-    const centerCropBtn = document.getElementById('center-crop');
-    
-    const qualitySlider = document.getElementById('quality-slider');
-    const qualityValue = document.getElementById('quality-value');
-    const outputFormat = document.getElementById('output-format');
-    const maxSize = document.getElementById('max-size');
-    
-    const cropPreview = document.getElementById('crop-preview');
-    const cropX = document.getElementById('crop-x');
-    const cropY = document.getElementById('crop-y');
-    const cropWidth = document.getElementById('crop-width');
-    const cropHeight = document.getElementById('crop-height');
-    const cropRatio = document.getElementById('crop-ratio');
-    
-    // Set initial values
+    let scaleX = 1, scaleY = 1;
+
     img.src = imageSrc;
     modal.style.display = 'flex';
-    
-    // Destroy existing cropper
-    if (cropper) { 
-        cropper.destroy(); 
-        cropper = null; 
-    }
-    
-    // Store cropper state for advanced features
-    let cropperState = {
-        scaleX: 1,
-        scaleY: 1,
-        rotation: 0,
-        zoom: 1
-    };
-    
-    // Initialize cropper with enhanced options
+    if (cropper) { cropper.destroy(); cropper = null; }
     cropper = new Cropper(img, {
         viewMode: 1,
         aspectRatio: (cropShape === 'circle') ? 1 : NaN,
-        autoCropArea: 0.8,
+        autoCropArea: 1,
         movable: true,
         zoomable: true,
         scalable: true,
-        rotatable: true,
-        cropBoxMovable: true,
-        cropBoxResizable: true,
-        toggleDragModeOnDblclick: false,
-        minContainerWidth: 400,
-        minContainerHeight: 300,
+        rotatable: false,
         ready() {
             if (cropShape === 'circle') addCircleOverlay(cropper);
-            updateCropInfo();
-            updatePreview();
-            
-            // Set initial aspect ratio if specified
-            const initialRatio = aspectRatioPreset.value;
-            if (initialRatio !== 'free') {
-                cropper.setAspectRatio(parseFloat(initialRatio));
-            }
-        },
-        crop: updateCropInfo,
-        cropmove: updateCropInfo,
-        cropend: () => {
-            updateCropInfo();
-            updatePreview();
-        },
-        zoom: (e) => {
-            const zoomRatio = e.detail.ratio;
-            cropperState.zoom = zoomRatio;
-            zoomSlider.value = zoomRatio;
-            zoomValue.textContent = Math.round(zoomRatio * 100) + '%';
-            updatePreview();
         }
     });
-    
-    // Update crop info display
-    function updateCropInfo() {
-        if (!cropper) return;
-        
-        const cropBoxData = cropper.getCropBoxData();
-        const canvasData = cropper.getCanvasData();
-        
-        // Calculate actual crop coordinates relative to image
-        const imageData = cropper.getImageData();
-        const scaleX = imageData.naturalWidth / imageData.width;
-        const scaleY = imageData.naturalHeight / imageData.height;
-        
-        const actualX = Math.round((cropBoxData.left - canvasData.left) * scaleX);
-        const actualY = Math.round((cropBoxData.top - canvasData.top) * scaleY);
-        const actualWidth = Math.round(cropBoxData.width * scaleX);
-        const actualHeight = Math.round(cropBoxData.height * scaleY);
-        
-        cropX.textContent = actualX;
-        cropY.textContent = actualY;
-        cropWidth.textContent = actualWidth;
-        cropHeight.textContent = actualHeight;
-        
-        // Calculate and display aspect ratio
-        const ratio = actualWidth / actualHeight;
-        if (ratio > 1) {
-            const simplified = simplifyRatio(actualWidth, actualHeight);
-            cropRatio.textContent = `${simplified.width}:${simplified.height}`;
-        } else {
-            const simplified = simplifyRatio(actualHeight, actualWidth);
-            cropRatio.textContent = `${simplified.width}:${simplified.height}`;
-        }
-    }
-    
-    // Simplify aspect ratio for display
-    function simplifyRatio(w, h) {
-        const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
-        const divisor = gcd(w, h);
-        return { width: Math.round(w / divisor), height: Math.round(h / divisor) };
-    }
-    
-    // Update preview
-    function updatePreview() {
-        if (!cropper) return;
-        
-        try {
-            const canvas = cropper.getCroppedCanvas({
-                width: 200,
-                height: 200,
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high'
-            });
-            
-            if (canvas) {
-                // Clear preview
-                cropPreview.innerHTML = '';
-                
-                if (cropShape === 'circle') {
-                    // Create circular preview
-                    const circleCanvas = document.createElement('canvas');
-                    circleCanvas.width = 200;
-                    circleCanvas.height = 200;
-                    const ctx = circleCanvas.getContext('2d');
-                    
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(100, 100, 100, 0, 2 * Math.PI);
-                    ctx.closePath();
-                    ctx.clip();
-                    ctx.drawImage(canvas, 0, 0, 200, 200);
-                    ctx.restore();
-                    
-                    circleCanvas.style.borderRadius = '50%';
-                    cropPreview.appendChild(circleCanvas);
-                } else {
-                    canvas.style.maxWidth = '100%';
-                    canvas.style.maxHeight = '100%';
-                    cropPreview.appendChild(canvas);
-                }
-            }
-        } catch (error) {
-            console.warn('Preview update failed:', error);
-        }
-    }
-    
-    // Zoom controls
-    zoomSlider.addEventListener('input', (e) => {
-        const zoomLevel = parseFloat(e.target.value);
-        cropper.zoomTo(zoomLevel);
-        zoomValue.textContent = Math.round(zoomLevel * 100) + '%';
-        cropperState.zoom = zoomLevel;
-    });
-    
-    zoomInBtn.addEventListener('click', () => {
-        cropper.zoom(0.1);
-    });
-    
-    zoomOutBtn.addEventListener('click', () => {
-        cropper.zoom(-0.1);
-    });
-    
-    // Rotation controls
-    rotationSlider.addEventListener('input', (e) => {
-        const rotation = parseFloat(e.target.value);
-        cropper.rotateTo(rotation);
-        rotationValue.textContent = rotation + '°';
-        cropperState.rotation = rotation;
-        updatePreview();
-    });
-    
-    rotateLeftBtn.addEventListener('click', () => {
-        cropper.rotate(-90);
-        const newRotation = (cropperState.rotation - 90) % 360;
-        cropperState.rotation = newRotation;
-        rotationSlider.value = newRotation;
-        rotationValue.textContent = newRotation + '°';
-        updatePreview();
-    });
-    
-    rotateRightBtn.addEventListener('click', () => {
-        cropper.rotate(90);
-        const newRotation = (cropperState.rotation + 90) % 360;
-        cropperState.rotation = newRotation;
-        rotationSlider.value = newRotation;
-        rotationValue.textContent = newRotation + '°';
-        updatePreview();
-    });
-    
-    // Aspect ratio presets
-    aspectRatioPreset.addEventListener('change', (e) => {
-        const ratio = e.target.value;
-        if (ratio === 'free') {
-            cropper.setAspectRatio(NaN);
-        } else {
-            cropper.setAspectRatio(parseFloat(ratio));
-        }
-        updateCropInfo();
-        updatePreview();
-    });
-    
-    // Flip controls
-    flipHorizontalBtn.addEventListener('click', () => {
-        const scaleX = cropperState.scaleX * -1;
-        cropper.scaleX(scaleX);
-        cropperState.scaleX = scaleX;
-        updatePreview();
-    });
-    
-    flipVerticalBtn.addEventListener('click', () => {
-        const scaleY = cropperState.scaleY * -1;
-        cropper.scaleY(scaleY);
-        cropperState.scaleY = scaleY;
-        updatePreview();
-    });
-    
-    // Position fine-tuning
-    const moveStep = 10;
-    moveLeftBtn.addEventListener('click', () => {
-        cropper.move(-moveStep, 0);
-        updateCropInfo();
-        updatePreview();
-    });
-    
-    moveRightBtn.addEventListener('click', () => {
-        cropper.move(moveStep, 0);
-        updateCropInfo();
-        updatePreview();
-    });
-    
-    moveUpBtn.addEventListener('click', () => {
-        cropper.move(0, -moveStep);
-        updateCropInfo();
-        updatePreview();
-    });
-    
-    moveDownBtn.addEventListener('click', () => {
-        cropper.move(0, moveStep);
-        updateCropInfo();
-        updatePreview();
-    });
-    
-    centerCropBtn.addEventListener('click', () => {
-        cropper.center();
-        updateCropInfo();
-        updatePreview();
-    });
-    
-    // Quality controls
-    qualitySlider.addEventListener('input', (e) => {
-        const quality = parseFloat(e.target.value);
-        qualityValue.textContent = Math.round(quality * 100) + '%';
-    });
-    
-    // Reset functionality
-    resetBtn.addEventListener('click', () => {
-        cropper.reset();
-        cropperState = { scaleX: 1, scaleY: 1, rotation: 0, zoom: 1 };
-        zoomSlider.value = 1;
-        zoomValue.textContent = '100%';
-        rotationSlider.value = 0;
-        rotationValue.textContent = '0°';
-        aspectRatioPreset.value = cropShape === 'circle' ? '1' : 'free';
-        updateCropInfo();
-        updatePreview();
-    });
-    
-    // Enhanced confirm functionality
+
+    // Aspect ratio change
+    aspectSelect.onchange = function() {
+        let val = aspectSelect.value;
+        if (val === 'free') cropper.setAspectRatio(NaN);
+        else cropper.setAspectRatio(eval(val));
+    };
+    // Rotate
+    rotateLeftBtn.onclick = function() { cropper.rotate(-90); };
+    rotateRightBtn.onclick = function() { cropper.rotate(90); };
+    // Flip
+    flipHBtn.onclick = function() { scaleX = -scaleX; cropper.scaleX(scaleX); };
+    flipVBtn.onclick = function() { scaleY = -scaleY; cropper.scaleY(scaleY); };
+    // Zoom
+    zoomInBtn.onclick = function() { cropper.zoom(0.1); };
+    zoomOutBtn.onclick = function() { cropper.zoom(-0.1); };
+    // Reset
+    resetBtn.onclick = function() { cropper.reset(); scaleX = 1; scaleY = 1; };
+
     confirmBtn.onclick = () => {
-        const quality = parseFloat(qualitySlider.value);
-        const format = outputFormat.value;
-        const maxSizeValue = maxSize.value;
-        
-        // Get crop canvas with quality settings
-        let canvasOptions = {
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high'
-        };
-        
-        // Apply max size if specified
-        if (maxSizeValue !== 'original') {
-            const maxPixels = parseInt(maxSizeValue);
-            const cropBoxData = cropper.getCropBoxData();
-            const aspectRatio = cropBoxData.width / cropBoxData.height;
-            
-            if (aspectRatio > 1) {
-                canvasOptions.width = maxPixels;
-                canvasOptions.height = Math.round(maxPixels / aspectRatio);
-            } else {
-                canvasOptions.height = maxPixels;
-                canvasOptions.width = Math.round(maxPixels * aspectRatio);
-            }
-        }
-        
-        const canvas = cropper.getCroppedCanvas(canvasOptions);
-        
+        // For circle, mask the square crop to a circle
         if (cropShape === 'circle') {
-            // Create circular crop
+            const canvas = cropper.getCroppedCanvas();
             const size = Math.min(canvas.width, canvas.height);
             const circleCanvas = document.createElement('canvas');
             circleCanvas.width = size;
             circleCanvas.height = size;
             const ctx = circleCanvas.getContext('2d');
-            
             ctx.save();
             ctx.beginPath();
             ctx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
@@ -717,106 +436,23 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
             ctx.clip();
             ctx.drawImage(canvas, 0, 0, size, size, 0, 0, size, size);
             ctx.restore();
-            
             circleCanvas.toBlob(blob => {
                 modal.style.display = 'none';
-                cropper.destroy(); 
-                cropper = null;
+                cropper.destroy(); cropper = null;
                 onCrop(blob);
-            }, format, quality);
+            });
         } else {
-            canvas.toBlob(blob => {
+            cropper.getCroppedCanvas().toBlob(blob => {
                 modal.style.display = 'none';
-                cropper.destroy(); 
-                cropper = null;
+                cropper.destroy(); cropper = null;
                 onCrop(blob);
-            }, format, quality);
+            });
         }
     };
-    
-    // Cancel functionality
     cancelBtn.onclick = () => {
         modal.style.display = 'none';
-        cropper.destroy(); 
-        cropper = null;
+        cropper.destroy(); cropper = null;
         if (onCancel) onCancel();
-    };
-    
-    // Keyboard shortcuts
-    const handleKeydown = (e) => {
-        if (!modal.style.display || modal.style.display === 'none') return;
-        
-        switch(e.key) {
-            case 'Enter':
-                e.preventDefault();
-                confirmBtn.click();
-                break;
-            case 'Escape':
-                e.preventDefault();
-                cancelBtn.click();
-                break;
-            case 'r':
-            case 'R':
-                if (e.ctrlKey || e.metaKey) {
-                    e.preventDefault();
-                    resetBtn.click();
-                }
-                break;
-            case 'ArrowLeft':
-                if (e.shiftKey) {
-                    e.preventDefault();
-                    moveLeftBtn.click();
-                }
-                break;
-            case 'ArrowRight':
-                if (e.shiftKey) {
-                    e.preventDefault();
-                    moveRightBtn.click();
-                }
-                break;
-            case 'ArrowUp':
-                if (e.shiftKey) {
-                    e.preventDefault();
-                    moveUpBtn.click();
-                }
-                break;
-            case 'ArrowDown':
-                if (e.shiftKey) {
-                    e.preventDefault();
-                    moveDownBtn.click();
-                }
-                break;
-            case '=':
-            case '+':
-                e.preventDefault();
-                zoomInBtn.click();
-                break;
-            case '-':
-                e.preventDefault();
-                zoomOutBtn.click();
-                break;
-        }
-    };
-    
-    document.addEventListener('keydown', handleKeydown);
-    
-    // Cleanup function
-    const cleanup = () => {
-        document.removeEventListener('keydown', handleKeydown);
-    };
-    
-    // Add cleanup to existing event handlers
-    const originalConfirmClick = confirmBtn.onclick;
-    const originalCancelClick = cancelBtn.onclick;
-    
-    confirmBtn.onclick = () => {
-        cleanup();
-        originalConfirmClick();
-    };
-    
-    cancelBtn.onclick = () => {
-        cleanup();
-        originalCancelClick();
     };
 }
 
@@ -3238,19 +2874,3 @@ class HeightfieldViewer {
 
 // Initialize the viewer
 window.viewer = new HeightfieldViewer(); 
-
-// Initialize the application
-document.addEventListener('DOMContentLoaded', () => {
-    // Set build timestamp in US Eastern Time
-    const now = new Date();
-    const options = { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-    const estString = now.toLocaleString('en-US', options).replace(',', '');
-    // Determine EST/EDT
-    const tz = now.toLocaleTimeString('en-US', { timeZoneName: 'short', timeZone: 'America/New_York' }).split(' ').pop();
-    const timestampElement = document.getElementById('build-timestamp');
-    if (timestampElement) {
-        timestampElement.textContent = estString + ' ' + tz;
-    }
-    window.viewer = new HeightfieldViewer();
-    window.viewer.init();
-});
