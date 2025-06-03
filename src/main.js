@@ -480,9 +480,9 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
     // Live preview
     function updatePreview() {
         if (!previewCanvas) return;
-        const canvas = cropper.getCroppedCanvas({width:150,height:150});
-        previewCtx.clearRect(0,0,150,150);
-        if (canvas && canvas.width > 0 && canvas.height > 0) previewCtx.drawImage(canvas,0,0,150,150);
+        const canvas = cropper.getCroppedCanvas({width:250,height:250});
+        previewCtx.clearRect(0,0,250,250);
+        if (canvas && canvas.width > 0 && canvas.height > 0) previewCtx.drawImage(canvas,0,0,250,250);
     }
     // Zoom/rotation display
     function updateZoomRotDisplay() {
