@@ -3074,6 +3074,7 @@ async function generateImageWithOpenAI(prompt) {
         }
 
         const data = await response.json();
+        console.log('✅ Full response data:', JSON.stringify(data, null, 2));
         console.log('✅ Response data received, imageData type:', typeof data.imageData, 'length:', data.imageData ? data.imageData.length : 'null');
         
         document.getElementById('loading-status').textContent = 'Processing generated image...';
