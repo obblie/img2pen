@@ -294,6 +294,12 @@ function addCircleOverlay(cropper) {
         if (overlay) overlay.remove();
         const w = cropBox.offsetWidth;
         const h = cropBox.offsetHeight;
+        
+        // Prevent negative radius values by ensuring minimum size
+        const minRadius = 5; // Minimum radius to prevent negative values
+        const rxOuter = Math.max(minRadius, w/2 - 3);
+        const ryOuter = Math.max(minRadius, h/2 - 3);
+        
         overlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         overlay.classList.add('circle-crop-overlay');
         overlay.setAttribute('width', w);
@@ -309,8 +315,8 @@ function addCircleOverlay(cropper) {
         const ellipseOutline = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
         ellipseOutline.setAttribute('cx', w/2);
         ellipseOutline.setAttribute('cy', h/2);
-        ellipseOutline.setAttribute('rx', w/2 - 3);
-        ellipseOutline.setAttribute('ry', h/2 - 3);
+        ellipseOutline.setAttribute('rx', rxOuter);
+        ellipseOutline.setAttribute('ry', ryOuter);
         ellipseOutline.setAttribute('fill', 'none');
         ellipseOutline.setAttribute('stroke', 'white');
         ellipseOutline.setAttribute('stroke-width', '7');
@@ -321,8 +327,8 @@ function addCircleOverlay(cropper) {
         const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
         ellipse.setAttribute('cx', w/2);
         ellipse.setAttribute('cy', h/2);
-        ellipse.setAttribute('rx', w/2 - 3);
-        ellipse.setAttribute('ry', h/2 - 3);
+        ellipse.setAttribute('rx', rxOuter);
+        ellipse.setAttribute('ry', ryOuter);
         ellipse.setAttribute('fill', 'none');
         ellipse.setAttribute('stroke', '#4af');
         ellipse.setAttribute('stroke-width', '5');
