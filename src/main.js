@@ -1811,8 +1811,8 @@ class HeightfieldViewer {
                     transparent: !!alphaMap,
                     alphaMap: alphaMap,
                     alphaTest: alphaMap ? 0.5 : 0,
-                    vertexColors: true,
-                    wireframe: true // Temporary for debugging
+                    vertexColors: true
+                    // Removed wireframe: true - this was making it invisible!
                 });
                 const mesh = new THREE.Mesh(geometry, material);
                 
@@ -1820,25 +1820,23 @@ class HeightfieldViewer {
                 console.log('Mesh position:', mesh.position);
                 console.log('Mesh visible:', mesh.visible);
                 
-                if (this.currentObjectType === 'circular-pendant') {
-                    // For circular pendant, rotate to stand upright and position bottom edge at y=0
-                    mesh.rotation.x = 0; // Remove the flat rotation
-                    mesh.position.y = this.pendantThickness / 2;
-                } else {
-                    // Position so the bottom edge sits on the platform (y=0)
-                    mesh.position.y = this.pendantThickness / 2;
-                }
-                
-                // Position the mesh properly
-                mesh.position.set(0, 0, 0); // Center the mesh at origin
+                // Position the mesh at origin - remove conflicting positioning
+                mesh.position.set(0, 0, 0);
+                mesh.rotation.x = 0; // Ensure no rotation
                 console.log('Mesh position after adjustment:', mesh.position);
                 
                 this.scene.add(mesh);
+                this.heightfield = mesh; // Store reference
                 console.log('Added mesh to scene');
                 
                 // Create jumpring
-                this.createJumpring();
+                this.createJumpring('small');
+                this.updateJumpringPosition();
                 console.log('Creating jumpring');
+                
+                // Apply metal material
+                const metalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+                this.updateMetalMaterial(metalType);
                 
                 // Center the camera on the mesh
                 const box = new THREE.Box3().setFromObject(mesh);
