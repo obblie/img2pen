@@ -1811,7 +1811,8 @@ class HeightfieldViewer {
                     transparent: !!alphaMap,
                     alphaMap: alphaMap,
                     alphaTest: alphaMap ? 0.5 : 0,
-                    vertexColors: true
+                    vertexColors: true,
+                    wireframe: true // Temporary for debugging
                 });
                 const mesh = new THREE.Mesh(geometry, material);
                 
@@ -1851,6 +1852,9 @@ class HeightfieldViewer {
                 // Fit camera to see the pendant
                 this.fitCameraToObject(mesh);
                 console.log('Camera fitted to object');
+                console.log('Camera position after fit:', this.camera.position);
+                console.log('Camera target after fit:', this.controls.target);
+                console.log('Mesh center:', boundingBox.getCenter(new THREE.Vector3()));
                 
                 return;
             case 'rectangular-pendant':
