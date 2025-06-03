@@ -1847,6 +1847,11 @@ class HeightfieldViewer {
                 console.log('Adding red layer');
                 console.log('Scene children:', this.scene.children.length);
                 console.log('About to return from circular-pendant case');
+                
+                // Fit camera to see the pendant
+                this.fitCameraToObject(mesh);
+                console.log('Camera fitted to object');
+                
                 return;
             case 'rectangular-pendant':
                 geometry = new THREE.PlaneGeometry(
