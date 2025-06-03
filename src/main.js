@@ -384,6 +384,18 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
     const zoomInBtn = document.getElementById('cropper-zoom-in');
     const zoomOutBtn = document.getElementById('cropper-zoom-out');
     const resetBtn = document.getElementById('cropper-reset');
+    const fitBtn = document.getElementById('cropper-fit');
+    const centerBtn = document.getElementById('cropper-center');
+    // Pixel controls
+    const xInput = document.getElementById('cropper-x');
+    const yInput = document.getElementById('cropper-y');
+    const wInput = document.getElementById('cropper-w');
+    const hInput = document.getElementById('cropper-h');
+    const zoomDisplay = document.getElementById('cropper-zoom');
+    const rotDisplay = document.getElementById('cropper-rotation');
+    // Live preview
+    const previewCanvas = document.getElementById('cropper-preview');
+    const previewCtx = previewCanvas.getContext('2d');
     let scaleX = 1, scaleY = 1;
 
     img.src = imageSrc;
@@ -396,9 +408,22 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
         movable: true,
         zoomable: true,
         scalable: true,
-        rotatable: false,
+        rotatable: true,
         ready() {
             if (cropShape === 'circle') addCircleOverlay(cropper);
+            updatePixelInputs();
+            updatePreview();
+            updateZoomRotDisplay();
+        },
+        crop() {
+            updatePixelInputs();
+            updatePreview();
+        },
+        zoom() {
+            updateZoomRotDisplay();
+        },
+        rotate() {
+            updateZoomRotDisplay();
         }
     });
 
@@ -419,6 +444,50 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
     zoomOutBtn.onclick = function() { cropper.zoom(-0.1); };
     // Reset
     resetBtn.onclick = function() { cropper.reset(); scaleX = 1; scaleY = 1; };
+    // Fit
+    fitBtn.onclick = function() { cropper.setCropBoxData({left:0,top:0,width:cropper.getImageData().naturalWidth,height:cropper.getImageData().naturalHeight}); };
+    // Center
+    centerBtn.onclick = function() {
+        const imgData = cropper.getImageData();
+        const cropData = cropper.getCropBoxData();
+        cropper.setCropBoxData({
+            left: imgData.left + (imgData.width - cropData.width) / 2,
+            top: imgData.top + (imgData.height - cropData.height) / 2,
+            width: cropData.width,
+            height: cropData.height
+        });
+    };
+    // Pixel-precise controls
+    function updatePixelInputs() {
+        const data = cropper.getData(true);
+        xInput.value = Math.round(data.x);
+        yInput.value = Math.round(data.y);
+        wInput.value = Math.round(data.width);
+        hInput.value = Math.round(data.height);
+    }
+    function setCropBoxFromInputs() {
+        cropper.setData({
+            x: parseInt(xInput.value),
+            y: parseInt(yInput.value),
+            width: parseInt(wInput.value),
+            height: parseInt(hInput.value)
+        });
+    }
+    xInput.onchange = yInput.onchange = wInput.onchange = hInput.onchange = setCropBoxFromInputs;
+    // Live preview
+    function updatePreview() {
+        if (!previewCanvas) return;
+        const canvas = cropper.getCroppedCanvas({width:150,height:150});
+        previewCtx.clearRect(0,0,150,150);
+        if (canvas) previewCtx.drawImage(canvas,0,0,150,150);
+    }
+    // Zoom/rotation display
+    function updateZoomRotDisplay() {
+        const imgData = cropper.getImageData();
+        const rot = cropper.getData().rotate || 0;
+        zoomDisplay.textContent = Math.round(imgData.scaleX * 100) + '%';
+        rotDisplay.textContent = Math.round(rot) + '°';
+    }
 
     confirmBtn.onclick = () => {
         // For circle, mask the square crop to a circle
