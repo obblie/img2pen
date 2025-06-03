@@ -459,8 +459,14 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
                 cropper.setAspectRatio(parseFloat(initialRatio));
             }
         },
-        crop: updateCropInfo,
-        cropmove: updateCropInfo,
+        crop: () => {
+            updateCropInfo();
+            updatePreview();
+        },
+        cropmove: () => {
+            updateCropInfo();
+            updatePreview();
+        },
         cropend: () => {
             updateCropInfo();
             updatePreview();
@@ -1555,8 +1561,11 @@ class HeightfieldViewer {
                 // Relief (top)
                 const diameter = this.pendantDiameter;
                 const radius = diameter / 2;
-                const widthSegments = heightfieldData.width - 1;
-                const heightSegments = heightfieldData.height - 1;
+                // Limit segments to prevent massive geometry
+                const maxSegments = 128; // Reasonable limit for performance
+                const widthSegments = Math.min(heightfieldData.width - 1, maxSegments);
+                const heightSegments = Math.min(heightfieldData.height - 1, maxSegments);
+                console.log('Using segments:', widthSegments, 'x', heightSegments, 'instead of', heightfieldData.width - 1, 'x', heightfieldData.height - 1);
                 const thickness = this.pendantThickness;
 
                 // Relief positions, normals, uvs
@@ -1830,7 +1839,11 @@ class HeightfieldViewer {
                 this.updateMetalMaterial(metalType);
                 console.log('Camera position:', this.camera.position);
                 console.log('Camera looking at:', this.controls.target);
-                console.log('Mesh bounding box:', new THREE.Box3().setFromObject(mesh));
+                const boundingBox = new THREE.Box3().setFromObject(mesh);
+                console.log('Mesh bounding box:', boundingBox);
+                console.log('Bounding box min:', boundingBox.min);
+                console.log('Bounding box max:', boundingBox.max);
+                console.log('Bounding box size:', boundingBox.getSize(new THREE.Vector3()));
                 console.log('Adding red layer');
                 console.log('Scene children:', this.scene.children.length);
                 console.log('About to return from circular-pendant case');
