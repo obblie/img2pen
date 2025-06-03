@@ -1791,6 +1791,7 @@ class HeightfieldViewer {
                 geometry.setAttribute('color', new THREE.Float32BufferAttribute(antiquingColorsCirc, 3));
                 geometry.setIndex(allIndices);
                 geometry.computeVertexNormals();
+                console.log('Created geometry with', allPositions.length / 3, 'vertices and', allIndices.length / 3, 'triangles');
                 // Single material for all
                 const material = new THREE.MeshStandardMaterial({
                     color: METAL_MATERIALS['sterling-silver'].color,
@@ -1805,6 +1806,10 @@ class HeightfieldViewer {
                 });
                 const mesh = new THREE.Mesh(geometry, material);
                 
+                console.log('Created mesh:', mesh);
+                console.log('Mesh position:', mesh.position);
+                console.log('Mesh visible:', mesh.visible);
+                
                 if (this.currentObjectType === 'circular-pendant') {
                     // For circular pendant, rotate to stand upright and position bottom edge at y=0
                     mesh.rotation.x = 0; // Remove the flat rotation
@@ -1814,13 +1819,18 @@ class HeightfieldViewer {
                     mesh.position.y = this.pendantThickness / 2;
                 }
                 
+                console.log('Mesh position after adjustment:', mesh.position);
                 this.scene.add(mesh);
+                console.log('Added mesh to scene');
                 this.heightfield = mesh;
                 this.createJumpring('small');
                 this.updateJumpringPosition();
                 // Ensure the correct metal material is applied on first render
                 const metalType = document.getElementById('metal-type')?.value || 'sterling-silver';
                 this.updateMetalMaterial(metalType);
+                console.log('Camera position:', this.camera.position);
+                console.log('Camera looking at:', this.controls.target);
+                console.log('Mesh bounding box:', new THREE.Box3().setFromObject(mesh));
                 console.log('Adding red layer');
                 console.log('Scene children:', this.scene.children.length);
                 console.log('About to return from circular-pendant case');
@@ -1946,6 +1956,10 @@ class HeightfieldViewer {
         // Create mesh and position it upright like jewelry sitting on a platform
         const mesh = new THREE.Mesh(geometry, material);
         
+        console.log('Created mesh:', mesh);
+        console.log('Mesh position:', mesh.position);
+        console.log('Mesh visible:', mesh.visible);
+        
         if (this.currentObjectType === 'circular-pendant') {
             // For circular pendant, rotate to stand upright and position bottom edge at y=0
             mesh.rotation.x = 0; // Remove the flat rotation
@@ -1955,7 +1969,9 @@ class HeightfieldViewer {
             mesh.position.y = this.pendantThickness / 2;
         }
         
+        console.log('Mesh position after adjustment:', mesh.position);
         this.scene.add(mesh);
+        console.log('Added mesh to scene');
         this.heightfield = mesh;
         this.createJumpring('small');
         this.updateJumpringPosition();
