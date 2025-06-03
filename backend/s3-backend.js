@@ -3,16 +3,10 @@ import AWS from 'aws-sdk';
 import dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 import cors from 'cors';
-import OpenAI from 'openai';
 
 dotenv.config();
 
 const app = express();
-
-// Configure OpenAI
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
 // Configure AWS
 AWS.config.update({
@@ -285,84 +279,6 @@ app.post('/api/get-dalle-upload-url', async (req, res) => {
     } catch (error) {
         console.error('[DALLE-URL] ❌ Error generating DALL-E upload URL:', error);
         res.status(500).json({ error: 'Failed to generate DALL-E upload URL' });
-    }
-});
-
-// OpenAI Image Generation endpoint
-app.post('/api/generate-image', async (req, res) => {
-    try {
-        const { prompt } = req.body;
-        
-        if (!prompt) {
-            console.log('[OPENAI] Missing prompt in request');
-            return res.status(400).json({ error: 'Prompt is required' });
-        }
-
-        console.log(`[OPENAI] Generating image with prompt: ${prompt.substring(0, 100)}...`);
-
-        // Generate image using DALL-E 3
-        const response = await openai.images.generate({
-            model: "dall-e-3",
-            prompt: prompt,
-            n: 1,
-            size: "1024x1024",
-            quality: "standard",
-            response_format: "b64_json"
-        });
-
-        if (!response.data || !response.data[0] || !response.data[0].b64_json) {
-            console.error('[OPENAI] ❌ No image data received from OpenAI');
-            return res.status(500).json({ error: 'Failed to generate image - no data received' });
-        }
-
-        const imageBase64 = response.data[0].b64_json;
-        const imageDataUrl = `data:image/png;base64,${imageBase64}`;
-
-        console.log(`[OPENAI] ✅ Image generated successfully, data URL length: ${imageDataUrl.length}`);
-
-        res.json({
-            success: true,
-            imageData: imageDataUrl,
-            revisedPrompt: response.data[0].revised_prompt || prompt
-        });
-
-    } catch (error) {
-        console.error('[OPENAI] ❌ Error generating image:', error);
-        
-        // Handle specific OpenAI errors
-        if (error.status === 429) {
-            return res.status(429).json({ 
-                error: 'Rate limit exceeded. Please wait a few minutes before trying again.',
-                code: 'RATE_LIMIT_EXCEEDED'
-            });
-        } else if (error.status === 400) {
-            if (error.message && error.message.includes('billing')) {
-                return res.status(400).json({ 
-                    error: 'Billing issue detected. Please check your OpenAI account credits.',
-                    code: 'BILLING_ISSUE'
-                });
-            } else if (error.message && error.message.includes('content_policy')) {
-                return res.status(400).json({ 
-                    error: 'Content policy violation. Please try a different prompt.',
-                    code: 'CONTENT_POLICY_VIOLATION'
-                });
-            } else {
-                return res.status(400).json({ 
-                    error: 'Invalid request. Please try a different prompt.',
-                    code: 'INVALID_REQUEST'
-                });
-            }
-        } else if (error.status === 401) {
-            return res.status(401).json({ 
-                error: 'Authentication failed. Please contact support.',
-                code: 'AUTH_FAILED'
-            });
-        } else {
-            return res.status(500).json({ 
-                error: 'Server error. Please try again later.',
-                code: 'SERVER_ERROR'
-            });
-        }
     }
 });
 

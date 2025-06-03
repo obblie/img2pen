@@ -3031,11 +3031,11 @@ fetch('./version.json')
 // Function to generate image using backend OpenAI proxy
 async function generateImageWithOpenAI(prompt) {
     try {
-        console.log('🌐 Making request to:', `${BACKEND_URL}/api/generate-image`);
+        console.log('🌐 Making request to:', `${OPENAI_BACKEND_URL}/api/generate-image`);
         showLoadingOverlay();
         document.getElementById('loading-status').textContent = 'Generating image with AI...';
         
-        const response = await fetch(`${BACKEND_URL}/api/generate-image`, {
+        const response = await fetch(`${OPENAI_BACKEND_URL}/api/generate-image`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
