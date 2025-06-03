@@ -1,17 +1,21 @@
 import { execSync } from 'child_process';
+import { randomUUID } from 'crypto';
 
-const getGitTimestamp = () => {
+const getVersionGUID = () => {
   try {
-    return execSync('git log -1 --format=%cd --date=iso', { encoding: 'utf8' }).trim();
+    // Try to get git commit hash first
+    const gitHash = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim();
+    return `v${gitHash}-${Date.now().toString(36)}`;
   } catch (error) {
-    return new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+    // Fallback to random GUID
+    return `v${randomUUID().split('-')[0]}-${Date.now().toString(36)}`;
   }
 };
 
 export default {
   base: '/img2pen/',
   define: {
-    '__GIT_TIMESTAMP__': JSON.stringify(getGitTimestamp())
+    '__VERSION_GUID__': JSON.stringify(getVersionGUID())
   },
   build: {
     minify: false

@@ -1829,15 +1829,22 @@ class HeightfieldViewer {
                     mesh.position.y = this.pendantThickness / 2;
                 }
                 
+                // Position the mesh properly
+                mesh.position.set(0, 0, 0); // Center the mesh at origin
                 console.log('Mesh position after adjustment:', mesh.position);
+                
                 this.scene.add(mesh);
                 console.log('Added mesh to scene');
-                this.heightfield = mesh;
-                this.createJumpring('small');
-                this.updateJumpringPosition();
-                // Ensure the correct metal material is applied on first render
-                const metalType = document.getElementById('metal-type')?.value || 'sterling-silver';
-                this.updateMetalMaterial(metalType);
+                
+                // Create jumpring
+                this.createJumpring();
+                console.log('Creating jumpring');
+                
+                // Center the camera on the mesh
+                const box = new THREE.Box3().setFromObject(mesh);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                
                 console.log('Camera position:', this.camera.position);
                 console.log('Camera looking at:', this.controls.target);
                 const boundingBox = new THREE.Box3().setFromObject(mesh);
@@ -1845,17 +1852,19 @@ class HeightfieldViewer {
                 console.log('Bounding box min:', boundingBox.min);
                 console.log('Bounding box max:', boundingBox.max);
                 console.log('Bounding box size:', boundingBox.getSize(new THREE.Vector3()));
+                console.log('Mesh center calculated:', center);
+                
+                // Position camera to look at the mesh center
+                this.controls.target.copy(center);
+                this.camera.position.set(center.x, center.y, center.z + Math.max(size.x, size.y, size.z) * 2);
+                this.controls.update();
+                
+                console.log('Camera repositioned to:', this.camera.position);
+                console.log('Camera now looking at:', this.controls.target);
+                
                 console.log('Adding red layer');
                 console.log('Scene children:', this.scene.children.length);
                 console.log('About to return from circular-pendant case');
-                
-                // Fit camera to see the pendant
-                this.fitCameraToObject(mesh);
-                console.log('Camera fitted to object');
-                console.log('Camera position after fit:', this.camera.position);
-                console.log('Camera target after fit:', this.controls.target);
-                console.log('Mesh center:', boundingBox.getCenter(new THREE.Vector3()));
-                
                 return;
             case 'rectangular-pendant':
                 geometry = new THREE.PlaneGeometry(

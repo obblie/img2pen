@@ -620,14 +620,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             const versionElement = document.getElementById('version-indicator');
             if (versionElement) {
-                // Get git commit timestamp (this will be replaced during build)
-                const gitTimestamp = '__GIT_TIMESTAMP__';
-                const buildTimestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                // Get version GUID (this will be replaced during build)
+                const versionGUID = '__VERSION_GUID__';
+                const fallbackVersion = `v${Date.now().toString(36)}`;
                 
-                // Use git timestamp if available, otherwise fall back to build timestamp
-                const timestamp = gitTimestamp !== '__GIT_TIMESTAMP__' ? gitTimestamp : buildTimestamp;
+                // Use version GUID if available, otherwise fall back to timestamp-based version
+                const version = versionGUID !== '__VERSION_GUID__' ? versionGUID : fallbackVersion;
                 
-                versionElement.querySelector('span').textContent = timestamp;
+                versionElement.querySelector('span').textContent = version;
             }
         });
     </script>
