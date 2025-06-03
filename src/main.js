@@ -6,20 +6,6 @@ import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
-// Version GUID (replaced during build)
-const VERSION_GUID = __VERSION_GUID__;
-
-// Display version in console and UI
-console.log('img2pen version:', VERSION_GUID);
-
-// Update version display in UI
-document.addEventListener('DOMContentLoaded', () => {
-    const versionElement = document.getElementById('build-timestamp');
-    if (versionElement) {
-        versionElement.textContent = VERSION_GUID;
-    }
-});
-
 // Constants for physical dimensions
 const MAX_DEPTH = 0.8; // mm (reduced from 1.3mm)
 const FIXED_WIDTH = 25; // mm
@@ -308,12 +294,6 @@ function addCircleOverlay(cropper) {
         if (overlay) overlay.remove();
         const w = cropBox.offsetWidth;
         const h = cropBox.offsetHeight;
-        
-        // Prevent negative radius values by ensuring minimum size
-        const minRadius = 5; // Minimum radius to prevent negative values
-        const rxOuter = Math.max(minRadius, w/2 - 3);
-        const ryOuter = Math.max(minRadius, h/2 - 3);
-        
         overlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         overlay.classList.add('circle-crop-overlay');
         overlay.setAttribute('width', w);
@@ -329,8 +309,8 @@ function addCircleOverlay(cropper) {
         const ellipseOutline = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
         ellipseOutline.setAttribute('cx', w/2);
         ellipseOutline.setAttribute('cy', h/2);
-        ellipseOutline.setAttribute('rx', rxOuter);
-        ellipseOutline.setAttribute('ry', ryOuter);
+        ellipseOutline.setAttribute('rx', w/2 - 3);
+        ellipseOutline.setAttribute('ry', h/2 - 3);
         ellipseOutline.setAttribute('fill', 'none');
         ellipseOutline.setAttribute('stroke', 'white');
         ellipseOutline.setAttribute('stroke-width', '7');
@@ -341,8 +321,8 @@ function addCircleOverlay(cropper) {
         const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
         ellipse.setAttribute('cx', w/2);
         ellipse.setAttribute('cy', h/2);
-        ellipse.setAttribute('rx', rxOuter);
-        ellipse.setAttribute('ry', ryOuter);
+        ellipse.setAttribute('rx', w/2 - 3);
+        ellipse.setAttribute('ry', h/2 - 3);
         ellipse.setAttribute('fill', 'none');
         ellipse.setAttribute('stroke', '#4af');
         ellipse.setAttribute('stroke-width', '5');
@@ -473,14 +453,8 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
                 cropper.setAspectRatio(parseFloat(initialRatio));
             }
         },
-        crop: () => {
-            updateCropInfo();
-            updatePreview();
-        },
-        cropmove: () => {
-            updateCropInfo();
-            updatePreview();
-        },
+        crop: updateCropInfo,
+        cropmove: updateCropInfo,
         cropend: () => {
             updateCropInfo();
             updatePreview();
@@ -534,68 +508,48 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
         return { width: Math.round(w / divisor), height: Math.round(h / divisor) };
     }
     
-    // Update preview with throttling to prevent constant refreshing
-    let updatePreviewTimeout;
+    // Update preview
     function updatePreview() {
-        if (!cropper) {
-            console.warn('updatePreview: cropper not available');
-            return;
-        }
+        if (!cropper) return;
         
-        // Clear any existing timeout to throttle calls
-        if (updatePreviewTimeout) {
-            clearTimeout(updatePreviewTimeout);
-        }
-        
-        updatePreviewTimeout = setTimeout(() => {
-            console.log('updatePreview: starting preview update');
+        try {
+            const canvas = cropper.getCroppedCanvas({
+                width: 200,
+                height: 200,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
             
-            try {
-                const canvas = cropper.getCroppedCanvas({
-                    width: 200,
-                    height: 200,
-                    imageSmoothingEnabled: true,
-                    imageSmoothingQuality: 'high'
-                });
+            if (canvas) {
+                // Clear preview
+                cropPreview.innerHTML = '';
                 
-                console.log('updatePreview: got canvas:', canvas);
-                
-                if (canvas) {
-                    // Clear preview
-                    cropPreview.innerHTML = '';
-                    console.log('updatePreview: cleared preview, cropShape:', cropShape);
+                if (cropShape === 'circle') {
+                    // Create circular preview
+                    const circleCanvas = document.createElement('canvas');
+                    circleCanvas.width = 200;
+                    circleCanvas.height = 200;
+                    const ctx = circleCanvas.getContext('2d');
                     
-                    if (cropShape === 'circle') {
-                        // Create circular preview
-                        const circleCanvas = document.createElement('canvas');
-                        circleCanvas.width = 200;
-                        circleCanvas.height = 200;
-                        const ctx = circleCanvas.getContext('2d');
-                        
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.arc(100, 100, 100, 0, 2 * Math.PI);
-                        ctx.closePath();
-                        ctx.clip();
-                        ctx.drawImage(canvas, 0, 0, 200, 200);
-                        ctx.restore();
-                        
-                        circleCanvas.style.borderRadius = '50%';
-                        cropPreview.appendChild(circleCanvas);
-                        console.log('updatePreview: added circular preview');
-                    } else {
-                        canvas.style.maxWidth = '100%';
-                        canvas.style.maxHeight = '100%';
-                        cropPreview.appendChild(canvas);
-                        console.log('updatePreview: added rectangular preview');
-                    }
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(100, 100, 100, 0, 2 * Math.PI);
+                    ctx.closePath();
+                    ctx.clip();
+                    ctx.drawImage(canvas, 0, 0, 200, 200);
+                    ctx.restore();
+                    
+                    circleCanvas.style.borderRadius = '50%';
+                    cropPreview.appendChild(circleCanvas);
                 } else {
-                    console.warn('updatePreview: canvas is null');
+                    canvas.style.maxWidth = '100%';
+                    canvas.style.maxHeight = '100%';
+                    cropPreview.appendChild(canvas);
                 }
-            } catch (error) {
-                console.warn('Preview update failed:', error);
             }
-        }, 100); // 100ms throttle
+        } catch (error) {
+            console.warn('Preview update failed:', error);
+        }
     }
     
     // Zoom controls
@@ -1580,10 +1534,8 @@ class HeightfieldViewer {
         let aspectRatio = heightfieldData.aspectRatio;
 
         // Create appropriate geometry based on object type
-        console.log('createHeightfieldMesh: currentObjectType =', this.currentObjectType);
         switch (this.currentObjectType) {
             case 'circular-pendant':
-                console.log('Entering circular-pendant case');
                 // Remove any previous pendant meshes
                 if (this.heightfield) this.scene.remove(this.heightfield);
                 if (this.bottomDisc) this.scene.remove(this.bottomDisc);
@@ -1595,11 +1547,8 @@ class HeightfieldViewer {
                 // Relief (top)
                 const diameter = this.pendantDiameter;
                 const radius = diameter / 2;
-                // Limit segments to prevent massive geometry
-                const maxSegments = 128; // Reasonable limit for performance
-                const widthSegments = Math.min(heightfieldData.width - 1, maxSegments);
-                const heightSegments = Math.min(heightfieldData.height - 1, maxSegments);
-                console.log('Using segments:', widthSegments, 'x', heightSegments, 'instead of', heightfieldData.width - 1, 'x', heightfieldData.height - 1);
+                const widthSegments = heightfieldData.width - 1;
+                const heightSegments = heightfieldData.height - 1;
                 const thickness = this.pendantThickness;
 
                 // Relief positions, normals, uvs
@@ -1834,7 +1783,6 @@ class HeightfieldViewer {
                 geometry.setAttribute('color', new THREE.Float32BufferAttribute(antiquingColorsCirc, 3));
                 geometry.setIndex(allIndices);
                 geometry.computeVertexNormals();
-                console.log('Created geometry with', allPositions.length / 3, 'vertices and', allIndices.length / 3, 'triangles');
                 // Single material for all
                 const material = new THREE.MeshStandardMaterial({
                     color: METAL_MATERIALS['sterling-silver'].color,
@@ -1846,84 +1794,27 @@ class HeightfieldViewer {
                     alphaMap: alphaMap,
                     alphaTest: alphaMap ? 0.5 : 0,
                     vertexColors: true
-                    // Removed wireframe: true - this was making it invisible!
                 });
                 const mesh = new THREE.Mesh(geometry, material);
                 
-                console.log('Created mesh:', mesh);
-                console.log('Mesh position:', mesh.position);
-                console.log('Mesh visible:', mesh.visible);
-                console.log('Mesh material:', mesh.material);
-                console.log('Mesh geometry vertices:', mesh.geometry.attributes.position.count);
-                
-                // Ensure mesh is visible
-                mesh.visible = true;
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                
-                // Position the mesh at origin - remove conflicting positioning
-                mesh.position.set(0, 0, 0);
-                mesh.rotation.x = 0; // Ensure no rotation
-                console.log('Mesh position after adjustment:', mesh.position);
-                
-                this.scene.add(mesh);
-                this.heightfield = mesh; // Store reference
-                console.log('Added mesh to scene');
-                console.log('Scene children count:', this.scene.children.length);
-                
-                // Create jumpring
-                this.createJumpring('small');
-                this.updateJumpringPosition();
-                console.log('Creating jumpring');
-                
-                // Apply metal material
-                const metalType = document.getElementById('metal-type')?.value || 'sterling-silver';
-                this.updateMetalMaterial(metalType);
-                
-                // Center the camera on the mesh
-                const box = new THREE.Box3().setFromObject(mesh);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
-                
-                console.log('Camera position:', this.camera.position);
-                console.log('Camera looking at:', this.controls.target);
-                const boundingBox = new THREE.Box3().setFromObject(mesh);
-                console.log('Mesh bounding box:', boundingBox);
-                console.log('Bounding box min:', boundingBox.min);
-                console.log('Bounding box max:', boundingBox.max);
-                console.log('Bounding box size:', boundingBox.getSize(new THREE.Vector3()));
-                console.log('Mesh center calculated:', center);
-                
-                // Check if bounding box is valid
-                if (size.x === 0 && size.y === 0 && size.z === 0) {
-                    console.error('Mesh has zero size! This means the mesh is not properly created.');
-                    // Set a default camera position
-                    this.camera.position.set(50, 50, 50);
-                    this.controls.target.set(0, 0, 0);
+                if (this.currentObjectType === 'circular-pendant') {
+                    // For circular pendant, rotate to stand upright and position bottom edge at y=0
+                    mesh.rotation.x = 0; // Remove the flat rotation
+                    mesh.position.y = this.pendantThickness / 2;
                 } else {
-                    // Ensure camera is at a reasonable distance
-                    const maxDimension = Math.max(size.x, size.y, size.z);
-                    console.log('Max dimension:', maxDimension);
-                    
-                    // Use a simpler camera positioning
-                    this.controls.target.copy(center);
-                    
-                    // Position camera at a fixed distance that should work for most pendants
-                    const distance = Math.max(50, maxDimension * 4);
-                    this.camera.position.set(distance, distance, distance);
-                    
-                    console.log('Setting camera distance to:', distance);
+                    // Position so the bottom edge sits on the platform (y=0)
+                    mesh.position.y = this.pendantThickness / 2;
                 }
                 
-                this.controls.update();
-                
-                console.log('Camera repositioned to:', this.camera.position);
-                console.log('Camera now looking at:', this.controls.target);
-                console.log('Camera distance from target:', this.camera.position.distanceTo(this.controls.target));
-                
-                // Force a render to see if anything appears
-                this.renderer.render(this.scene, this.camera);
-                console.log('Forced render completed');
+                this.scene.add(mesh);
+                this.heightfield = mesh;
+                this.createJumpring('small');
+                this.updateJumpringPosition();
+                // Ensure the correct metal material is applied on first render
+                const metalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+                this.updateMetalMaterial(metalType);
+                console.log('Adding red layer');
+                console.log('Scene children:', this.scene.children.length);
                 return;
             case 'rectangular-pendant':
                 geometry = new THREE.PlaneGeometry(
@@ -1951,7 +1842,6 @@ class HeightfieldViewer {
                 break;
         }
 
-        console.log('After switch statement - this should not execute for circular-pendant');
         if (!geometry) return;
 
         const positions = geometry.attributes.position.array;
@@ -2046,10 +1936,6 @@ class HeightfieldViewer {
         // Create mesh and position it upright like jewelry sitting on a platform
         const mesh = new THREE.Mesh(geometry, material);
         
-        console.log('Created mesh:', mesh);
-        console.log('Mesh position:', mesh.position);
-        console.log('Mesh visible:', mesh.visible);
-        
         if (this.currentObjectType === 'circular-pendant') {
             // For circular pendant, rotate to stand upright and position bottom edge at y=0
             mesh.rotation.x = 0; // Remove the flat rotation
@@ -2059,9 +1945,7 @@ class HeightfieldViewer {
             mesh.position.y = this.pendantThickness / 2;
         }
         
-        console.log('Mesh position after adjustment:', mesh.position);
         this.scene.add(mesh);
-        console.log('Added mesh to scene');
         this.heightfield = mesh;
         this.createJumpring('small');
         this.updateJumpringPosition();
@@ -3357,25 +3241,16 @@ window.viewer = new HeightfieldViewer();
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    // Set build timestamp in EST
+    // Set build timestamp in US Eastern Time
     const now = new Date();
-    const estOffset = -5; // EST is UTC-5 (or UTC-4 during daylight saving time)
-    const isDST = (date) => {
-        const jan = new Date(date.getFullYear(), 0, 1);
-        const jul = new Date(date.getFullYear(), 6, 1);
-        return date.getTimezoneOffset() < Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
-    };
-    
-    const offset = isDST(now) ? -4 : -5; // EDT is UTC-4, EST is UTC-5
-    const estTime = new Date(now.getTime() + (offset * 60 * 60 * 1000));
-    const timezoneName = isDST(now) ? 'EDT' : 'EST';
-    
-    const buildTimestamp = estTime.toISOString().replace('T', ' ').substring(0, 19) + ` ${timezoneName}`;
+    const options = { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const estString = now.toLocaleString('en-US', options).replace(',', '');
+    // Determine EST/EDT
+    const tz = now.toLocaleTimeString('en-US', { timeZoneName: 'short', timeZone: 'America/New_York' }).split(' ').pop();
     const timestampElement = document.getElementById('build-timestamp');
     if (timestampElement) {
-        timestampElement.textContent = buildTimestamp;
+        timestampElement.textContent = estString + ' ' + tz;
     }
-    
     window.viewer = new HeightfieldViewer();
     window.viewer.init();
 });

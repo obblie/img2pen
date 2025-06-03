@@ -257,8 +257,8 @@
     <div id="canvas-container"></div>
 
     <!-- Version indicator -->
-    <div id="version-indicator" style="position:fixed;bottom:10px;left:10px;background:rgba(0,0,0,0.7);color:#aaa;padding:10px 15px;border-radius:6px;font-size:0.9em;font-family:monospace;z-index:1000;pointer-events:none;">
-        <div>Version: <span id="build-timestamp">Loading...</span></div>
+    <div id="version-indicator" style="position:fixed;bottom:10px;left:10px;background:rgba(0,0,0,0.85);color:#fff;padding:14px 22px;border-radius:8px;font-size:1.25em;font-family:monospace;z-index:1000;pointer-events:none;box-shadow:0 2px 12px #000;letter-spacing:0.5px;">
+        <div><b>Version:</b> <span id="build-timestamp">Loading...</span></div>
     </div>
 
     <!-- Notification system -->
@@ -607,7 +607,7 @@
         </div>
     </div>
 
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="./src/main.js?v=3&t=1234567890"></script>
     <!-- Cropper.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <!-- Add this in the <head> or before the closing </body> tag -->
