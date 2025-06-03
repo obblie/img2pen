@@ -6,6 +6,20 @@ import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
+// Version GUID (replaced during build)
+const VERSION_GUID = __VERSION_GUID__;
+
+// Display version in console and UI
+console.log('img2pen version:', VERSION_GUID);
+
+// Update version display in UI
+document.addEventListener('DOMContentLoaded', () => {
+    const versionElement = document.getElementById('version');
+    if (versionElement) {
+        versionElement.textContent = VERSION_GUID;
+    }
+});
+
 // Constants for physical dimensions
 const MAX_DEPTH = 0.8; // mm (reduced from 1.3mm)
 const FIXED_WIDTH = 25; // mm
@@ -1819,6 +1833,13 @@ class HeightfieldViewer {
                 console.log('Created mesh:', mesh);
                 console.log('Mesh position:', mesh.position);
                 console.log('Mesh visible:', mesh.visible);
+                console.log('Mesh material:', mesh.material);
+                console.log('Mesh geometry vertices:', mesh.geometry.attributes.position.count);
+                
+                // Ensure mesh is visible
+                mesh.visible = true;
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
                 
                 // Position the mesh at origin - remove conflicting positioning
                 mesh.position.set(0, 0, 0);
@@ -1828,6 +1849,7 @@ class HeightfieldViewer {
                 this.scene.add(mesh);
                 this.heightfield = mesh; // Store reference
                 console.log('Added mesh to scene');
+                console.log('Scene children count:', this.scene.children.length);
                 
                 // Create jumpring
                 this.createJumpring('small');
@@ -1852,17 +1874,18 @@ class HeightfieldViewer {
                 console.log('Bounding box size:', boundingBox.getSize(new THREE.Vector3()));
                 console.log('Mesh center calculated:', center);
                 
+                // Ensure camera is at a reasonable distance
+                const maxDimension = Math.max(size.x, size.y, size.z);
+                const cameraDistance = maxDimension * 3; // Increased distance
+                
                 // Position camera to look at the mesh center
                 this.controls.target.copy(center);
-                this.camera.position.set(center.x, center.y, center.z + Math.max(size.x, size.y, size.z) * 2);
+                this.camera.position.set(center.x + cameraDistance, center.y + cameraDistance, center.z + cameraDistance);
                 this.controls.update();
                 
                 console.log('Camera repositioned to:', this.camera.position);
                 console.log('Camera now looking at:', this.controls.target);
-                
-                console.log('Adding red layer');
-                console.log('Scene children:', this.scene.children.length);
-                console.log('About to return from circular-pendant case');
+                console.log('Camera distance from target:', this.camera.position.distanceTo(this.controls.target));
                 return;
             case 'rectangular-pendant':
                 geometry = new THREE.PlaneGeometry(
