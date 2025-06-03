@@ -795,12 +795,6 @@ class HeightfieldViewer {
                     return;
                 }
 
-                // Check if API key is configured
-                if (!OPENAI_API_KEY) {
-                    showNotification('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your .env file. Get your key from: https://platform.openai.com/api-keys', 'error');
-                    return;
-                }
-
                 try {
                     const imageBlob = await generateImageWithOpenAI(prompt);
                     if (imageBlob) {
