@@ -3031,10 +3031,11 @@ fetch('./version.json')
 // Function to generate image using backend OpenAI proxy
 async function generateImageWithOpenAI(prompt) {
     try {
+        console.log('🌐 Making request to:', `${BACKEND_URL}/api/generate-image`);
         showLoadingOverlay();
         document.getElementById('loading-status').textContent = 'Generating image with AI...';
         
-        const response = await fetch(`${OPENAI_BACKEND_URL}/api/generate-image`, {
+        const response = await fetch(`${BACKEND_URL}/api/generate-image`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -3044,8 +3045,12 @@ async function generateImageWithOpenAI(prompt) {
             })
         });
 
+        console.log('📡 Response status:', response.status, response.statusText);
+        console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
         if (!response.ok) {
-            const errorData = await response.json();
+            const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
+            console.error('❌ Response error data:', errorData);
             
             // Provide user-friendly error messages based on status code
             let userMessage = 'Failed to generate image';
@@ -3069,6 +3074,7 @@ async function generateImageWithOpenAI(prompt) {
         }
 
         const data = await response.json();
+        console.log('✅ Response data received, imageData type:', typeof data.imageData, 'length:', data.imageData ? data.imageData.length : 'null');
         
         document.getElementById('loading-status').textContent = 'Processing generated image...';
         
@@ -3078,7 +3084,8 @@ async function generateImageWithOpenAI(prompt) {
         return data.imageData;
     } catch (error) {
         hideLoadingOverlay();
-        console.error('Error generating image:', error);
+        console.error('💥 Error generating image:', error);
+        console.error('💥 Error stack:', error.stack);
         showNotification(`Error: ${error.message}`, 'error');
         return null;
     }
