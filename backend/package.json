@@ -1,13 +1,13 @@
 {
-  "name": "img2pen-s3-backend",
+  "name": "img2pen-backend",
   "version": "1.0.0",
-  "description": "S3-based backend for img2pen with signed URL uploads",
-  "main": "s3-backend.js",
+  "description": "Backend services for img2pen including S3 uploads and OpenAI proxy",
+  "main": "openai-proxy.js",
   "type": "module",
   "scripts": {
-    "start": "node s3-backend.js",
-    "dev": "nodemon s3-backend.js",
-    "test": "node test-s3.js"
+    "start": "node openai-proxy.js",
+    "dev": "node openai-proxy.js",
+    "s3": "node s3-backend.js"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -21,5 +21,8 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "keywords": ["openai", "proxy", "express", "api", "s3"],
+  "author": "",
+  "license": "MIT"
 } 

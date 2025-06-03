@@ -11,6 +11,10 @@ const MAX_DEPTH = 0.8; // mm (reduced from 1.3mm)
 const FIXED_WIDTH = 25; // mm
 const RESOLUTION = 1000; // Number of segments in X direction (restored to original resolution for 18MB files)
 
+// OpenAI API configuration
+// AI image generation is handled through the backend proxy for security
+// No API key needed in frontend - it's handled securely on the server
+
 // Metal material properties
 const METAL_MATERIALS = {
     'sterling-silver': {
@@ -88,7 +92,8 @@ function showNotification(message, type = 'success') {
 }
 
 // Configuration
-const BACKEND_URL = 'https://img2pen-s3-backend.onrender.com'; // Updated to S3 backend
+const BACKEND_URL = 'https://img2pen-s3-backend.onrender.com'; // S3 backend for file uploads
+const OPENAI_BACKEND_URL = 'https://your-render-service-url.onrender.com'; // Replace with your actual Render service URL
 
 // Function to upload image to S3 (updated from GitHub)
 async function uploadImageToGitHub(file) {
@@ -778,6 +783,62 @@ class HeightfieldViewer {
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        // Handle prompt submit for AI image generation
+        const promptSubmitBtn = document.getElementById('prompt-submit');
+        const promptInput = document.getElementById('prompt-input');
+        if (promptSubmitBtn && promptInput) {
+            promptSubmitBtn.addEventListener('click', async () => {
+                const prompt = promptInput.value.trim();
+                if (!prompt) {
+                    showNotification('Please enter a prompt to generate an image', 'error');
+                    return;
+                }
+
+                // Check if API key is configured
+                if (!OPENAI_API_KEY) {
+                    showNotification('OpenAI API key not configured. Please add VITE_OPENAI_API_KEY to your .env file. Get your key from: https://platform.openai.com/api-keys', 'error');
+                    return;
+                }
+
+                try {
+                    const imageBlob = await generateImageWithOpenAI(prompt);
+                    if (imageBlob) {
+                        // Start S3 upload in background (non-blocking)
+                        uploadImageToS3(imageBlob).then(uploadResult => {
+                            console.log('✅ Background AI image upload completed:', uploadResult);
+                        }).catch(error => {
+                            console.error('❌ Background AI image upload failed:', error);
+                        });
+                        
+                        // Convert blob to data URL for cropper
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            this.originalImageDataUrl = ev.target.result;
+                            showCropperModal(ev.target.result, (croppedBlob) => {
+                                this.processImage(croppedBlob);
+                            }, null, this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect');
+                        };
+                        reader.readAsDataURL(imageBlob);
+                        
+                        // Clear the prompt input
+                        promptInput.value = '';
+                        showNotification('Image generated successfully! Please crop it to continue.', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error in prompt submit:', error);
+                    showNotification('Failed to generate image. Please try again.', 'error');
+                }
+            });
+
+            // Allow Enter key to submit
+            promptInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    promptSubmitBtn.click();
+                }
+            });
+        }
     }
 
     setupUIControls() {
@@ -2960,3 +3021,46 @@ fetch('./version.json')
     const el = document.getElementById('deployment-guid');
     if (el) el.textContent = 'Deployment version: unknown';
   });
+
+// Function to generate image using backend OpenAI proxy
+async function generateImageWithOpenAI(prompt) {
+    try {
+        showLoadingOverlay();
+        document.getElementById('loading-status').textContent = 'Generating image with AI...';
+        
+        const response = await fetch(`${OPENAI_BACKEND_URL}/api/generate-image`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prompt: prompt
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        const imageUrl = data.imageUrl;
+        
+        // Download the image and convert to blob
+        document.getElementById('loading-status').textContent = 'Downloading generated image...';
+        const imageResponse = await fetch(imageUrl);
+        if (!imageResponse.ok) {
+            throw new Error('Failed to download generated image');
+        }
+        
+        const imageBlob = await imageResponse.blob();
+        hideLoadingOverlay();
+        
+        return imageBlob;
+    } catch (error) {
+        hideLoadingOverlay();
+        console.error('Error generating image:', error);
+        showNotification(`Failed to generate image: ${error.message}`, 'error');
+        return null;
+    }
+}
