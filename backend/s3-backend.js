@@ -19,7 +19,16 @@ const s3 = new AWS.S3();
 const BUCKET_NAME = process.env.S3_BUCKET_NAME;
 
 // Add CORS middleware
-app.use(cors());
+app.use(cors({
+    origin: [
+        'https://obblie.github.io',
+        'http://localhost:5173', // For local development
+        'http://localhost:3000'  // For local development
+    ],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false
+}));
 app.use(express.json());
 
 // Add request logging middleware
@@ -226,6 +235,50 @@ app.post('/api/get-image-upload-url', async (req, res) => {
     } catch (error) {
         console.error('[IMAGE-URL] ❌ Error generating image upload URL:', error);
         res.status(500).json({ error: 'Failed to generate image upload URL' });
+    }
+});
+
+// Generate signed URL for DALL-E generated image upload
+app.post('/api/get-dalle-upload-url', async (req, res) => {
+    try {
+        const { fileType = 'image/png', prompt } = req.body;
+
+        // Generate unique filename for DALL-E image
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const guid = uuidv4();
+        const extension = fileType.split('/')[1] || 'png';
+        const filename = `dalleGenerations/${timestamp}-${guid}.${extension}`;
+
+        console.log(`[DALLE-URL] Generating signed URL for DALL-E image: ${filename}`);
+        console.log(`[DALLE-URL] Prompt: ${prompt?.substring(0, 100)}...`);
+
+        // Generate pre-signed URL for PUT operation
+        const signedUrl = s3.getSignedUrl('putObject', {
+            Bucket: BUCKET_NAME,
+            Key: filename,
+            ContentType: fileType,
+            Expires: 300, // 5 minutes for images
+            Metadata: {
+                'upload-timestamp': timestamp,
+                'file-type': 'dalle-generated',
+                'prompt': prompt?.substring(0, 1000) || 'no-prompt' // Limit prompt length
+            }
+        });
+
+        console.log(`[DALLE-URL] ✅ Signed URL generated for ${filename}`);
+        
+        res.json({
+            success: true,
+            uploadUrl: signedUrl,
+            filename: filename,
+            guid: guid,
+            timestamp: timestamp,
+            expiresIn: 300 // 5 minutes
+        });
+
+    } catch (error) {
+        console.error('[DALLE-URL] ❌ Error generating DALL-E upload URL:', error);
+        res.status(500).json({ error: 'Failed to generate DALL-E upload URL' });
     }
 });
 

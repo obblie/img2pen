@@ -379,10 +379,15 @@ function removeCircleOverlay(cropper) {
 
 // Enhanced showCropperModal to support circle overlay
 function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
+    console.log('🖼️ showCropperModal called with:', { imageSrc: imageSrc ? imageSrc.substring(0, 50) + '...' : 'null', cropShape });
+    
     const modal = document.getElementById('cropper-modal');
     const img = document.getElementById('cropper-image');
     const confirmBtn = document.getElementById('cropper-confirm');
     const cancelBtn = document.getElementById('cropper-cancel');
+    
+    console.log('🎯 Modal elements found:', { modal: !!modal, img: !!img, confirmBtn: !!confirmBtn, cancelBtn: !!cancelBtn });
+    
     // Toolbar controls
     const aspectSelect = document.getElementById('cropper-aspect');
     const rotateLeftBtn = document.getElementById('cropper-rotate-left');
@@ -407,6 +412,7 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
     let scaleX = 1, scaleY = 1;
 
     img.src = imageSrc;
+    console.log('🎭 Setting modal display to flex');
     modal.style.display = 'flex';
     if (cropper) { cropper.destroy(); cropper = null; }
     cropper = new Cropper(img, {
@@ -796,26 +802,34 @@ class HeightfieldViewer {
                 }
 
                 try {
+                    console.log('🎨 Starting image generation with prompt:', prompt);
                     const imageDataUrl = await generateImageWithOpenAI(prompt);
+                    console.log('✅ Image generated, data URL length:', imageDataUrl ? imageDataUrl.length : 'null');
+                    
                     if (imageDataUrl) {
                         // Convert data URL to blob for S3 upload in background (non-blocking)
                         fetch(imageDataUrl).then(response => response.blob()).then(imageBlob => {
-                            uploadImageToS3(imageBlob).then(uploadResult => {
-                                console.log('✅ Background AI image upload completed:', uploadResult);
+                            uploadDalleImageToS3(imageBlob, prompt).then(uploadResult => {
+                                console.log('✅ Background DALL-E image upload completed:', uploadResult);
                             }).catch(error => {
-                                console.error('❌ Background AI image upload failed:', error);
+                                console.error('❌ Background DALL-E image upload failed:', error);
                             });
                         });
                         
                         // Use the data URL directly for cropper
+                        console.log('📷 About to show cropper modal with image data');
                         this.originalImageDataUrl = imageDataUrl;
                         showCropperModal(imageDataUrl, (croppedBlob) => {
+                            console.log('✂️ Cropper callback triggered with blob size:', croppedBlob.size);
                             this.processImage(croppedBlob);
                         }, null, this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect');
                         
                         // Clear the prompt input
                         promptInput.value = '';
                         showNotification('Image generated successfully! Please crop it to continue.', 'success');
+                    } else {
+                        console.error('❌ Image generation returned null/empty data URL');
+                        showNotification('Failed to generate image. Please try again.', 'error');
                     }
                 } catch (error) {
                     console.error('Error in prompt submit:', error);
@@ -3067,5 +3081,58 @@ async function generateImageWithOpenAI(prompt) {
         console.error('Error generating image:', error);
         showNotification(`Error: ${error.message}`, 'error');
         return null;
+    }
+}
+
+// Function to upload DALL-E generated image to S3
+async function uploadDalleImageToS3(imageBlob, prompt) {
+    try {
+        console.log('📋 Requesting signed URL for DALL-E image upload...');
+        
+        // Get signed upload URL for DALL-E images
+        const uploadUrlResponse = await fetch(`${BACKEND_URL}/api/get-dalle-upload-url`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                fileType: imageBlob.type,
+                prompt: prompt
+            })
+        });
+
+        if (!uploadUrlResponse.ok) {
+            const errorText = await uploadUrlResponse.text();
+            throw new Error(`Failed to get upload URL: ${uploadUrlResponse.status} - ${errorText}`);
+        }
+
+        const uploadData = await uploadUrlResponse.json();
+        console.log('✅ Got signed URL for DALL-E image:', uploadData.filename);
+
+        // Upload the image to S3
+        console.log('📤 Uploading DALL-E image to S3...');
+        const uploadResponse = await fetch(uploadData.uploadUrl, {
+            method: 'PUT',
+            body: imageBlob,
+            headers: {
+                'Content-Type': imageBlob.type
+            }
+        });
+
+        if (!uploadResponse.ok) {
+            throw new Error(`S3 upload failed: ${uploadResponse.status}`);
+        }
+
+        console.log('✅ DALL-E image uploaded successfully to S3:', uploadData.filename);
+        return {
+            success: true,
+            filename: uploadData.filename,
+            guid: uploadData.guid,
+            s3Key: uploadData.filename
+        };
+
+    } catch (error) {
+        console.error('❌ DALL-E S3 image upload error:', error);
+        throw error;
     }
 }
