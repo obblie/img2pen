@@ -93,7 +93,7 @@ function showNotification(message, type = 'success') {
 
 // Configuration
 const BACKEND_URL = 'https://img2pen-s3-backend.onrender.com'; // S3 backend for file uploads
-const OPENAI_BACKEND_URL = 'https://your-render-service-url.onrender.com'; // Replace with your actual Render service URL
+const OPENAI_BACKEND_URL = 'https://img2pen-openai-backend.onrender.com'; // Replace with your actual Render service URL
 
 // Function to upload image to S3 (updated from GitHub)
 async function uploadImageToGitHub(file) {
