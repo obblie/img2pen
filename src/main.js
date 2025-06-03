@@ -796,24 +796,22 @@ class HeightfieldViewer {
                 }
 
                 try {
-                    const imageBlob = await generateImageWithOpenAI(prompt);
-                    if (imageBlob) {
-                        // Start S3 upload in background (non-blocking)
-                        uploadImageToS3(imageBlob).then(uploadResult => {
-                            console.log('✅ Background AI image upload completed:', uploadResult);
-                        }).catch(error => {
-                            console.error('❌ Background AI image upload failed:', error);
+                    const imageDataUrl = await generateImageWithOpenAI(prompt);
+                    if (imageDataUrl) {
+                        // Convert data URL to blob for S3 upload in background (non-blocking)
+                        fetch(imageDataUrl).then(response => response.blob()).then(imageBlob => {
+                            uploadImageToS3(imageBlob).then(uploadResult => {
+                                console.log('✅ Background AI image upload completed:', uploadResult);
+                            }).catch(error => {
+                                console.error('❌ Background AI image upload failed:', error);
+                            });
                         });
                         
-                        // Convert blob to data URL for cropper
-                        const reader = new FileReader();
-                        reader.onload = (ev) => {
-                            this.originalImageDataUrl = ev.target.result;
-                            showCropperModal(ev.target.result, (croppedBlob) => {
-                                this.processImage(croppedBlob);
-                            }, null, this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect');
-                        };
-                        reader.readAsDataURL(imageBlob);
+                        // Use the data URL directly for cropper
+                        this.originalImageDataUrl = imageDataUrl;
+                        showCropperModal(imageDataUrl, (croppedBlob) => {
+                            this.processImage(croppedBlob);
+                        }, null, this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect');
                         
                         // Clear the prompt input
                         promptInput.value = '';
@@ -3058,17 +3056,12 @@ async function generateImageWithOpenAI(prompt) {
 
         const data = await response.json();
         
-        // Convert base64 data URL to blob
         document.getElementById('loading-status').textContent = 'Processing generated image...';
-        const base64Data = data.imageData;
-        
-        // Convert base64 to blob
-        const response2 = await fetch(base64Data);
-        const imageBlob = await response2.blob();
         
         hideLoadingOverlay();
         
-        return imageBlob;
+        // Return the base64 data URL directly
+        return data.imageData;
     } catch (error) {
         hideLoadingOverlay();
         console.error('Error generating image:', error);
