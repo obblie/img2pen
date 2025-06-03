@@ -227,7 +227,7 @@
     </style>
     <!-- Cropper.js CSS -->
     <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
-  <script type="module" crossorigin src="/img2pen/assets/index-CZbs85z1.js"></script>
+  <script type="module" crossorigin src="/img2pen/assets/index-Drt0SfSO.js"></script>
 </head>
 <body>
     <div id="drop-zone">
@@ -491,31 +491,54 @@
 
     <!-- Cropper Modal -->
     <div id="cropper-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);z-index:4000;justify-content:center;align-items:center;flex-direction:column;">
-        <div style="background:#222;padding:24px;border-radius:10px;box-shadow:0 2px 16px #000;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;">
-            <img id="cropper-image" src="" style="max-width:70vw;max-height:60vh;display:block;background:#111;"/>
-            <!-- Cropper Toolbar -->
-            <div id="cropper-toolbar" style="margin-top:18px;display:flex;gap:10px;align-items:center;">
-                <label style="color:white;">Aspect:</label>
-                <select id="cropper-aspect" style="padding:2px 6px;">
-                    <option value="free">Free</option>
-                    <option value="1">1:1</option>
-                    <option value="4/3">4:3</option>
-                    <option value="16/9">16:9</option>
-                </select>
-                <button id="cropper-rotate-left" title="Rotate Left">⟲</button>
-                <button id="cropper-rotate-right" title="Rotate Right">⟳</button>
-                <button id="cropper-flip-h" title="Flip Horizontal">⇋</button>
-                <button id="cropper-flip-v" title="Flip Vertical">⇅</button>
-                <button id="cropper-zoom-in" title="Zoom In">＋</button>
-                <button id="cropper-zoom-out" title="Zoom Out">－</button>
-                <button id="cropper-reset" title="Reset">Reset</button>
+        <div style="background:#222;padding:24px;border-radius:10px;box-shadow:0 2px 16px #000;max-width:90vw;max-height:90vh;display:flex;flex-direction:row;align-items:flex-start;gap:32px;">
+            <div style="display:flex;flex-direction:column;align-items:center;">
+                <img id="cropper-image" src="" style="max-width:70vw;max-height:60vh;display:block;background:#111;"/>
+                <!-- Cropper Toolbar -->
+                <div id="cropper-toolbar" style="margin-top:18px;display:flex;gap:10px;align-items:center;">
+                    <label style="color:white;">Aspect:</label>
+                    <select id="cropper-aspect" style="padding:2px 6px;">
+                        <option value="free">Free</option>
+                        <option value="1">1:1</option>
+                        <option value="4/3">4:3</option>
+                        <option value="16/9">16:9</option>
+                    </select>
+                    <button id="cropper-rotate-left" title="Rotate Left">⟲</button>
+                    <button id="cropper-rotate-right" title="Rotate Right">⟳</button>
+                    <button id="cropper-flip-h" title="Flip Horizontal">⇋</button>
+                    <button id="cropper-flip-v" title="Flip Vertical">⇅</button>
+                    <button id="cropper-zoom-in" title="Zoom In">＋</button>
+                    <button id="cropper-zoom-out" title="Zoom Out">－</button>
+                    <button id="cropper-reset" title="Reset">Reset</button>
+                    <button id="cropper-fit" title="Fit crop box to image">Fit</button>
+                    <button id="cropper-center" title="Center crop box">Center</button>
+                </div>
+                <!-- Pixel-precise controls -->
+                <div id="cropper-pixel-controls" style="margin-top:10px;display:flex;gap:8px;align-items:center;">
+                    <label style="color:white;font-size:0.95em;">X: <input id="cropper-x" type="number" style="width:60px;"></label>
+                    <label style="color:white;font-size:0.95em;">Y: <input id="cropper-y" type="number" style="width:60px;"></label>
+                    <label style="color:white;font-size:0.95em;">W: <input id="cropper-w" type="number" style="width:60px;"></label>
+                    <label style="color:white;font-size:0.95em;">H: <input id="cropper-h" type="number" style="width:60px;"></label>
+                    <span style="color:#aaa;font-size:0.95em;">Zoom: <span id="cropper-zoom">100%</span></span>
+                    <span style="color:#aaa;font-size:0.95em;">Rot: <span id="cropper-rotation">0°</span></span>
+                </div>
+                <div style="margin-top:18px;display:flex;gap:16px;">
+                    <button id="cropper-confirm" style="padding:8px 24px;font-size:1.1em;">Crop & Continue</button>
+                    <button id="cropper-cancel" style="padding:8px 24px;font-size:1.1em;">Cancel</button>
+                </div>
             </div>
-            <div style="margin-top:18px;display:flex;gap:16px;">
-                <button id="cropper-confirm" style="padding:8px 24px;font-size:1.1em;">Crop & Continue</button>
-                <button id="cropper-cancel" style="padding:8px 24px;font-size:1.1em;">Cancel</button>
+            <!-- Live Preview -->
+            <div id="cropper-preview-container" style="background:#111;padding:12px;border-radius:8px;min-width:160px;min-height:160px;display:flex;flex-direction:column;align-items:center;">
+                <div style="color:white;font-size:1em;margin-bottom:8px;">Live Preview</div>
+                <div style="background:#222;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;width:150px;height:150px;">
+                    <canvas id="cropper-preview" width="150" height="150" style="display:block;"></canvas>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Deployment GUID Display -->
+    <div id="deployment-guid" style="position:fixed;bottom:12px;left:12px;background:rgba(0,0,0,0.7);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.95em;z-index:5000;pointer-events:none;user-select:text;">Loading version...</div>
 
     <!-- Cropper.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>

@@ -2943,3 +2943,17 @@ class HeightfieldViewer {
 
 // Initialize the viewer
 window.viewer = new HeightfieldViewer(); 
+
+// Show deployment GUID in lower left
+fetch('./version.json')
+  .then(res => res.json())
+  .then(data => {
+    const el = document.getElementById('deployment-guid');
+    if (el) {
+      el.textContent = `Deployment GUID: ${data.guid}\n${data.date}`;
+    }
+  })
+  .catch(() => {
+    const el = document.getElementById('deployment-guid');
+    if (el) el.textContent = 'Deployment version: unknown';
+  });
