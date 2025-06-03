@@ -126,9 +126,9 @@ app.post('/api/generate-image', async (req, res) => {
         const responseText = await response.text();
         console.log('OpenAI raw response:', responseText);
         
-        let errorData;
+        let responseData;
         try {
-            errorData = JSON.parse(responseText);
+            responseData = JSON.parse(responseText);
         } catch (parseError) {
             console.error('Failed to parse OpenAI response as JSON:', parseError);
             console.error('Raw response was:', responseText);
@@ -139,18 +139,18 @@ app.post('/api/generate-image', async (req, res) => {
         }
 
         if (!response.ok) {
-            console.error('OpenAI API error details:', JSON.stringify(errorData, null, 2));
+            console.error('OpenAI API error details:', JSON.stringify(responseData, null, 2));
             return res.status(response.status).json({ 
-                error: errorData.error?.message || 'Failed to generate image',
-                details: errorData
+                error: responseData.error?.message || 'Failed to generate image',
+                details: responseData
             });
         }
 
-        console.log('OpenAI response data:', JSON.stringify(errorData, null, 2));
+        console.log('OpenAI response data:', JSON.stringify(responseData, null, 2));
         console.log('Image generated successfully');
         
         // Download the image from OpenAI and convert to base64
-        const imageUrl = errorData.data[0].url;
+        const imageUrl = responseData.data[0].url;
         console.log('Downloading image from:', imageUrl);
         
         const imageResponse = await fetch(imageUrl);

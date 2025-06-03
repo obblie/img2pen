@@ -209,16 +209,13 @@ app.post('/api/get-image-upload-url', async (req, res) => {
 
         console.log(`[IMAGE-URL] Generating signed URL for image: ${filename}`);
 
-        // Generate pre-signed URL for PUT operation
+        // Generate pre-signed URL for PUT operation (without metadata to avoid signature issues)
         const signedUrl = s3.getSignedUrl('putObject', {
             Bucket: BUCKET_NAME,
             Key: filename,
             ContentType: fileType,
             Expires: 300, // 5 minutes for images
-            Metadata: {
-                'upload-timestamp': timestamp,
-                'file-type': 'user-image'
-            }
+            // Note: Removed Metadata to avoid 403 signature issues
         });
 
         console.log(`[IMAGE-URL] ✅ Signed URL generated for ${filename}`);
@@ -229,7 +226,11 @@ app.post('/api/get-image-upload-url', async (req, res) => {
             filename: filename,
             guid: guid,
             timestamp: timestamp,
-            expiresIn: 300 // 5 minutes
+            expiresIn: 300, // 5 minutes
+            metadata: {
+                'upload-timestamp': timestamp,
+                'file-type': 'user-image'
+            }
         });
 
     } catch (error) {
@@ -252,17 +253,14 @@ app.post('/api/get-dalle-upload-url', async (req, res) => {
         console.log(`[DALLE-URL] Generating signed URL for DALL-E image: ${filename}`);
         console.log(`[DALLE-URL] Prompt: ${prompt?.substring(0, 100)}...`);
 
-        // Generate pre-signed URL for PUT operation
+        // Generate pre-signed URL for PUT operation (without metadata to avoid signature issues)
         const signedUrl = s3.getSignedUrl('putObject', {
             Bucket: BUCKET_NAME,
             Key: filename,
             ContentType: fileType,
             Expires: 300, // 5 minutes for images
-            Metadata: {
-                'upload-timestamp': timestamp,
-                'file-type': 'dalle-generated',
-                'prompt': prompt?.substring(0, 1000) || 'no-prompt' // Limit prompt length
-            }
+            // Note: Removed Metadata to avoid 403 signature issues
+            // Metadata can be added via a separate tagging operation if needed
         });
 
         console.log(`[DALLE-URL] ✅ Signed URL generated for ${filename}`);
@@ -273,7 +271,12 @@ app.post('/api/get-dalle-upload-url', async (req, res) => {
             filename: filename,
             guid: guid,
             timestamp: timestamp,
-            expiresIn: 300 // 5 minutes
+            expiresIn: 300, // 5 minutes
+            metadata: {
+                'upload-timestamp': timestamp,
+                'file-type': 'dalle-generated',
+                'prompt': prompt?.substring(0, 1000) || 'no-prompt'
+            }
         });
 
     } catch (error) {
