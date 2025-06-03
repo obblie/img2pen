@@ -14,7 +14,7 @@ console.log('img2pen version:', VERSION_GUID);
 
 // Update version display in UI
 document.addEventListener('DOMContentLoaded', () => {
-    const versionElement = document.getElementById('version');
+    const versionElement = document.getElementById('build-timestamp');
     if (versionElement) {
         versionElement.textContent = VERSION_GUID;
     }
@@ -536,7 +536,12 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
     
     // Update preview
     function updatePreview() {
-        if (!cropper) return;
+        if (!cropper) {
+            console.warn('updatePreview: cropper not available');
+            return;
+        }
+        
+        console.log('updatePreview: starting preview update');
         
         try {
             const canvas = cropper.getCroppedCanvas({
@@ -546,9 +551,12 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
                 imageSmoothingQuality: 'high'
             });
             
+            console.log('updatePreview: got canvas:', canvas);
+            
             if (canvas) {
                 // Clear preview
                 cropPreview.innerHTML = '';
+                console.log('updatePreview: cleared preview, cropShape:', cropShape);
                 
                 if (cropShape === 'circle') {
                     // Create circular preview
@@ -567,11 +575,15 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
                     
                     circleCanvas.style.borderRadius = '50%';
                     cropPreview.appendChild(circleCanvas);
+                    console.log('updatePreview: added circular preview');
                 } else {
                     canvas.style.maxWidth = '100%';
                     canvas.style.maxHeight = '100%';
                     cropPreview.appendChild(canvas);
+                    console.log('updatePreview: added rectangular preview');
                 }
+            } else {
+                console.warn('updatePreview: canvas is null');
             }
         } catch (error) {
             console.warn('Preview update failed:', error);
