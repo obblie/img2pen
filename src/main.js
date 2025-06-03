@@ -3238,3 +3238,16 @@ class HeightfieldViewer {
 
 // Initialize the viewer
 window.viewer = new HeightfieldViewer(); 
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
+    // Set build timestamp
+    const buildTimestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+    const timestampElement = document.getElementById('build-timestamp');
+    if (timestampElement) {
+        timestampElement.textContent = buildTimestamp;
+    }
+    
+    window.viewer = new HeightfieldViewer();
+    window.viewer.init();
+});
