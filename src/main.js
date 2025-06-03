@@ -305,12 +305,15 @@ function addCircleOverlay(cropper) {
         overlay.style.height = '100%';
         overlay.style.pointerEvents = 'none';
         overlay.style.zIndex = '20';
+        // Clamp rx/ry to minimum 1
+        const rx = Math.max(w/2 - 3, 1);
+        const ry = Math.max(h/2 - 3, 1);
         // White outline
         const ellipseOutline = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
         ellipseOutline.setAttribute('cx', w/2);
         ellipseOutline.setAttribute('cy', h/2);
-        ellipseOutline.setAttribute('rx', w/2 - 3);
-        ellipseOutline.setAttribute('ry', h/2 - 3);
+        ellipseOutline.setAttribute('rx', rx);
+        ellipseOutline.setAttribute('ry', ry);
         ellipseOutline.setAttribute('fill', 'none');
         ellipseOutline.setAttribute('stroke', 'white');
         ellipseOutline.setAttribute('stroke-width', '7');
@@ -321,8 +324,8 @@ function addCircleOverlay(cropper) {
         const ellipse = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
         ellipse.setAttribute('cx', w/2);
         ellipse.setAttribute('cy', h/2);
-        ellipse.setAttribute('rx', w/2 - 3);
-        ellipse.setAttribute('ry', h/2 - 3);
+        ellipse.setAttribute('rx', rx);
+        ellipse.setAttribute('ry', ry);
         ellipse.setAttribute('fill', 'none');
         ellipse.setAttribute('stroke', '#4af');
         ellipse.setAttribute('stroke-width', '5');
@@ -479,7 +482,7 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
         if (!previewCanvas) return;
         const canvas = cropper.getCroppedCanvas({width:150,height:150});
         previewCtx.clearRect(0,0,150,150);
-        if (canvas) previewCtx.drawImage(canvas,0,0,150,150);
+        if (canvas && canvas.width > 0 && canvas.height > 0) previewCtx.drawImage(canvas,0,0,150,150);
     }
     // Zoom/rotation display
     function updateZoomRotDisplay() {
