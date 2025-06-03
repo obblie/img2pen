@@ -122,8 +122,23 @@ app.post('/api/generate-image', async (req, res) => {
         console.log('OpenAI response status:', response.status);
         console.log('OpenAI response headers:', JSON.stringify([...response.headers.entries()]));
 
+        // Get response text first to debug
+        const responseText = await response.text();
+        console.log('OpenAI raw response:', responseText);
+        
+        let errorData;
+        try {
+            errorData = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error('Failed to parse OpenAI response as JSON:', parseError);
+            console.error('Raw response was:', responseText);
+            return res.status(500).json({ 
+                error: 'Invalid response from OpenAI API',
+                details: { rawResponse: responseText }
+            });
+        }
+
         if (!response.ok) {
-            const errorData = await response.json();
             console.error('OpenAI API error details:', JSON.stringify(errorData, null, 2));
             return res.status(response.status).json({ 
                 error: errorData.error?.message || 'Failed to generate image',
@@ -131,13 +146,12 @@ app.post('/api/generate-image', async (req, res) => {
             });
         }
 
-        const data = await response.json();
-        console.log('OpenAI response data:', JSON.stringify(data, null, 2));
+        console.log('OpenAI response data:', JSON.stringify(errorData, null, 2));
         console.log('Image generated successfully');
         
         res.json({
             success: true,
-            imageUrl: data.data[0].url
+            imageUrl: errorData.data[0].url
         });
         
     } catch (error) {
