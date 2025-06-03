@@ -534,60 +534,68 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
         return { width: Math.round(w / divisor), height: Math.round(h / divisor) };
     }
     
-    // Update preview
+    // Update preview with throttling to prevent constant refreshing
+    let updatePreviewTimeout;
     function updatePreview() {
         if (!cropper) {
             console.warn('updatePreview: cropper not available');
             return;
         }
         
-        console.log('updatePreview: starting preview update');
-        
-        try {
-            const canvas = cropper.getCroppedCanvas({
-                width: 200,
-                height: 200,
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high'
-            });
-            
-            console.log('updatePreview: got canvas:', canvas);
-            
-            if (canvas) {
-                // Clear preview
-                cropPreview.innerHTML = '';
-                console.log('updatePreview: cleared preview, cropShape:', cropShape);
-                
-                if (cropShape === 'circle') {
-                    // Create circular preview
-                    const circleCanvas = document.createElement('canvas');
-                    circleCanvas.width = 200;
-                    circleCanvas.height = 200;
-                    const ctx = circleCanvas.getContext('2d');
-                    
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.arc(100, 100, 100, 0, 2 * Math.PI);
-                    ctx.closePath();
-                    ctx.clip();
-                    ctx.drawImage(canvas, 0, 0, 200, 200);
-                    ctx.restore();
-                    
-                    circleCanvas.style.borderRadius = '50%';
-                    cropPreview.appendChild(circleCanvas);
-                    console.log('updatePreview: added circular preview');
-                } else {
-                    canvas.style.maxWidth = '100%';
-                    canvas.style.maxHeight = '100%';
-                    cropPreview.appendChild(canvas);
-                    console.log('updatePreview: added rectangular preview');
-                }
-            } else {
-                console.warn('updatePreview: canvas is null');
-            }
-        } catch (error) {
-            console.warn('Preview update failed:', error);
+        // Clear any existing timeout to throttle calls
+        if (updatePreviewTimeout) {
+            clearTimeout(updatePreviewTimeout);
         }
+        
+        updatePreviewTimeout = setTimeout(() => {
+            console.log('updatePreview: starting preview update');
+            
+            try {
+                const canvas = cropper.getCroppedCanvas({
+                    width: 200,
+                    height: 200,
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high'
+                });
+                
+                console.log('updatePreview: got canvas:', canvas);
+                
+                if (canvas) {
+                    // Clear preview
+                    cropPreview.innerHTML = '';
+                    console.log('updatePreview: cleared preview, cropShape:', cropShape);
+                    
+                    if (cropShape === 'circle') {
+                        // Create circular preview
+                        const circleCanvas = document.createElement('canvas');
+                        circleCanvas.width = 200;
+                        circleCanvas.height = 200;
+                        const ctx = circleCanvas.getContext('2d');
+                        
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.arc(100, 100, 100, 0, 2 * Math.PI);
+                        ctx.closePath();
+                        ctx.clip();
+                        ctx.drawImage(canvas, 0, 0, 200, 200);
+                        ctx.restore();
+                        
+                        circleCanvas.style.borderRadius = '50%';
+                        cropPreview.appendChild(circleCanvas);
+                        console.log('updatePreview: added circular preview');
+                    } else {
+                        canvas.style.maxWidth = '100%';
+                        canvas.style.maxHeight = '100%';
+                        cropPreview.appendChild(canvas);
+                        console.log('updatePreview: added rectangular preview');
+                    }
+                } else {
+                    console.warn('updatePreview: canvas is null');
+                }
+            } catch (error) {
+                console.warn('Preview update failed:', error);
+            }
+        }, 100); // 100ms throttle
     }
     
     // Zoom controls
@@ -1886,18 +1894,36 @@ class HeightfieldViewer {
                 console.log('Bounding box size:', boundingBox.getSize(new THREE.Vector3()));
                 console.log('Mesh center calculated:', center);
                 
-                // Ensure camera is at a reasonable distance
-                const maxDimension = Math.max(size.x, size.y, size.z);
-                const cameraDistance = maxDimension * 3; // Increased distance
+                // Check if bounding box is valid
+                if (size.x === 0 && size.y === 0 && size.z === 0) {
+                    console.error('Mesh has zero size! This means the mesh is not properly created.');
+                    // Set a default camera position
+                    this.camera.position.set(50, 50, 50);
+                    this.controls.target.set(0, 0, 0);
+                } else {
+                    // Ensure camera is at a reasonable distance
+                    const maxDimension = Math.max(size.x, size.y, size.z);
+                    console.log('Max dimension:', maxDimension);
+                    
+                    // Use a simpler camera positioning
+                    this.controls.target.copy(center);
+                    
+                    // Position camera at a fixed distance that should work for most pendants
+                    const distance = Math.max(50, maxDimension * 4);
+                    this.camera.position.set(distance, distance, distance);
+                    
+                    console.log('Setting camera distance to:', distance);
+                }
                 
-                // Position camera to look at the mesh center
-                this.controls.target.copy(center);
-                this.camera.position.set(center.x + cameraDistance, center.y + cameraDistance, center.z + cameraDistance);
                 this.controls.update();
                 
                 console.log('Camera repositioned to:', this.camera.position);
                 console.log('Camera now looking at:', this.controls.target);
                 console.log('Camera distance from target:', this.camera.position.distanceTo(this.controls.target));
+                
+                // Force a render to see if anything appears
+                this.renderer.render(this.scene, this.camera);
+                console.log('Forced render completed');
                 return;
             case 'rectangular-pendant':
                 geometry = new THREE.PlaneGeometry(
