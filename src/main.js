@@ -3241,8 +3241,20 @@ window.viewer = new HeightfieldViewer();
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
-    // Set build timestamp
-    const buildTimestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+    // Set build timestamp in EST
+    const now = new Date();
+    const estOffset = -5; // EST is UTC-5 (or UTC-4 during daylight saving time)
+    const isDST = (date) => {
+        const jan = new Date(date.getFullYear(), 0, 1);
+        const jul = new Date(date.getFullYear(), 6, 1);
+        return date.getTimezoneOffset() < Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+    };
+    
+    const offset = isDST(now) ? -4 : -5; // EDT is UTC-4, EST is UTC-5
+    const estTime = new Date(now.getTime() + (offset * 60 * 60 * 1000));
+    const timezoneName = isDST(now) ? 'EDT' : 'EST';
+    
+    const buildTimestamp = estTime.toISOString().replace('T', ' ').substring(0, 19) + ` ${timezoneName}`;
     const timestampElement = document.getElementById('build-timestamp');
     if (timestampElement) {
         timestampElement.textContent = buildTimestamp;
