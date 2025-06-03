@@ -3034,27 +3034,45 @@ async function generateImageWithOpenAI(prompt) {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || `API request failed with status ${response.status}`);
+            
+            // Provide user-friendly error messages based on status code
+            let userMessage = 'Failed to generate image';
+            if (response.status === 429) {
+                userMessage = 'Rate limit exceeded. Please wait a few minutes before trying again.';
+            } else if (response.status === 400) {
+                if (errorData.error && errorData.error.includes('billing')) {
+                    userMessage = 'Billing issue detected. Please check your OpenAI account credits.';
+                } else if (errorData.error && errorData.error.includes('content')) {
+                    userMessage = 'Content policy violation. Please try a different prompt.';
+                } else {
+                    userMessage = 'Invalid request. Please try a different prompt.';
+                }
+            } else if (response.status === 401) {
+                userMessage = 'Authentication failed. Please contact support.';
+            } else if (response.status >= 500) {
+                userMessage = 'Server error. Please try again later.';
+            }
+            
+            throw new Error(userMessage);
         }
 
         const data = await response.json();
-        const imageUrl = data.imageUrl;
         
-        // Download the image and convert to blob
-        document.getElementById('loading-status').textContent = 'Downloading generated image...';
-        const imageResponse = await fetch(imageUrl);
-        if (!imageResponse.ok) {
-            throw new Error('Failed to download generated image');
-        }
+        // Convert base64 data URL to blob
+        document.getElementById('loading-status').textContent = 'Processing generated image...';
+        const base64Data = data.imageData;
         
-        const imageBlob = await imageResponse.blob();
+        // Convert base64 to blob
+        const response2 = await fetch(base64Data);
+        const imageBlob = await response2.blob();
+        
         hideLoadingOverlay();
         
         return imageBlob;
     } catch (error) {
         hideLoadingOverlay();
         console.error('Error generating image:', error);
-        showNotification(`Failed to generate image: ${error.message}`, 'error');
+        showNotification(`Error: ${error.message}`, 'error');
         return null;
     }
 }

@@ -149,9 +149,24 @@ app.post('/api/generate-image', async (req, res) => {
         console.log('OpenAI response data:', JSON.stringify(errorData, null, 2));
         console.log('Image generated successfully');
         
+        // Download the image from OpenAI and convert to base64
+        const imageUrl = errorData.data[0].url;
+        console.log('Downloading image from:', imageUrl);
+        
+        const imageResponse = await fetch(imageUrl);
+        if (!imageResponse.ok) {
+            console.error('Failed to download image from OpenAI');
+            return res.status(500).json({ error: 'Failed to download generated image' });
+        }
+        
+        const imageBuffer = await imageResponse.arrayBuffer();
+        const base64Image = Buffer.from(imageBuffer).toString('base64');
+        
+        console.log('Image downloaded and converted to base64, size:', base64Image.length);
+        
         res.json({
             success: true,
-            imageUrl: errorData.data[0].url
+            imageData: `data:image/png;base64,${base64Image}`
         });
         
     } catch (error) {
