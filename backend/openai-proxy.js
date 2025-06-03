@@ -5,10 +5,29 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// Configure CORS to allow GitHub Pages
+const corsOptions = {
+    origin: [
+        'https://obblie.github.io',
+        'http://localhost:5173', // For local development
+        'http://localhost:3000'  // For local development
+    ],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+// Add logging middleware
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path} from ${req.get('origin') || 'unknown'}`);
+    next();
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
