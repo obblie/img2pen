@@ -577,40 +577,32 @@ class HeightfieldViewer {
     constructor() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
         this.controls = null;
         this.heightfield = null;
-        this.heightfieldData = null;
-        this.originalImageDataUrl = null;
-        this.jumpring = null;
-        this.grid = null;
-        this.redLayer = null;
         this.lights = {};
-        this.isRotating = false;
-        this.rotationSpeed = 0.01;
         this.currentObjectType = 'circular-pendant';
-        this.pendantDiameter = 25;
-        this.pendantWidth = 25;
-        this.pendantHeight = 25;
-        this.pendantThickness = 2;
-        this.borderThickness = 1.0;
         this.aspectLocked = true;
-        this.jumpringOffset = { x: 0, y: 0, z: -15 };
-        this.imageTransform = {
-            offsetX: 0,
-            offsetY: 0,
-            scale: 1,
-            rotation: 0
-        };
+        this.imageTexture = null;
+        this.originalImageDataUrl = null;
         
         // Text box system
         this.textBoxes = [];
-        this.textBoxCounter = 0;
-        this.fontCache = {};
-        this.defaultFontName = 'helvetiker';
+        this.nextTextBoxId = 1;
+        this.font = null;
+        this.loadEngravingFont('Roboto');
         
-        // Load default font
-        this.loadEngravingFont(this.defaultFontName);
+        // Enhanced lighting properties
+        this.envMapLoaded = false;
+        
+        // Webcam experimental feature
+        this.webcamActive = false;
+        this.webcamStream = null;
+        this.webcamVideo = null;
+        this.webcamCanvas = null;
+        this.webcamContext = null;
+        this.webcamAnimationFrame = null;
+        this.webcamProcessingInterval = null;
         
         this.init();
     }
@@ -826,6 +818,13 @@ class HeightfieldViewer {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Handle page unload - cleanup webcam
+        window.addEventListener('beforeunload', () => {
+            if (this.webcamActive) {
+                this.stopWebcam();
+            }
         });
 
         // Handle prompt submit for AI image generation
@@ -1268,9 +1267,43 @@ class HeightfieldViewer {
         // Text box controls
         const addTextBoxBtn = document.getElementById('add-text-box');
         if (addTextBoxBtn) {
-            addTextBoxBtn.addEventListener('click', () => {
-                this.addTextBox();
+            addTextBoxBtn.addEventListener('click', () => this.addTextBox());
+        }
+
+        // Webcam experimental feature controls
+        const webcamToggle = document.getElementById('webcam-toggle');
+        if (webcamToggle) {
+            webcamToggle.addEventListener('click', () => {
+                if (this.webcamActive) {
+                    this.stopWebcam();
+                } else {
+                    this.startWebcam();
+                }
             });
+        }
+
+        // Webcam sensitivity control
+        const webcamSensitivity = document.getElementById('webcam-sensitivity');
+        const webcamSensitivityValue = document.getElementById('webcam-sensitivity-value');
+        if (webcamSensitivity && webcamSensitivityValue) {
+            webcamSensitivity.addEventListener('input', (e) => {
+                this.webcamSensitivity = parseFloat(e.target.value);
+                webcamSensitivityValue.textContent = this.webcamSensitivity.toFixed(1);
+            });
+            // Initialize value
+            this.webcamSensitivity = 1.0;
+            webcamSensitivityValue.textContent = '1.0';
+        }
+
+        // Webcam framerate control
+        const webcamFramerate = document.getElementById('webcam-framerate');
+        if (webcamFramerate) {
+            webcamFramerate.addEventListener('change', (e) => {
+                this.webcamFramerate = parseInt(e.target.value);
+                console.log('Webcam framerate changed to:', this.webcamFramerate);
+            });
+            // Initialize value
+            this.webcamFramerate = 30;
         }
     }
 
@@ -3008,37 +3041,22 @@ class HeightfieldViewer {
     
     // Cleanup method for proper disposal
     dispose() {
-        // Remove view preset container
-        if (this.viewPresetContainer && this.viewPresetContainer.parentNode) {
-            this.viewPresetContainer.parentNode.removeChild(this.viewPresetContainer);
-        }
-        
-        // Remove cube renderer
-        if (this.cubeRenderer && this.cubeRenderer.domElement && this.cubeRenderer.domElement.parentNode) {
-            this.cubeRenderer.domElement.parentNode.removeChild(this.cubeRenderer.domElement);
-            this.cubeRenderer.dispose();
-        }
-        
-        // Dispose of geometries and materials
+        // Dispose of geometry and materials
         if (this.heightfield) {
             this.heightfield.geometry.dispose();
+            if (this.heightfield.material.map) {
+                this.heightfield.material.map.dispose();
+            }
             this.heightfield.material.dispose();
         }
         
-        if (this.jumpring) {
-            this.jumpring.geometry.dispose();
-            this.jumpring.material.dispose();
-        }
-        
-        if (this.engravingMesh) {
-            this.engravingMesh.geometry.dispose();
-            this.engravingMesh.material.dispose();
+        // Cleanup webcam resources
+        if (this.webcamActive) {
+            this.stopWebcam();
         }
         
         // Dispose of renderer
-        if (this.renderer) {
-            this.renderer.dispose();
-        }
+        this.renderer.dispose();
     }
 
     refreshAllTextBoxes() {
@@ -3046,6 +3064,207 @@ class HeightfieldViewer {
         this.textBoxes.forEach(textBox => {
             this.updateTextBoxMesh(textBox);
         });
+    }
+
+    // Webcam experimental feature methods
+    async startWebcam() {
+        try {
+            console.log('🎥 Starting webcam...');
+            
+            // Request webcam access
+            this.webcamStream = await navigator.mediaDevices.getUserMedia({
+                video: { 
+                    width: 640, 
+                    height: 480,
+                    facingMode: 'user' // Front camera
+                }
+            });
+            
+            // Create video element
+            this.webcamVideo = document.createElement('video');
+            this.webcamVideo.srcObject = this.webcamStream;
+            this.webcamVideo.autoplay = true;
+            this.webcamVideo.muted = true;
+            this.webcamVideo.playsInline = true;
+            
+            // Create canvas for processing
+            this.webcamCanvas = document.createElement('canvas');
+            this.webcamCanvas.width = 256; // Processing resolution
+            this.webcamCanvas.height = 256;
+            this.webcamContext = this.webcamCanvas.getContext('2d');
+            
+            // Wait for video to be ready
+            await new Promise((resolve) => {
+                this.webcamVideo.onloadedmetadata = () => {
+                    this.webcamVideo.play();
+                    resolve();
+                };
+            });
+            
+            this.webcamActive = true;
+            console.log('✅ Webcam started successfully');
+            
+            // Start processing frames
+            this.startWebcamProcessing();
+            
+            // Update UI
+            document.getElementById('webcam-toggle').textContent = '🔴 Stop Webcam';
+            document.getElementById('webcam-status').textContent = 'Active';
+            
+            showNotification('Webcam feed active! Your face will now displace the pendant in real-time.', 'success');
+            
+        } catch (error) {
+            console.error('❌ Webcam error:', error);
+            showNotification('Failed to access webcam. Please check permissions.', 'error');
+        }
+    }
+    
+    stopWebcam() {
+        console.log('🛑 Stopping webcam...');
+        
+        this.webcamActive = false;
+        
+        // Stop processing
+        if (this.webcamAnimationFrame) {
+            cancelAnimationFrame(this.webcamAnimationFrame);
+            this.webcamAnimationFrame = null;
+        }
+        
+        if (this.webcamProcessingInterval) {
+            clearInterval(this.webcamProcessingInterval);
+            this.webcamProcessingInterval = null;
+        }
+        
+        // Stop video stream
+        if (this.webcamStream) {
+            this.webcamStream.getTracks().forEach(track => track.stop());
+            this.webcamStream = null;
+        }
+        
+        // Clean up elements
+        if (this.webcamVideo) {
+            this.webcamVideo.remove();
+            this.webcamVideo = null;
+        }
+        
+        this.webcamCanvas = null;
+        this.webcamContext = null;
+        
+        // Update UI
+        document.getElementById('webcam-toggle').textContent = '📹 Start Webcam';
+        document.getElementById('webcam-status').textContent = 'Inactive';
+        
+        console.log('✅ Webcam stopped');
+        showNotification('Webcam feed stopped.', 'info');
+    }
+    
+    startWebcamProcessing() {
+        const processFrame = () => {
+            if (!this.webcamActive || !this.webcamVideo || !this.webcamContext) return;
+            
+            try {
+                // Draw video frame to canvas
+                this.webcamContext.drawImage(
+                    this.webcamVideo, 
+                    0, 0, 
+                    this.webcamCanvas.width, 
+                    this.webcamCanvas.height
+                );
+                
+                // Get image data and process it
+                const imageData = this.webcamContext.getImageData(
+                    0, 0, 
+                    this.webcamCanvas.width, 
+                    this.webcamCanvas.height
+                );
+                
+                // Convert to grayscale heightfield data
+                const heightfieldData = this.processWebcamFrame(imageData);
+                
+                // Update the heightfield mesh
+                if (heightfieldData) {
+                    this.updateHeightfieldFromWebcam(heightfieldData);
+                }
+                
+            } catch (error) {
+                console.error('Frame processing error:', error);
+            }
+            
+            // Continue processing if webcam is still active
+            if (this.webcamActive) {
+                this.webcamAnimationFrame = requestAnimationFrame(processFrame);
+            }
+        };
+        
+        // Start the processing loop
+        processFrame();
+    }
+    
+    processWebcamFrame(imageData) {
+        const data = imageData.data;
+        const width = imageData.width;
+        const height = imageData.height;
+        const heightfieldData = [];
+        
+        // Convert RGBA to grayscale heightfield
+        for (let y = 0; y < height; y++) {
+            const row = [];
+            for (let x = 0; x < width; x++) {
+                const i = (y * width + x) * 4;
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                
+                // Convert to grayscale (0-1 range)
+                const gray = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+                
+                // Invert and enhance contrast for better displacement
+                const height = 1 - gray;
+                const enhanced = Math.pow(height, 1.5) * 0.8; // Enhance contrast
+                
+                row.push(enhanced);
+            }
+            heightfieldData.push(row);
+        }
+        
+        return heightfieldData;
+    }
+    
+    updateHeightfieldFromWebcam(heightfieldData) {
+        if (!this.heightfield) return;
+        
+        const geometry = this.heightfield.geometry;
+        const positions = geometry.attributes.position;
+        const widthSegments = heightfieldData[0].length - 1;
+        const heightSegments = heightfieldData.length - 1;
+        
+        // Get current mesh dimensions
+        const pendantWidth = document.getElementById('pendant-width')?.value || 25;
+        const pendantHeight = document.getElementById('pendant-height')?.value || 25;
+        
+        // Calculate scaling factors
+        const scaleX = pendantWidth / widthSegments;
+        const scaleY = pendantHeight / heightSegments;
+        
+        // Update vertex positions based on webcam data
+        for (let y = 0; y <= heightSegments; y++) {
+            for (let x = 0; x <= widthSegments; x++) {
+                const index = y * (widthSegments + 1) + x;
+                
+                // Get height value with bounds checking
+                const dataY = Math.min(y, heightfieldData.length - 1);
+                const dataX = Math.min(x, heightfieldData[0].length - 1);
+                const heightValue = heightfieldData[dataY][dataX];
+                
+                // Apply displacement with sensitivity
+                const displacement = heightValue * 2 * (this.webcamSensitivity || 1.0);
+                positions.setZ(index, displacement);
+            }
+        }
+        
+        // Update geometry
+        positions.needsUpdate = true;
+        geometry.computeVertexNormals();
     }
 }
 
