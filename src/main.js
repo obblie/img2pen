@@ -711,6 +711,9 @@ class HeightfieldViewer {
 
         // Start animation loop
         this.animate();
+
+        // Add watermark functionality after scene setup
+        addWatermark();
     }
 
     setupEventListeners() {
@@ -3032,9 +3035,18 @@ fetch('./version.json')
 async function generateImageWithOpenAI(prompt) {
     try {
         console.log('🌐 Making request to:', `${OPENAI_BACKEND_URL}/api/generate-image`);
+        console.log('⏱️ Request started at:', new Date().toISOString());
         showLoadingOverlay();
         document.getElementById('loading-status').textContent = 'Generating image with AI...';
         
+        // Add timeout to the fetch request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            console.log('⏰ Request timeout after 60 seconds');
+            controller.abort();
+        }, 60000); // 60 second timeout
+        
+        console.log('📤 Sending request to OpenAI backend...');
         const response = await fetch(`${OPENAI_BACKEND_URL}/api/generate-image`, {
             method: 'POST',
             headers: {
@@ -3042,9 +3054,12 @@ async function generateImageWithOpenAI(prompt) {
             },
             body: JSON.stringify({
                 prompt: prompt
-            })
+            }),
+            signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
+        console.log('📡 Response received at:', new Date().toISOString());
         console.log('📡 Response status:', response.status, response.statusText);
         console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
 
@@ -3073,6 +3088,7 @@ async function generateImageWithOpenAI(prompt) {
             throw new Error(userMessage);
         }
 
+        console.log('📥 Parsing response data...');
         const data = await response.json();
         console.log('✅ Full response data:', JSON.stringify(data, null, 2));
         console.log('✅ Response data received, imageData type:', typeof data.imageData, 'length:', data.imageData ? data.imageData.length : 'null');
@@ -3085,9 +3101,14 @@ async function generateImageWithOpenAI(prompt) {
         return data.imageData;
     } catch (error) {
         hideLoadingOverlay();
-        console.error('💥 Error generating image:', error);
-        console.error('💥 Error stack:', error.stack);
-        showNotification(`Error: ${error.message}`, 'error');
+        if (error.name === 'AbortError') {
+            console.error('⏰ Request timed out after 60 seconds');
+            showNotification('Request timed out. The server may be overloaded. Please try again.', 'error');
+        } else {
+            console.error('💥 Error generating image:', error);
+            console.error('💥 Error stack:', error.stack);
+            showNotification(`Error: ${error.message}`, 'error');
+        }
         return null;
     }
 }
@@ -3144,3 +3165,43 @@ async function uploadDalleImageToS3(imageBlob, prompt) {
         throw error;
     }
 }
+
+// Add watermark functionality after scene setup
+function addWatermark() {
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load('./assets/foreverAndEverJewelry.png', function(texture) {
+        // Create watermark material with transparency
+        const watermarkMaterial = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            opacity: 0.3, // Semi-transparent
+            alphaTest: 0.1,
+            side: THREE.DoubleSide
+        });
+        
+        // Create plane geometry for the watermark
+        const watermarkGeometry = new THREE.PlaneGeometry(8, 4); // Adjust size as needed
+        const watermarkMesh = new THREE.Mesh(watermarkGeometry, watermarkMaterial);
+        
+        // Position watermark in bottom-right corner
+        watermarkMesh.position.set(15, -10, 5); // Adjust position as needed
+        watermarkMesh.name = 'watermark';
+        
+        // Add to scene
+        scene.add(watermarkMesh);
+        
+        console.log('Watermark loaded and added to scene');
+    }, undefined, function(error) {
+        console.error('Error loading watermark:', error);
+    });
+}
+
+// Call addWatermark after scene is initialized
+// ... existing code ...
+
+// Add this call after scene initialization
+if (typeof scene !== 'undefined') {
+    addWatermark();
+}
+
+// ... existing code ...
