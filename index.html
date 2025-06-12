@@ -226,16 +226,10 @@
         }
         
         /* Hide specific menu sections while keeping them in code */
-        .menu-section:has(.menu-header h3:contains("Jumpring Settings")),
-        .menu-section:has(.menu-header h3:contains("Camera Controls")),
-        .menu-section:has(.menu-header h3:contains("Scene Settings")) {
-            display: none !important;
-        }
-        
-        /* Alternative approach using nth-child selectors for better browser support */
-        #ui-menu .menu-section:nth-of-type(4), /* Jumpring Settings */
-        #ui-menu .menu-section:nth-of-type(5), /* Camera Controls */
-        #ui-menu .menu-section:nth-of-type(6)  /* Scene Settings */ {
+        /* Jumpring Settings, Camera Controls, Scene Settings */
+        #jumpring-settings-section,
+        #camera-controls-section,
+        #scene-settings-section {
             display: none !important;
         }
     </style>
@@ -374,7 +368,7 @@
             </div>
         </div>
 
-        <div class="menu-section">
+        <div class="menu-section" id="jumpring-settings-section">
             <div class="menu-header">
                 <h3>Jumpring Settings</h3>
                 <button class="toggle-button">▼</button>
@@ -395,7 +389,7 @@
             </div>
         </div>
 
-        <div class="menu-section">
+        <div class="menu-section" id="camera-controls-section">
             <div class="menu-header">
                 <h3>Camera Controls</h3>
                 <button class="toggle-button">▼</button>
@@ -415,7 +409,7 @@
             </div>
         </div>
 
-        <div class="menu-section">
+        <div class="menu-section" id="scene-settings-section">
             <div class="menu-header">
                 <h3>Scene Settings</h3>
                 <button class="toggle-button">▼</button>
