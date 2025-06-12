@@ -224,6 +224,20 @@
             color: #aaa;
             margin-top: 2px;
         }
+        
+        /* Hide specific menu sections while keeping them in code */
+        .menu-section:has(.menu-header h3:contains("Jumpring Settings")),
+        .menu-section:has(.menu-header h3:contains("Camera Controls")),
+        .menu-section:has(.menu-header h3:contains("Scene Settings")) {
+            display: none !important;
+        }
+        
+        /* Alternative approach using nth-child selectors for better browser support */
+        #ui-menu .menu-section:nth-of-type(4), /* Jumpring Settings */
+        #ui-menu .menu-section:nth-of-type(5), /* Camera Controls */
+        #ui-menu .menu-section:nth-of-type(6)  /* Scene Settings */ {
+            display: none !important;
+        }
     </style>
     <!-- Cropper.js CSS -->
     <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
