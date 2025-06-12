@@ -740,10 +740,10 @@ class HeightfieldViewer {
             // Create watermark material with transparency
             const watermarkMaterial = new THREE.MeshBasicMaterial({
                 map: texture,
-                transparent: true,
+                    transparent: true,
                 opacity: 0.4, // Semi-transparent
                 alphaTest: 0.1,
-                side: THREE.DoubleSide,
+                    side: THREE.DoubleSide,
                 depthWrite: false, // Prevent depth issues
                 depthTest: false   // Always render on top
             });
