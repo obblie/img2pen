@@ -1094,37 +1094,7 @@ class HeightfieldViewer {
             });
         }
 
-        // Pendant size controls
-        const diameterSlider = document.getElementById('pendant-diameter');
-        const widthSlider = document.getElementById('pendant-width');
-        const heightSlider = document.getElementById('pendant-height');
-        const aspectLockBtn = document.getElementById('aspect-lock');
-        const aspectLockIcon = document.getElementById('aspect-lock-icon');
-        const diameterValue = document.getElementById('pendant-diameter-value');
-        const widthValue = document.getElementById('pendant-width-value');
-        const heightValue = document.getElementById('pendant-height-value');
-        
-        if (diameterSlider && widthSlider && heightSlider && diameterValue && widthValue && heightValue) {
-            const updateSliderLabels = () => {
-                diameterValue.textContent = diameterSlider.value + ' mm';
-                widthValue.textContent = widthSlider.value + ' mm';
-                heightValue.textContent = heightSlider.value + ' mm';
-            };
-            diameterSlider.addEventListener('input', (e) => {
-                this.pendantDiameter = parseFloat(e.target.value);
-                if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
-                    this.createHeightfieldMesh(this.heightfieldData);
-                }
-                updateSliderLabels();
-            });
-            widthSlider.addEventListener('input', updateSliderLabels);
-            heightSlider.addEventListener('input', updateSliderLabels);
-            updateSliderLabels();
-            aspectLockBtn.addEventListener('click', () => {
-                this.aspectLocked = !this.aspectLocked;
-                aspectLockIcon.textContent = this.aspectLocked ? '🔒' : '🔓';
-            });
-        }
+
 
         // Reset View button
         const resetView = document.getElementById('reset-view');
@@ -1171,20 +1141,7 @@ class HeightfieldViewer {
             });
         }
 
-        // Border thickness slider
-        const borderSlider = document.getElementById('border-thickness');
-        const borderValue = document.getElementById('border-thickness-value');
-        if (borderSlider && borderValue) {
-            const updateBorderLabel = () => { borderValue.textContent = borderSlider.value; };
-            borderSlider.addEventListener('input', (e) => {
-                this.borderThickness = parseFloat(e.target.value);
-                updateBorderLabel();
-                if (this.heightfieldData && this.currentObjectType === 'circular-pendant') {
-                    this.createHeightfieldMesh(this.heightfieldData);
-                }
-            });
-            updateBorderLabel();
-        }
+
 
         // Change Export STL button to Submit Order
         const submitOrderBtn = document.getElementById('export-stl');
@@ -1875,8 +1832,8 @@ class HeightfieldViewer {
             
             if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' || this.currentObjectType === 'earrings') {
                 // For circular shapes, convert position to UV coordinates
-                const x = positions[i];
-                const y = positions[i + 1];
+            const x = positions[i];
+            const y = positions[i + 1];
                 const radius = (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'earrings') ? this.pendantDiameter / 2 : this.pendantDiameter / 4;
                 u = (x / (this.pendantDiameter / 2) + 1) / 2;
                 v = (y / (this.pendantDiameter / 2) + 1) / 2;
