@@ -712,44 +712,10 @@ class HeightfieldViewer {
         // Start animation loop
         this.animate();
 
-        // Add watermark functionality after scene setup
-        this.addWatermark();
+
     }
 
-    // Add watermark functionality as a class method
-    addWatermark() {
-        const textureLoader = new THREE.TextureLoader();
-        textureLoader.load('./assets/foreverAndEverJewelry.png', (texture) => {
-            console.log('Watermark texture loaded successfully');
-            
-            // Create watermark material with transparency
-            const watermarkMaterial = new THREE.MeshBasicMaterial({
-                map: texture,
-                transparent: true,
-                opacity: 0.4, // Semi-transparent
-                alphaTest: 0.1,
-                side: THREE.DoubleSide,
-                depthWrite: false, // Prevent depth issues
-                depthTest: false   // Always render on top
-            });
-            
-            // Create plane geometry for the watermark
-            const watermarkGeometry = new THREE.PlaneGeometry(6, 3); // Smaller size
-            const watermarkMesh = new THREE.Mesh(watermarkGeometry, watermarkMaterial);
-            
-            // Position watermark in bottom-right corner of the view
-            watermarkMesh.position.set(12, -8, 10); // Adjusted position
-            watermarkMesh.name = 'watermark';
-            watermarkMesh.renderOrder = 999; // Render last
-            
-            // Add to scene
-            this.scene.add(watermarkMesh);
-            
-            console.log('Watermark added to scene at position:', watermarkMesh.position);
-        }, undefined, (error) => {
-            console.error('Error loading watermark:', error);
-        });
-    }
+
 
     setupEventListeners() {
         const dropZone = document.getElementById('drop-zone');
