@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Img2Pen - Convert Images to 3D Engravings</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 3em;
+            font-weight: 300;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            margin: 10px 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .file-input {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .file-input input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input input[type="file"]:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+
+        .controls-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-item label {
+            font-weight: 500;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        .control-item input[type="range"] {
+            width: 80px;
+        }
+
+        .control-item input[type="number"] {
+            width: 60px;
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        .info-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            max-width: 300px;
+            z-index: 1000;
+        }
+
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 2000;
+            display: none;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                position: relative;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .info-panel {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🖼️ Img2Pen</h1>
+        <p>Transform your images into stunning 3D engravings</p>
+    </div>
+    
+    <div class="controls">
+        <div class="file-input">
+            <input type="file" id="imageInput" accept="image/*" placeholder="Choose an image file...">
+        </div>
+        
+        <div class="controls-group">
+            <div class="control-item">
+                <label for="heightScale">Height:</label>
+                <input type="range" id="heightScale" min="0.1" max="2" step="0.1" value="0.5">
+                <input type="number" id="heightValue" min="0.1" max="2" step="0.1" value="0.5">
+            </div>
+            
+            <div class="control-item">
+                <label for="resolution">Detail:</label>
+                <input type="range" id="resolution" min="50" max="200" step="10" value="100">
+                <input type="number" id="resolutionValue" min="50" max="200" step="10" value="100">
+            </div>
+            
+            <button id="exportBtn" class="btn" disabled>Export STL</button>
+            <button id="resetBtn" class="btn">Reset View</button>
+        </div>
+    </div>
+    
+    <div id="canvas-container"></div>
+    
+    <div class="info-panel" id="infoPanel">
+        <div><strong>Controls:</strong></div>
+        <div>• Mouse drag: Rotate view</div>
+        <div>• Mouse wheel: Zoom in/out</div>
+        <div>• Upload image to generate 3D model</div>
+        <div id="meshInfo" style="margin-top: 10px; display: none;">
+            <div><strong>Mesh Info:</strong></div>
+            <div>Vertices: <span id="vertexCount">0</span></div>
+            <div>Faces: <span id="faceCount">0</span></div>
+        </div>
+    </div>
+    
+    <div class="loading" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">Processing image...</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </div>
+
+    <!-- Load Three.js from reliable Cloudflare CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.150.1/three.min.js"></script>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer, controls;
+        let currentMesh = null;
+        let originalImageData = null;
+        let heightScale = 0.5;
+        let resolution = 100;
+
+        // Wait for scripts to load before initializing
+        window.addEventListener('load', function() {
+            console.log('🚀 Simple inline version starting...');
+            console.log('🔍 Checking if THREE is loaded...');
+            
+            if (typeof THREE === 'undefined') {
+                console.error('❌ THREE.js failed to load from CDN');
+                document.body.innerHTML = `
+                    <div style="color: red; text-align: center; margin-top: 20vh; padding: 20px;">
+                        <h1>❌ THREE.js failed to load</h1>
+                        <p>Please check your internet connection and try refreshing the page.</p>
+                        <p>Current CDN: cdnjs.cloudflare.com</p>
+                        <button onclick="location.reload()" style="padding: 10px 20px; font-size: 16px; margin-top: 10px;">🔄 Refresh Page</button>
+                    </div>
+                `;
+                return;
+            }
+            console.log('✅ THREE.js loaded successfully, version:', THREE.REVISION);
+            
+            console.log('ℹ️ Running without OrbitControls for simplicity');
+            
+            // Backend configuration for Render
+            const BACKEND_URL = 'https://img2pen-s3-backend.onrender.com';
+            const OPENAI_BACKEND_URL = 'https://img2pen-openai-backend.onrender.com';
+            
+            console.log('🔗 S3 Backend:', BACKEND_URL);
+            console.log('🔗 OpenAI Backend:', OPENAI_BACKEND_URL);
+            
+            // Now initialize the app
+            initApp();
+        });
+        
+        function initApp() {
+            console.log('🎯 Initializing Three.js scene...');
+            init();
+            setupUIControls();
+            
+            document.getElementById('imageInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    console.log(`📁 File selected: ${file.name}`);
+                    processImage(file);
+                }
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (camera && renderer) {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                }
+            });
+        }
+
+        function setupUIControls() {
+            // Height scale controls
+            const heightSlider = document.getElementById('heightScale');
+            const heightValue = document.getElementById('heightValue');
+            
+            heightSlider.addEventListener('input', function() {
+                heightScale = parseFloat(this.value);
+                heightValue.value = heightScale;
+                if (originalImageData) {
+                    regenerateMesh();
+                }
+            });
+            
+            heightValue.addEventListener('input', function() {
+                heightScale = parseFloat(this.value);
+                heightSlider.value = heightScale;
+                if (originalImageData) {
+                    regenerateMesh();
+                }
+            });
+            
+            // Resolution controls
+            const resolutionSlider = document.getElementById('resolution');
+            const resolutionValue = document.getElementById('resolutionValue');
+            
+            resolutionSlider.addEventListener('input', function() {
+                resolution = parseInt(this.value);
+                resolutionValue.value = resolution;
+                if (originalImageData) {
+                    regenerateMesh();
+                }
+            });
+            
+            resolutionValue.addEventListener('input', function() {
+                resolution = parseInt(this.value);
+                resolutionSlider.value = resolution;
+                if (originalImageData) {
+                    regenerateMesh();
+                }
+            });
+            
+            // Export button
+            document.getElementById('exportBtn').addEventListener('click', exportSTL);
+            
+            // Reset view button
+            document.getElementById('resetBtn').addEventListener('click', resetView);
+        }
+
+        function init() {
+            console.log('🏗️ Creating Three.js scene...');
+            
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111111); // Dark background
+            
+            // Create camera
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(width, height);
+            renderer.setClearColor(0x111111);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+            
+            // Add lighting
+            setupLighting();
+            
+            // Add basic mouse controls manually (no OrbitControls needed)
+            addMouseControls();
+            console.log('✅ Basic mouse controls added');
+            
+            // Start render loop
+            animate();
+            
+            console.log('✅ Three.js initialization complete');
+        }
+
+        function setupLighting() {
+            // Ambient light
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+            scene.add(ambientLight);
+            
+            // Main directional light
+            const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            mainLight.position.set(10, 10, 5);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 2048;
+            mainLight.shadow.mapSize.height = 2048;
+            scene.add(mainLight);
+            
+            // Fill light
+            const fillLight = new THREE.DirectionalLight(0x9090ff, 0.3);
+            fillLight.position.set(-5, 0, -5);
+            scene.add(fillLight);
+        }
+        
+        function addTestObjects() {
+            console.log('🎲 Adding test objects...');
+            
+            // Add rotating green cube to test rendering
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.name = 'testCube';
+            scene.add(cube);
+            
+            // Add some lights
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            console.log('✅ Test objects added');
+        }
+
+        function addMouseControls() {
+            let isMouseDown = false;
+            let mouseX = 0, mouseY = 0;
+            
+            renderer.domElement.addEventListener('mousedown', function(event) {
+                isMouseDown = true;
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+            });
+            
+            renderer.domElement.addEventListener('mouseup', function() {
+                isMouseDown = false;
+            });
+            
+            renderer.domElement.addEventListener('mousemove', function(event) {
+                if (!isMouseDown) return;
+                
+                const deltaX = event.clientX - mouseX;
+                const deltaY = event.clientY - mouseY;
+                
+                // Rotate camera around the scene
+                const spherical = new THREE.Spherical();
+                spherical.setFromVector3(camera.position);
+                spherical.theta -= deltaX * 0.01;
+                spherical.phi += deltaY * 0.01;
+                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+                
+                camera.position.setFromSpherical(spherical);
+                camera.lookAt(0, 0, 0);
+                
+                mouseX = event.clientX;
+                mouseY = event.clientY;
+            });
+            
+            // Mouse wheel for zoom
+            renderer.domElement.addEventListener('wheel', function(event) {
+                const scale = event.deltaY > 0 ? 1.1 : 0.9;
+                camera.position.multiplyScalar(scale);
+                
+                // Clamp zoom
+                const distance = camera.position.length();
+                if (distance < 2) camera.position.normalize().multiplyScalar(2);
+                if (distance > 20) camera.position.normalize().multiplyScalar(20);
+                
+                event.preventDefault();
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        async function processImage(file) {
+            try {
+                showLoading('Processing image...');
+                console.log('🔄 Starting image processing...');
+                
+                // Create image from file
+                const img = new Image();
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                img.onload = function() {
+                    console.log('🖼️ Image loaded, dimensions:', img.width, 'x', img.height);
+                    
+                    // Set canvas size to maintain aspect ratio
+                    const maxSize = 512;
+                    let { width, height } = img;
+                    
+                    if (width > height) {
+                        if (width > maxSize) {
+                            height = (height * maxSize) / width;
+                            width = maxSize;
+                        }
+                    } else {
+                        if (height > maxSize) {
+                            width = (width * maxSize) / height;
+                            height = maxSize;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // Draw image to canvas
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Get image data
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    originalImageData = imageData;
+                    
+                    // Generate 3D geometry from image
+                    generate3DFromImage(imageData);
+                    
+                    hideLoading();
+                };
+                
+                img.onerror = function() {
+                    hideLoading();
+                    console.error('❌ Failed to load image');
+                };
+                
+                img.src = URL.createObjectURL(file);
+                
+            } catch (error) {
+                hideLoading();
+                console.error('❌ Error processing image:', error);
+            }
+        }
+
+        function generate3DFromImage(imageData) {
+            console.log('🏔️ Generating 3D geometry from image...');
+            
+            try {
+                // Remove existing mesh
+                if (currentMesh) {
+                    scene.remove(currentMesh);
+                    currentMesh.geometry.dispose();
+                    currentMesh.material.dispose();
+                }
+                
+                const width = imageData.width;
+                const height = imageData.height;
+                const data = imageData.data;
+                
+                // Calculate geometry resolution based on UI setting
+                const segments = Math.min(resolution, Math.min(width, height));
+                const aspectRatio = width / height;
+                const meshWidth = aspectRatio > 1 ? 4 : 4 * aspectRatio;
+                const meshHeight = aspectRatio > 1 ? 4 / aspectRatio : 4;
+                
+                // Create displacement geometry
+                const geometry = new THREE.PlaneGeometry(
+                    meshWidth, 
+                    meshHeight, 
+                    segments, 
+                    Math.floor(segments / aspectRatio)
+                );
+                
+                const vertices = geometry.attributes.position.array;
+                
+                // Apply displacement based on image brightness
+                for (let i = 0; i < vertices.length; i += 3) {
+                    const x = ((vertices[i] + meshWidth/2) / meshWidth) * width;
+                    const y = ((vertices[i + 1] + meshHeight/2) / meshHeight) * height;
+                    
+                    const pixelX = Math.floor(Math.max(0, Math.min(width - 1, x)));
+                    const pixelY = Math.floor(Math.max(0, Math.min(height - 1, height - y)));
+                    
+                    const pixelIndex = (pixelY * width + pixelX) * 4;
+                    const r = data[pixelIndex];
+                    const g = data[pixelIndex + 1];
+                    const b = data[pixelIndex + 2];
+                    
+                    // Calculate brightness and apply height scale
+                    const brightness = (r + g + b) / (3 * 255);
+                    vertices[i + 2] = brightness * heightScale;
+                }
+                
+                geometry.attributes.position.needsUpdate = true;
+                geometry.computeVertexNormals();
+                
+                // Create material with improved appearance
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0xcccccc,
+                    shininess: 30,
+                    flatShading: false
+                });
+                
+                // Create mesh
+                currentMesh = new THREE.Mesh(geometry, material);
+                currentMesh.castShadow = true;
+                currentMesh.receiveShadow = true;
+                scene.add(currentMesh);
+                
+                // Update UI
+                updateMeshInfo(geometry);
+                document.getElementById('exportBtn').disabled = false;
+                
+                console.log('✅ 3D geometry generated and added to scene');
+                
+            } catch (error) {
+                console.error('❌ Error generating 3D geometry:', error);
+            }
+        }
+
+        function regenerateMesh() {
+            if (originalImageData) {
+                generate3DFromImage(originalImageData);
+            }
+        }
+
+        function updateMeshInfo(geometry) {
+            const vertexCount = geometry.attributes.position.count;
+            const faceCount = geometry.index ? geometry.index.count / 3 : vertexCount / 3;
+            
+            document.getElementById('vertexCount').textContent = vertexCount.toLocaleString();
+            document.getElementById('faceCount').textContent = Math.floor(faceCount).toLocaleString();
+            document.getElementById('meshInfo').style.display = 'block';
+        }
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        function resetView() {
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+        }
+
+        function exportSTL() {
+            if (!currentMesh) {
+                alert('No mesh to export. Please upload an image first.');
+                return;
+            }
+            
+            // Simple STL export (basic implementation)
+            const geometry = currentMesh.geometry;
+            const vertices = geometry.attributes.position.array;
+            const indices = geometry.index ? geometry.index.array : null;
+            
+            let stl = 'solid mesh\n';
+            
+            if (indices) {
+                for (let i = 0; i < indices.length; i += 3) {
+                    const i1 = indices[i] * 3;
+                    const i2 = indices[i + 1] * 3;
+                    const i3 = indices[i + 2] * 3;
+                    
+                    const v1 = new THREE.Vector3(vertices[i1], vertices[i1 + 1], vertices[i1 + 2]);
+                    const v2 = new THREE.Vector3(vertices[i2], vertices[i2 + 1], vertices[i2 + 2]);
+                    const v3 = new THREE.Vector3(vertices[i3], vertices[i3 + 1], vertices[i3 + 2]);
+                    
+                    const normal = new THREE.Vector3()
+                        .crossVectors(v2.clone().sub(v1), v3.clone().sub(v1))
+                        .normalize();
+                    
+                    stl += `  facet normal ${normal.x} ${normal.y} ${normal.z}\n`;
+                    stl += '    outer loop\n';
+                    stl += `      vertex ${v1.x} ${v1.y} ${v1.z}\n`;
+                    stl += `      vertex ${v2.x} ${v2.y} ${v2.z}\n`;
+                    stl += `      vertex ${v3.x} ${v3.y} ${v3.z}\n`;
+                    stl += '    endloop\n';
+                    stl += '  endfacet\n';
+                }
+            }
+            
+            stl += 'endsolid mesh\n';
+            
+            // Download the STL file
+            const blob = new Blob([stl], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'img2pen_model.stl';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html> 

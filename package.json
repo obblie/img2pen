@@ -10,7 +10,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "./sync-and-deploy.sh"
+    "deploy": "./sync-and-deploy.sh",
+    "deploy:render": "./deploy-render.sh"
   },
   "dependencies": {
     "three": "~0.150.1",
