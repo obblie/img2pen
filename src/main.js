@@ -1842,25 +1842,10 @@ class HeightfieldViewer {
                 mesh2.position.x = spacing / 2;
                 mesh2.position.y = this.pendantThickness / 2;
                 
-                // Create French wires (earring hooks) for each earring
-                const frenchWire1 = this.createFrenchWire(earringMaterial.clone());
-                const frenchWire2 = this.createFrenchWire(earringMaterial.clone());
-                
-                // Position French wires above each earring
-                const wireHeight = this.pendantDiameter * 0.7; // Position above the earring
-                frenchWire1.position.x = -spacing / 2;
-                frenchWire1.position.y = this.pendantThickness / 2 + wireHeight;
-                frenchWire1.position.z = 0;
-                frenchWire2.position.x = spacing / 2;
-                frenchWire2.position.y = this.pendantThickness / 2 + wireHeight;
-                frenchWire2.position.z = 0;
-                
-                // Create a group to hold both earrings and their French wires
+                // Create a group to hold both earrings
                 const earringsGroup = new THREE.Group();
                 earringsGroup.add(mesh1);
                 earringsGroup.add(mesh2);
-                earringsGroup.add(frenchWire1);
-                earringsGroup.add(frenchWire2);
                 
                 this.scene.add(earringsGroup);
                 this.heightfield = earringsGroup;
@@ -2143,24 +2128,13 @@ class HeightfieldViewer {
         const materialProps = METAL_MATERIALS[metalType];
         
         if (this.currentObjectType === 'earrings' && this.heightfield.isGroup) {
-            // For earrings, update all meshes in the group (earrings + French wires)
+            // For earrings, update both meshes in the group
             this.heightfield.children.forEach(mesh => {
                 if (mesh.material) {
-                    // Single mesh with material
                     mesh.material.color.set(materialProps.color);
                     mesh.material.metalness = materialProps.metalness;
                     mesh.material.roughness = materialProps.roughness;
                     mesh.material.envMapIntensity = materialProps.envMapIntensity;
-                } else if (mesh.children) {
-                    // French wire group with child meshes
-                    mesh.children.forEach(childMesh => {
-                        if (childMesh.material) {
-                            childMesh.material.color.set(materialProps.color);
-                            childMesh.material.metalness = materialProps.metalness;
-                            childMesh.material.roughness = materialProps.roughness;
-                            childMesh.material.envMapIntensity = materialProps.envMapIntensity;
-                        }
-                    });
                 }
             });
         } else {
@@ -2185,18 +2159,10 @@ class HeightfieldViewer {
         const finishProps = FINISH_PROPERTIES[finish];
         
         if (this.currentObjectType === 'earrings' && this.heightfield.isGroup) {
-            // For earrings, update all meshes in the group (earrings + French wires)
+            // For earrings, update both meshes in the group
             this.heightfield.children.forEach(mesh => {
                 if (mesh.material) {
-                    // Single mesh with material
                     mesh.material.roughness = finishProps.roughness;
-                } else if (mesh.children) {
-                    // French wire group with child meshes
-                    mesh.children.forEach(childMesh => {
-                        if (childMesh.material) {
-                            childMesh.material.roughness = finishProps.roughness;
-                        }
-                    });
                 }
             });
         } else {
@@ -2230,42 +2196,6 @@ class HeightfieldViewer {
         console.log('Creating jumpring');
     }
 
-    createFrenchWire(material) {
-        // French wire dimensions (in mm, scaled down for our scene)
-        const wireThickness = 0.3; // Wire thickness
-        const hookRadius = 3; // Radius of the curved hook
-        const hookLength = 8; // Total length of the hook
-        const straightLength = 4; // Length of straight portion that goes through ear
-        
-        // Create the curved hook portion using a tube geometry along a curve
-        const curve = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(0, 0, 0), // Start point
-            new THREE.Vector3(-hookRadius * 0.7, hookRadius * 0.5, 0), // Control point for curve
-            new THREE.Vector3(-hookRadius, hookRadius, 0), // Top of hook
-            new THREE.Vector3(-hookRadius * 0.3, hookRadius * 1.3, 0), // Back curve
-            new THREE.Vector3(straightLength, hookRadius * 1.2, 0) // End point (straight portion)
-        ]);
-        
-        // Create tube geometry for the curved portion
-        const tubeGeometry = new THREE.TubeGeometry(curve, 32, wireThickness, 8, false);
-        
-        // Create a small loop at the bottom for earring attachment
-        const loopGeometry = new THREE.TorusGeometry(1, wireThickness, 8, 16);
-        
-        // Create group to combine hook and loop
-        const frenchWireGroup = new THREE.Group();
-        
-        // Add hook
-        const hookMesh = new THREE.Mesh(tubeGeometry, material);
-        frenchWireGroup.add(hookMesh);
-        
-        // Add attachment loop at the bottom
-        const loopMesh = new THREE.Mesh(loopGeometry, material.clone());
-        loopMesh.position.set(0, -1, 0); // Position below the hook start
-        frenchWireGroup.add(loopMesh);
-        
-        return frenchWireGroup;
-    }
 
     updateJumpring(size) {
         this.createJumpring(size);
