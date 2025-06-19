@@ -21,9 +21,10 @@ const BUCKET_NAME = process.env.S3_BUCKET_NAME;
 // Add CORS middleware
 app.use(cors({
     origin: [
-        'https://obblie.github.io',
-        'http://localhost:5173', // For local development
-        'http://localhost:3000'  // For local development
+        'https://obblie.github.io',      // GitHub Pages domain
+        'https://img2pen.onrender.com',  // Render frontend domain
+        'http://localhost:5173',         // For local development
+        'http://localhost:3000'          // For local development
     ],
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
