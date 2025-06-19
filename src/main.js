@@ -1619,6 +1619,222 @@ class HeightfieldViewer {
                     heightfieldData.height - 1
                 );
                 break;
+            case 'earrings':
+                // For earrings, use the same watertight geometry as circular-pendant
+                // Remove any previous pendant meshes
+                if (this.heightfield) this.scene.remove(this.heightfield);
+                if (this.bottomDisc) this.scene.remove(this.bottomDisc);
+                if (this.sideWall) this.scene.remove(this.sideWall);
+                this.heightfield = null;
+                this.bottomDisc = null;
+                this.sideWall = null;
+
+                // Create two watertight circular earrings
+                const createEarringGeometry = () => {
+                    const diameter = this.pendantDiameter;
+                    const radius = diameter / 2;
+                    const widthSegments = heightfieldData.width - 1;
+                    const heightSegments = heightfieldData.height - 1;
+                    const thickness = this.pendantThickness;
+
+                    // Relief positions, normals, uvs
+                    const reliefPositions = [];
+                    const reliefUVs = [];
+                    const gridIdx = (x, y) => y * (widthSegments + 1) + x;
+                    const grid = [];
+                    for (let y = 0; y <= heightSegments; ++y) {
+                        for (let x = 0; x <= widthSegments; ++x) {
+                            const px = (x / widthSegments - 0.5) * diameter;
+                            const py = (y / heightSegments - 0.5) * diameter;
+                            const dist = Math.sqrt(px * px + py * py);
+                            let z = 0;
+                            let u = (px / radius + 1) / 2;
+                            let v = (py / radius + 1) / 2;
+                            if (dist <= radius) {
+                                const pixelX = Math.floor(u * (heightfieldData.width - 1));
+                                const pixelY = heightfieldData.height - 1 - Math.floor(v * (heightfieldData.height - 1));
+                                const pixelIndex = (pixelY * heightfieldData.width + pixelX) * 4;
+                                const gray = (heightfieldData.data[pixelIndex] * 0.299 +
+                                    heightfieldData.data[pixelIndex + 1] * 0.587 +
+                                    heightfieldData.data[pixelIndex + 2] * 0.114) / 255;
+                                z = gray * MAX_DEPTH;
+                            }
+                            grid.push({ px, py, z, u, v, inCircle: dist <= radius });
+                        }
+                    }
+                    // Build positions/uvs for only in-circle vertices, and map old grid index to new
+                    const idxMap = new Array(grid.length).fill(-1);
+                    let idxCounter = 0;
+                    for (let i = 0; i < grid.length; ++i) {
+                        if (grid[i].inCircle) {
+                            reliefPositions.push(grid[i].px, grid[i].py, grid[i].z);
+                            reliefUVs.push(grid[i].u, grid[i].v);
+                            idxMap[i] = idxCounter++;
+                        }
+                    }
+                    // Build indices for triangles fully inside the circle
+                    const reliefIndices = [];
+                    for (let y = 0; y < heightSegments; ++y) {
+                        for (let x = 0; x < widthSegments; ++x) {
+                            const a = gridIdx(x, y);
+                            const b = gridIdx(x + 1, y);
+                            const c = gridIdx(x, y + 1);
+                            const d = gridIdx(x + 1, y + 1);
+                            if (grid[a].inCircle && grid[b].inCircle && grid[c].inCircle)
+                                reliefIndices.push(idxMap[a], idxMap[b], idxMap[c]);
+                            if (grid[b].inCircle && grid[d].inCircle && grid[c].inCircle)
+                                reliefIndices.push(idxMap[b], idxMap[d], idxMap[c]);
+                        }
+                    }
+                    // Find edge points of the relief (for bottom disc and side wall)
+                    const edgePoints = [];
+                    for (let y = 0; y <= heightSegments; ++y) {
+                        for (let x = 0; x <= widthSegments; ++x) {
+                            const idx = y * (widthSegments + 1) + x;
+                            if (grid[idx].inCircle) {
+                                // Is this an edge? (at least one neighbor is out of circle)
+                                const neighbors = [
+                                    gridIdx(x - 1, y), gridIdx(x + 1, y),
+                                    gridIdx(x, y - 1), gridIdx(x, y + 1)
+                                ];
+                                if (neighbors.some(n => n < 0 || n >= grid.length || !grid[n] || !grid[n].inCircle)) {
+                                    edgePoints.push({ x: grid[idx].px, y: grid[idx].py, z: grid[idx].z });
+                                }
+                            }
+                        }
+                    }
+                    // Sort edge points by angle from center for a clean bottom disc
+                    edgePoints.sort((a, b) => {
+                        const angleA = Math.atan2(a.y, a.x);
+                        const angleB = Math.atan2(b.y, b.x);
+                        return angleA - angleB;
+                    });
+                    
+                    // --- Merge all into a single geometry ---
+                    // 1. Relief (top)
+                    const allPositions = [...reliefPositions];
+                    const allUVs = [...reliefUVs];
+                    const allIndices = [...reliefIndices];
+                    // 2. Bottom disc (fan from center to edge points)
+                    const bottomStartIdx = allPositions.length / 3;
+                    allPositions.push(0, 0, -thickness); // center
+                    allUVs.push(0.5, 0.5);
+                    for (let i = 0; i < edgePoints.length; ++i) {
+                        allPositions.push(edgePoints[i].x, edgePoints[i].y, -thickness);
+                        allUVs.push((edgePoints[i].x / radius + 1) / 2, (edgePoints[i].y / radius + 1) / 2);
+                    }
+                    for (let i = 1; i <= edgePoints.length; ++i) {
+                        const a = bottomStartIdx;
+                        const b = bottomStartIdx + i;
+                        const c = bottomStartIdx + (i < edgePoints.length ? i + 1 : 1);
+                        allIndices.push(a, b, c);
+                    }
+                    // 3. Side wall (quads between edge of relief and bottom disc)
+                    const wallStartIdx = allPositions.length / 3;
+                    for (let i = 0; i < edgePoints.length; ++i) {
+                        // Top edge
+                        const x1 = edgePoints[i].x, y1 = edgePoints[i].y, z1 = edgePoints[i].z;
+                        const x2 = edgePoints[(i + 1) % edgePoints.length].x, y2 = edgePoints[(i + 1) % edgePoints.length].y, z2 = edgePoints[(i + 1) % edgePoints.length].z;
+                        // Bottom edge
+                        const x1b = x1, y1b = y1, z1b = -thickness;
+                        const x2b = x2, y2b = y2, z2b = -thickness;
+                        // Add wall vertices
+                        allPositions.push(x1, y1, z1); // 0 top current
+                        allPositions.push(x2, y2, z2); // 1 top next
+                        allPositions.push(x1b, y1b, z1b); // 2 bottom current
+                        allPositions.push(x2b, y2b, z2b); // 3 bottom next
+                        allUVs.push(0, 0, 0, 0, 0, 0, 0, 0); // dummy UVs
+                        const base = wallStartIdx + i * 4;
+                        allIndices.push(base, base + 2, base + 1);
+                        allIndices.push(base + 1, base + 2, base + 3);
+                    }
+                    
+                    // Compute antiquing vertex colors based on Z height (same as circular pendant)
+                    let minZEarring = Infinity, maxZEarring = -Infinity;
+                    let antiquingColorsEarring = [];
+                    for (let i = 2; i < allPositions.length; i += 3) {
+                        if (allPositions[i] < minZEarring) minZEarring = allPositions[i];
+                        if (allPositions[i] > maxZEarring) maxZEarring = allPositions[i];
+                    }
+                    const antiquingAmount = parseFloat(document.getElementById('antiquing-amount')?.value || 0.5);
+                    for (let i = 2; i < allPositions.length; i += 3) {
+                        const z = allPositions[i];
+                        const t = (z - minZEarring) / (maxZEarring - minZEarring + 1e-6);
+                        const antiqued = 0.15 + (1 - 0.15) * ((1 - antiquingAmount) * t + antiquingAmount * (1 - t));
+                        antiquingColorsEarring.push(antiqued, antiqued, antiqued);
+                    }
+                    
+                    // Create geometry
+                    const earringGeometry = new THREE.BufferGeometry();
+                    earringGeometry.setAttribute('position', new THREE.Float32BufferAttribute(allPositions, 3));
+                    earringGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(allUVs, 2));
+                    earringGeometry.setAttribute('color', new THREE.Float32BufferAttribute(antiquingColorsEarring, 3));
+                    earringGeometry.setIndex(allIndices);
+                    earringGeometry.computeVertexNormals();
+                    
+                    return earringGeometry;
+                };
+
+                // Create two earrings with watertight geometry
+                const earringGeometry = createEarringGeometry();
+                
+                // Generate a circular alphaMap for earrings (same as circular pendant)
+                const size = 512;
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, size, size);
+                ctx.beginPath();
+                ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                const earringAlphaMap = new THREE.CanvasTexture(canvas);
+                
+                // Use the same material settings as circular pendant
+                const earringMaterial = new THREE.MeshStandardMaterial({
+                    color: METAL_MATERIALS['sterling-silver'].color,
+                    metalness: this.envMapLoaded ? 1.0 : 0.2,
+                    roughness: this.envMapLoaded ? 0.1 : 0.7,
+                    side: THREE.DoubleSide,
+                    envMapIntensity: this.envMapLoaded ? 1.0 : 0.0,
+                    transparent: !!earringAlphaMap,
+                    alphaMap: earringAlphaMap,
+                    alphaTest: earringAlphaMap ? 0.5 : 0,
+                    vertexColors: true
+                });
+
+                const mesh1 = new THREE.Mesh(earringGeometry.clone(), earringMaterial.clone());
+                const mesh2 = new THREE.Mesh(earringGeometry.clone(), earringMaterial.clone());
+                
+                // Position earrings side by side with some spacing
+                const spacing = this.pendantDiameter * 1.2;
+                mesh1.position.x = -spacing / 2;
+                mesh1.position.y = this.pendantThickness / 2;
+                mesh2.position.x = spacing / 2;
+                mesh2.position.y = this.pendantThickness / 2;
+                
+                // Create a group to hold both earrings
+                const earringsGroup = new THREE.Group();
+                earringsGroup.add(mesh1);
+                earringsGroup.add(mesh2);
+                
+                this.scene.add(earringsGroup);
+                this.heightfield = earringsGroup;
+                
+                // No jumprings for earrings
+                if (this.jumpring) {
+                    this.scene.remove(this.jumpring);
+                    this.jumpring = null;
+                }
+                
+                // Ensure the correct metal material is applied on first render
+                const earringMetalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+                this.updateMetalMaterial(earringMetalType);
+                console.log('Created watertight earrings pair');
+                return;
         }
 
         if (!geometry) return;
@@ -1630,11 +1846,11 @@ class HeightfieldViewer {
         for (let i = 0; i < positions.length; i += 3) {
             let u, v;
             
-            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
+            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' || this.currentObjectType === 'earrings') {
                 // For circular shapes, convert position to UV coordinates
                 const x = positions[i];
                 const y = positions[i + 1];
-                const radius = (this.currentObjectType === 'circular-pendant') ? this.pendantDiameter / 2 : this.pendantDiameter / 4;
+                const radius = (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'earrings') ? this.pendantDiameter / 2 : this.pendantDiameter / 4;
                 u = (x / (this.pendantDiameter / 2) + 1) / 2;
                 v = (y / (this.pendantDiameter / 2) + 1) / 2;
                 // Mask out vertices outside the circle
@@ -1666,8 +1882,8 @@ class HeightfieldViewer {
         // IMPORTANT: Recompute normals after modifying vertices for correct lighting/reflections
         geometry.computeVertexNormals();
 
-        // Generate a circular alphaMap for the circular pendant
-        if (this.currentObjectType === 'circular-pendant') {
+        // Generate a circular alphaMap for circular shapes
+        if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'earrings') {
             const size = 512;
             const canvas = document.createElement('canvas');
             canvas.width = size;
@@ -1778,7 +1994,7 @@ class HeightfieldViewer {
             // Find the bottom edge Y (for circular/rectangular, it's -diameter/2 or -height/2)
             let pivotY = 0;
             let pivotZ = 0;
-            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
+            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' || this.currentObjectType === 'earrings') {
                 pivotY = -this.pendantDiameter / 2;
                 pivotZ = 0;
             } else {
@@ -1853,8 +2069,8 @@ class HeightfieldViewer {
             y = yRot;
 
             // Offset
-            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
-                const radius = (this.currentObjectType === 'circular-pendant') ? this.pendantDiameter / 2 : this.pendantDiameter / 4;
+            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' || this.currentObjectType === 'earrings') {
+                const radius = (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'earrings') ? this.pendantDiameter / 2 : this.pendantDiameter / 4;
                 x += this.imageTransform.offsetX * radius;
                 y += this.imageTransform.offsetY * radius;
             } else {
@@ -1867,8 +2083,8 @@ class HeightfieldViewer {
             positions[i + 1] = y;
 
             // Update UVs for proper texture mapping
-            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
-                const radius = (this.currentObjectType === 'circular-pendant') ? this.pendantDiameter / 2 : this.pendantDiameter / 4;
+            if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' || this.currentObjectType === 'earrings') {
+                const radius = (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'earrings') ? this.pendantDiameter / 2 : this.pendantDiameter / 4;
                 uvs[i / 3 * 2] = (x / radius + 1) / 2;
                 uvs[i / 3 * 2 + 1] = (y / radius + 1) / 2;
             }
@@ -1883,10 +2099,24 @@ class HeightfieldViewer {
         if (!this.heightfield) return;
 
         const materialProps = METAL_MATERIALS[metalType];
-        this.heightfield.material.color.set(materialProps.color);
-        this.heightfield.material.metalness = materialProps.metalness;
-        this.heightfield.material.roughness = materialProps.roughness;
-        this.heightfield.material.envMapIntensity = materialProps.envMapIntensity;
+        
+        if (this.currentObjectType === 'earrings' && this.heightfield.isGroup) {
+            // For earrings, update both meshes in the group
+            this.heightfield.children.forEach(mesh => {
+                if (mesh.material) {
+                    mesh.material.color.set(materialProps.color);
+                    mesh.material.metalness = materialProps.metalness;
+                    mesh.material.roughness = materialProps.roughness;
+                    mesh.material.envMapIntensity = materialProps.envMapIntensity;
+                }
+            });
+        } else {
+            // For single pendant
+            this.heightfield.material.color.set(materialProps.color);
+            this.heightfield.material.metalness = materialProps.metalness;
+            this.heightfield.material.roughness = materialProps.roughness;
+            this.heightfield.material.envMapIntensity = materialProps.envMapIntensity;
+        }
 
         if (this.jumpring) {
             this.jumpring.material.color.set(materialProps.color);
@@ -1900,7 +2130,18 @@ class HeightfieldViewer {
         if (!this.heightfield) return;
 
         const finishProps = FINISH_PROPERTIES[finish];
-        this.heightfield.material.roughness = finishProps.roughness;
+        
+        if (this.currentObjectType === 'earrings' && this.heightfield.isGroup) {
+            // For earrings, update both meshes in the group
+            this.heightfield.children.forEach(mesh => {
+                if (mesh.material) {
+                    mesh.material.roughness = finishProps.roughness;
+                }
+            });
+        } else {
+            // For single pendant
+            this.heightfield.material.roughness = finishProps.roughness;
+        }
 
         if (this.jumpring) {
             this.jumpring.material.roughness = finishProps.roughness;
