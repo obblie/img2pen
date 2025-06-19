@@ -15,16 +15,24 @@ if ! git rev-parse --git-dir > /dev/null 2>&1; then
     exit 1
 fi
 
-# Check for uncommitted changes in source files
-if ! git diff --quiet HEAD -- src/ package.json package-lock.json vite.config.js; then
-    echo -e "${YELLOW}⚠️  Warning: You have uncommitted changes in source files${NC}"
-    echo -e "${YELLOW}   Consider committing your changes first${NC}"
-    read -p "Continue anyway? (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo -e "${YELLOW}🛑 Deployment cancelled${NC}"
-        exit 0
-    fi
+# Check for uncommitted changes in source files and auto-commit them
+SOURCE_FILES="src/ index.html package.json package-lock.json vite.config.js"
+if ! git diff --quiet HEAD -- $SOURCE_FILES; then
+    echo -e "${BLUE}📝 Auto-committing source changes...${NC}"
+    
+    # Show what will be committed
+    echo -e "${BLUE}📋 Source changes to be committed:${NC}"
+    git diff --name-status HEAD -- $SOURCE_FILES
+    
+    # Add source changes
+    git add $SOURCE_FILES
+    
+    # Generate commit message for source changes
+    SOURCE_TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+    SOURCE_COMMIT_MSG="Update source files - ${SOURCE_TIMESTAMP}"
+    
+    git commit -m "$SOURCE_COMMIT_MSG"
+    echo -e "${GREEN}✅ Source changes committed: ${SOURCE_COMMIT_MSG}${NC}"
 fi
 
 # Build the project
