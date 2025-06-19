@@ -24,7 +24,7 @@ const METAL_MATERIALS = {
         envMapIntensity: 1.0
     },
     'gold-18k': {
-        color: 0xF4E4BC,
+        color: 0xDAA520,
         metalness: 1.0,
         roughness: 0.1,
         envMapIntensity: 1.0
