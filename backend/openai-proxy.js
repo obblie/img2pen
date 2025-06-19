@@ -6,12 +6,13 @@ dotenv.config();
 
 const app = express();
 
-// Configure CORS to allow GitHub Pages
+// Configure CORS to allow both GitHub Pages and Render deployments
 const corsOptions = {
     origin: [
-        'https://obblie.github.io',
-        'http://localhost:5173', // For local development
-        'http://localhost:3000'  // For local development
+        'https://obblie.github.io',      // GitHub Pages domain
+        'https://img2pen.onrender.com',  // Render frontend domain
+        'http://localhost:5173',         // For local development
+        'http://localhost:3000'          // For local development
     ],
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
