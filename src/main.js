@@ -23,7 +23,7 @@ const METAL_MATERIALS = {
         roughness: 0.1,
         envMapIntensity: 1.0
     },
-    'gold-18k': {
+    'gold-14k': {
         color: 0xDAA520,
         metalness: 1.0,
         roughness: 0.1,
@@ -1799,15 +1799,47 @@ class HeightfieldViewer {
                 mesh2.position.x = spacing / 2;
                 mesh2.position.y = this.pendantThickness / 2;
                 
-                // Create a group to hold both earrings
+                // Create jump rings for each earring
+                const jumpringRadius = 2.5; // Made larger for visibility
+                const jumpringWireThickness = 0.6; // Made thicker for visibility
+                const jumpringGeometry = new THREE.TorusGeometry(jumpringRadius, jumpringWireThickness, 16, 32);
+                const jumpringMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xFF0000, // Red color for debugging - make jump rings very visible
+                    metalness: 0.5,
+                    roughness: 0.3,
+                    envMapIntensity: 1.0
+                });
+                
+                // Create jump rings for each earring
+                const jumpring1 = new THREE.Mesh(jumpringGeometry.clone(), jumpringMaterial.clone());
+                const jumpring2 = new THREE.Mesh(jumpringGeometry.clone(), jumpringMaterial.clone());
+                
+                // Position jump rings at the top of each earring - made more visible
+                const earringTopY = this.pendantThickness / 2 + 15.0; // Much higher above the earring for visibility
+                jumpring1.position.set(-spacing / 2, earringTopY, 0);
+                jumpring2.position.set(spacing / 2, earringTopY, 0);
+                
+                console.log('Created jump rings with radius:', jumpringRadius, 'at Y position:', earringTopY);
+                console.log('Jump ring 1 position:', jumpring1.position);
+                console.log('Jump ring 2 position:', jumpring2.position);
+                
+                // Create a group to hold both earrings and their jump rings
                 const earringsGroup = new THREE.Group();
                 earringsGroup.add(mesh1);
                 earringsGroup.add(mesh2);
+                earringsGroup.add(jumpring1);
+                earringsGroup.add(jumpring2);
                 
                 this.scene.add(earringsGroup);
                 this.heightfield = earringsGroup;
                 
-                // No jumprings for earrings
+                console.log('Added earrings group to scene with', earringsGroup.children.length, 'children');
+                console.log('Scene now has', this.scene.children.length, 'total children');
+                
+                // Store jump rings for material updates
+                this.earringJumprings = [jumpring1, jumpring2];
+                
+                // Remove the main jumpring since we have individual ones for earrings
                 if (this.jumpring) {
                     this.scene.remove(this.jumpring);
                     this.jumpring = null;
@@ -1816,6 +1848,10 @@ class HeightfieldViewer {
                 // Ensure the correct metal material is applied on first render
                 const earringMetalType = document.getElementById('metal-type')?.value || 'sterling-silver';
                 this.updateMetalMaterial(earringMetalType);
+                
+                // Fit camera to the earrings group to ensure jump rings are visible
+                this.fitCameraToObject(earringsGroup);
+                
                 console.log('Created fully watertight earrings pair with complete geometry');
                 return;
             }
@@ -1960,6 +1996,14 @@ class HeightfieldViewer {
         
         this.controls.target.copy(center);
         this.controls.update();
+        
+        console.log('Fitted camera to object:', {
+            objectBounds: { min: box.min, max: box.max },
+            center: center,
+            size: size,
+            cameraPosition: this.camera.position,
+            cameraTarget: this.controls.target
+        });
     }
 
     animate() {
@@ -2094,6 +2138,18 @@ class HeightfieldViewer {
                     mesh.material.envMapIntensity = materialProps.envMapIntensity;
                 }
             });
+            
+            // Update earring jump rings if they exist
+            if (this.earringJumprings) {
+                this.earringJumprings.forEach(jumpring => {
+                    if (jumpring.material) {
+                        jumpring.material.color.set(materialProps.color);
+                        jumpring.material.metalness = materialProps.metalness;
+                        jumpring.material.roughness = materialProps.roughness;
+                        jumpring.material.envMapIntensity = materialProps.envMapIntensity;
+                    }
+                });
+            }
         } else {
             // For single pendant
             this.heightfield.material.color.set(materialProps.color);
@@ -2122,6 +2178,15 @@ class HeightfieldViewer {
                     mesh.material.roughness = finishProps.roughness;
                 }
             });
+            
+            // Update earring jump rings if they exist
+            if (this.earringJumprings) {
+                this.earringJumprings.forEach(jumpring => {
+                    if (jumpring.material) {
+                        jumpring.material.roughness = finishProps.roughness;
+                    }
+                });
+            }
         } else {
             // For single pendant
             this.heightfield.material.roughness = finishProps.roughness;
@@ -2185,6 +2250,11 @@ class HeightfieldViewer {
         let divisions = 60;
         if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
             gridSize = Math.ceil(this.pendantDiameter * 1.2);
+            divisions = gridSize;
+        } else if (this.currentObjectType === 'earrings') {
+            // For earrings, make grid wide enough to accommodate both earrings with spacing
+            const earringSpacing = this.pendantDiameter * 1.2;
+            gridSize = Math.ceil(earringSpacing * 1.5); // Extra space for visual comfort
             divisions = gridSize;
         } else {
             gridSize = Math.ceil(Math.max(this.pendantWidth, this.pendantHeight) * 1.2);
@@ -2496,6 +2566,14 @@ class HeightfieldViewer {
         const group = new THREE.Group();
         if (this.heightfield) group.add(this.heightfield.clone());
         if (this.jumpring) group.add(this.jumpring.clone());
+        
+        // Add earring jump rings if they exist
+        if (this.earringJumprings) {
+            this.earringJumprings.forEach(jumpring => {
+                group.add(jumpring.clone());
+            });
+        }
+        
         const stlString = exporter.parse(group);
         const blob = new Blob([stlString], { type: 'text/plain' });
         const link = document.createElement('a');
@@ -3122,6 +3200,16 @@ class HeightfieldViewer {
             this.jumpring = null;
         }
 
+        // Remove earring jump rings
+        if (this.earringJumprings) {
+            this.earringJumprings.forEach(jumpring => {
+                this.scene.remove(jumpring);
+                jumpring.geometry.dispose();
+                jumpring.material.dispose();
+            });
+            this.earringJumprings = null;
+        }
+
         // Remove engraving
         if (this.engravingMesh) {
             this.scene.remove(this.engravingMesh);
@@ -3220,6 +3308,13 @@ class HeightfieldViewer {
         if (this.jumpring) {
             this.jumpring.geometry.dispose();
             this.jumpring.material.dispose();
+        }
+        
+        if (this.earringJumprings) {
+            this.earringJumprings.forEach(jumpring => {
+                jumpring.geometry.dispose();
+                jumpring.material.dispose();
+            });
         }
         
         if (this.engravingMesh) {

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earrings with Jump Rings Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-info {
+            background: #333;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .test-steps {
+            background: #444;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .test-steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .test-steps li {
+            margin-bottom: 10px;
+        }
+        .status {
+            background: #555;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .status.success {
+            background: #2d5a2d;
+        }
+        .status.error {
+            background: #5a2d2d;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Earrings with Jump Rings Test</h1>
+        
+        <div class="test-info">
+            <h2>Test Objective</h2>
+            <p>Verify that when creating earring pairs, small jump rings are automatically added to each earring for attaching dangling chains.</p>
+        </div>
+        
+        <div class="test-steps">
+            <h2>Test Steps</h2>
+            <ol>
+                <li>Open the main application (index.html)</li>
+                <li>Select "Earrings (Pair)" from the Object Type dropdown</li>
+                <li>Upload an image or generate one with AI</li>
+                <li>Verify that each earring has a small jump ring positioned at the top</li>
+                <li>Check that the jump rings are properly sized (1.5mm radius)</li>
+                <li>Verify that the jump rings inherit the metal material properties</li>
+                <li>Test that the jump rings are included in STL export</li>
+            </ol>
+        </div>
+        
+        <div class="status">
+            <h3>Expected Results</h3>
+            <ul>
+                <li>✅ Two earrings displayed side by side</li>
+                <li>✅ Each earring has a small jump ring at the top</li>
+                <li>✅ Jump rings are positioned slightly above the earring surface</li>
+                <li>✅ Jump rings match the metal type and finish</li>
+                <li>✅ Jump rings are included in 3D model export</li>
+            </ul>
+        </div>
+        
+        <div class="status">
+            <h3>Technical Details</h3>
+            <ul>
+                <li><strong>Jump Ring Size:</strong> 1.5mm radius (smaller than standard 2mm)</li>
+                <li><strong>Wire Thickness:</strong> 0.4mm</li>
+                <li><strong>Position:</strong> 0.5mm above earring surface</li>
+                <li><strong>Material:</strong> Inherits from selected metal type</li>
+                <li><strong>Geometry:</strong> Torus with 16 segments, 32 radial segments</li>
+            </ul>
+        </div>
+        
+        <div class="status">
+            <h3>Implementation Notes</h3>
+            <ul>
+                <li>Jump rings are created as individual meshes within the earrings group</li>
+                <li>Material updates are handled for both earrings and jump rings</li>
+                <li>Proper cleanup is implemented in resetScene() and dispose() methods</li>
+                <li>STL export includes all jump rings</li>
+                <li>Jump rings are positioned relative to each earring's center</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html> 
