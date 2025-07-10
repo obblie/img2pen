@@ -33,8 +33,8 @@ const METAL_MATERIALS = {
 
 // Finish properties
 const FINISH_PROPERTIES = {
-    'polished': { roughness: 0.1 },
-    'brushed': { roughness: 0.3 },
+    'polished': { roughness: 0.1 }, 
+    'brushed': { roughness: 0.3 }, 
     'matte': { roughness: 0.7 }
 };
 
@@ -2126,6 +2126,9 @@ class HeightfieldViewer {
     updateMetalMaterial(metalType) {
         if (!this.heightfield) return;
 
+        console.log('Updating metal material to:', metalType);
+        console.log('Available materials:', Object.keys(METAL_MATERIALS));
+        
         const materialProps = METAL_MATERIALS[metalType];
         
         if (this.currentObjectType === 'earrings' && this.heightfield.isGroup) {
