@@ -7,7 +7,7 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 // Constants for physical dimensions
-const MAX_DEPTH = 0.8; // mm (reduced from 1.3mm)
+const MAX_DEPTH = 0.6; // mm (adjusted so total with rim = 2mm)
 const FIXED_WIDTH = 25; // mm
 const RESOLUTION = 1000; // Number of segments in X direction (restored to original resolution for 18MB files)
 
@@ -603,7 +603,7 @@ class HeightfieldViewer {
         this.pendantDiameter = 25;
         this.pendantWidth = 25;
         this.pendantHeight = 25;
-        this.pendantThickness = 2;
+        this.pendantThickness = 1.0; // Base thickness (total will be 2mm: 1mm base + 1mm above)
         this.borderThickness = 1.0;
         this.aspectLocked = true;
         this.jumpringOffset = { x: 0, y: 0, z: -15 };
@@ -1303,9 +1303,11 @@ class HeightfieldViewer {
                 this.bottomDisc = null;
                 this.sideWall = null;
 
-                // Relief (top)
+                // Relief (top) - subtract border thickness from diameter to keep total size at 25mm
                 const diameter = this.pendantDiameter;
-                const radius = diameter / 2;
+                const effectiveRadius = (diameter / 2) - this.borderThickness; // Inner radius for design
+                const outerRadius = diameter / 2; // Outer radius including border
+                const radius = effectiveRadius; // For backward compatibility with existing code
                 const widthSegments = heightfieldData.width - 1;
                 const heightSegments = heightfieldData.height - 1;
                 const thickness = this.pendantThickness;
@@ -1317,13 +1319,13 @@ class HeightfieldViewer {
                 const grid = [];
                 for (let y = 0; y <= heightSegments; ++y) {
                     for (let x = 0; x <= widthSegments; ++x) {
-                        const px = (x / widthSegments - 0.5) * diameter;
-                        const py = (y / heightSegments - 0.5) * diameter;
+                        const px = (x / widthSegments - 0.5) * (effectiveRadius * 2);
+                        const py = (y / heightSegments - 0.5) * (effectiveRadius * 2);
                         const dist = Math.sqrt(px * px + py * py);
                         let z = 0;
-                        let u = (px / radius + 1) / 2;
-                        let v = (py / radius + 1) / 2;
-                        if (dist <= radius) {
+                        let u = (px / effectiveRadius + 1) / 2;
+                        let v = (py / effectiveRadius + 1) / 2;
+                        if (dist <= effectiveRadius) {
                             const pixelX = Math.floor(u * (heightfieldData.width - 1));
                             const pixelY = heightfieldData.height - 1 - Math.floor(v * (heightfieldData.height - 1));
                             const pixelIndex = (pixelY * heightfieldData.width + pixelX) * 4;
@@ -1332,7 +1334,7 @@ class HeightfieldViewer {
                                 heightfieldData.data[pixelIndex + 2] * 0.114) / 255;
                             z = gray * MAX_DEPTH;
                         }
-                        grid.push({ px, py, z, u, v, inCircle: dist <= radius });
+                        grid.push({ px, py, z, u, v, inCircle: dist <= effectiveRadius });
                     }
                 }
                 // Build positions/uvs for only in-circle vertices, and map old grid index to new
@@ -1420,7 +1422,7 @@ class HeightfieldViewer {
                     allIndices.push(base, base + 2, base + 1);
                     allIndices.push(base + 1, base + 2, base + 3);
                 }
-                // 4. Border (rim) - vertical wall offset outward by borderThickness, total height 2.1mm
+                // 4. Border (rim) - extend to exactly outerRadius for 25mm total diameter
                 const rimStartIdx = allPositions.length / 3;
                 const border = this.borderThickness;
                 // Find maxZ of the relief
@@ -1428,7 +1430,7 @@ class HeightfieldViewer {
                 for (let i = 0; i < grid.length; ++i) {
                     if (grid[i].inCircle && grid[i].z > maxZ) maxZ = grid[i].z;
                 }
-                const rimTopZ = maxZ + 0.4; // reduced from 0.6mm to 0.4mm
+                const rimTopZ = maxZ + 0.4; // Rim 0.4mm above relief for proper recess
                 for (let i = 0; i < edgePoints.length; ++i) {
                     const next = (i + 1) % edgePoints.length;
                     // Outward normal
@@ -1437,11 +1439,13 @@ class HeightfieldViewer {
                     const len = Math.sqrt(dx * dx + dy * dy);
                     const nx = dx / len;
                     const ny = dy / len;
-                    // Outer edge points
-                    const ox1 = edgePoints[i].x + nx * border;
-                    const oy1 = edgePoints[i].y + ny * border;
-                    const ox2 = edgePoints[next].x + (edgePoints[next].x / Math.sqrt(edgePoints[next].x ** 2 + edgePoints[next].y ** 2)) * border;
-                    const oy2 = edgePoints[next].y + (edgePoints[next].y / Math.sqrt(edgePoints[next].x ** 2 + edgePoints[next].y ** 2)) * border;
+                    // Outer edge points - extend to exactly outerRadius for 25mm total diameter
+                    const ox1 = nx * outerRadius;
+                    const oy1 = ny * outerRadius;
+                    const nx2 = edgePoints[next].x / Math.sqrt(edgePoints[next].x ** 2 + edgePoints[next].y ** 2);
+                    const ny2 = edgePoints[next].y / Math.sqrt(edgePoints[next].x ** 2 + edgePoints[next].y ** 2);
+                    const ox2 = nx2 * outerRadius;
+                    const oy2 = ny2 * outerRadius;
                     // Top and bottom (rim top always at rimTopZ)
                     allPositions.push(edgePoints[i].x, edgePoints[i].y, rimTopZ); // 0 inner top
                     allPositions.push(edgePoints[next].x, edgePoints[next].y, rimTopZ); // 1 inner top next
@@ -3643,6 +3647,13 @@ if (typeof scene !== 'undefined') {
 function initializeMobileMenu() {
     const mobileToggle = document.getElementById('mobile-menu-toggle');
     const uiMenu = document.getElementById('ui-menu');
+    
+    // Prevent multiple initializations
+    if (window.mobileMenuInitialized) {
+        console.log('Mobile menu already initialized, skipping...');
+        return;
+    }
+    
     let isMenuOpen = false;
 
     // Check if we're on mobile
@@ -3651,19 +3662,30 @@ function initializeMobileMenu() {
     }
 
     // Toggle menu function
-    function toggleMenu() {
+    function toggleMenu(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        
         if (!isMobile()) return;
+        
+        console.log('Toggle menu clicked, current state:', isMenuOpen);
         
         isMenuOpen = !isMenuOpen;
         
         if (isMenuOpen) {
             uiMenu.classList.add('mobile-open');
+            uiMenu.style.transform = 'translateY(0)';
             mobileToggle.style.transform = 'rotate(45deg)';
             mobileToggle.innerHTML = '✕';
+            console.log('Menu opened');
         } else {
             uiMenu.classList.remove('mobile-open');
+            uiMenu.style.transform = 'translateY(100%)';
             mobileToggle.style.transform = 'rotate(0deg)';
             mobileToggle.innerHTML = '⚙️';
+            console.log('Menu closed');
         }
     }
 
@@ -3671,10 +3693,11 @@ function initializeMobileMenu() {
     function handleOutsideClick(event) {
         if (!isMobile() || !isMenuOpen) return;
         
-        const isClickInsideMenu = uiMenu.contains(event.target);
-        const isClickOnToggle = mobileToggle.contains(event.target);
+        const isClickInsideMenu = uiMenu && uiMenu.contains(event.target);
+        const isClickOnToggle = mobileToggle && mobileToggle.contains(event.target);
         
         if (!isClickInsideMenu && !isClickOnToggle) {
+            console.log('Outside click detected, closing menu');
             toggleMenu();
         }
     }
@@ -3684,15 +3707,28 @@ function initializeMobileMenu() {
         if (!isMobile() && isMenuOpen) {
             // Reset menu state when switching to desktop
             uiMenu.classList.remove('mobile-open');
+            uiMenu.style.transform = 'translateY(100%)';
             mobileToggle.style.transform = 'rotate(0deg)';
             mobileToggle.innerHTML = '⚙️';
             isMenuOpen = false;
+            console.log('Menu reset due to window resize');
         }
     }
 
-    // Add event listeners
+    // Add event listeners with proper error handling
     if (mobileToggle) {
+        // Remove any existing listeners first
+        mobileToggle.removeEventListener('click', toggleMenu);
         mobileToggle.addEventListener('click', toggleMenu);
+        console.log('Mobile toggle button listener added');
+    } else {
+        console.warn('Mobile toggle button not found');
+    }
+    
+    if (uiMenu) {
+        console.log('UI menu found, adding outside click listener');
+    } else {
+        console.warn('UI menu not found');
     }
     
     document.addEventListener('click', handleOutsideClick);
@@ -3733,6 +3769,7 @@ function initializeMobileMenu() {
         
         // Close menu if dragged down more than 100px
         if (isMenuOpen && deltaY > 100) {
+            console.log('Menu closed by drag gesture');
             toggleMenu();
         } else {
             // Snap back to position
@@ -3745,9 +3782,12 @@ function initializeMobileMenu() {
         uiMenu.addEventListener('touchstart', handleTouchStart, { passive: true });
         uiMenu.addEventListener('touchmove', handleTouchMove, { passive: true });
         uiMenu.addEventListener('touchend', handleTouchEnd, { passive: true });
+        console.log('Touch event listeners added to menu');
     }
 
-    console.log('Mobile menu functionality initialized');
+    // Mark as initialized
+    window.mobileMenuInitialized = true;
+    console.log('✅ Mobile menu functionality initialized');
 }
 
 // Test backend connectivity function
