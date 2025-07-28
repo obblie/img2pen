@@ -41,6 +41,207 @@
             width: 100%;
             height: 100%;
         }
+
+        /* Mobile Menu Toggle Button */
+        #mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: transform 0.2s ease, background 0.2s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #mobile-menu-toggle:hover {
+            transform: scale(1.1);
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        #mobile-menu-toggle:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 768px) {
+            #mobile-menu-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* Optimize replace image button for mobile */
+            #replace-image-button {
+                top: 10px !important;
+                left: 10px !important;
+            }
+            
+            #replace-file {
+                padding: 8px 12px !important;
+                font-size: 14px !important;
+                min-height: 44px !important;
+            }
+            
+            /* Mobile-optimized cropper modal */
+            #cropper-modal > div {
+                flex-direction: column !important;
+                max-width: 95vw !important;
+                max-height: 95vh !important;
+                padding: 16px !important;
+                gap: 12px !important;
+                overflow-y: auto !important;
+            }
+            
+            #cropper-image {
+                max-width: 90vw !important;
+                max-height: 40vh !important;
+                flex-shrink: 0 !important;
+            }
+            
+            /* Ensure action buttons are always accessible */
+            #cropper-modal .action-buttons {
+                position: sticky !important;
+                bottom: 0 !important;
+                background: #222 !important;
+                padding: 16px 0 !important;
+                margin: 0 -16px !important;
+                border-top: 1px solid rgba(255,255,255,0.1) !important;
+                z-index: 10 !important;
+            }
+            
+            #cropper-toolbar {
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+                gap: 8px !important;
+                margin-top: 12px !important;
+            }
+            
+            #cropper-toolbar button {
+                min-width: 44px !important;
+                min-height: 44px !important;
+                font-size: 18px !important;
+                padding: 8px !important;
+                border-radius: 8px !important;
+                background: rgba(255, 255, 255, 0.1) !important;
+                border: 1px solid rgba(255, 255, 255, 0.3) !important;
+                color: white !important;
+            }
+            
+            #cropper-toolbar select {
+                min-height: 44px !important;
+                font-size: 16px !important;
+                padding: 8px 12px !important;
+                background: rgba(255, 255, 255, 0.1) !important;
+                border: 1px solid rgba(255, 255, 255, 0.3) !important;
+                color: white !important;
+                border-radius: 8px !important;
+            }
+            
+            #cropper-pixel-controls {
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+                gap: 6px !important;
+                margin: 8px 0 !important;
+            }
+            
+            #cropper-pixel-controls label {
+                font-size: 14px !important;
+            }
+            
+            #cropper-pixel-controls input {
+                width: 50px !important;
+                padding: 4px !important;
+                font-size: 14px !important;
+            }
+            
+            #cropper-preview-container {
+                min-width: auto !important;
+                width: 100% !important;
+                max-width: 280px !important;
+            }
+            
+            #cropper-confirm,
+            #cropper-cancel {
+                padding: 12px 20px !important;
+                font-size: 16px !important;
+                min-height: 44px !important;
+                min-width: 120px !important;
+                touch-action: manipulation !important;
+                border-radius: 8px !important;
+                border: none !important;
+                cursor: pointer !important;
+            }
+            
+            #cropper-confirm {
+                background: #4CAF50 !important;
+                color: white !important;
+            }
+            
+            #cropper-cancel {
+                background: #666 !important;
+                color: white !important;
+            }
+            
+            /* Force buttons to always be visible */
+            @media (max-height: 600px) {
+                #cropper-image {
+                    max-height: 30vh !important;
+                }
+                
+                #cropper-toolbar {
+                    margin-top: 8px !important;
+                }
+                
+                #cropper-pixel-controls {
+                    display: none !important; /* Hide detailed controls on very small screens */
+                }
+            }
+            
+            /* Enhanced mobile cropper controls */
+            #cropper-image {
+                touch-action: none !important;
+                user-select: none !important;
+                -webkit-user-select: none !important;
+            }
+            
+            /* Make crop selection more visible on mobile */
+            .cropper-crop-box {
+                border: 3px solid #39f !important;
+                box-shadow: 0 0 0 1px rgba(255,255,255,0.5) !important;
+            }
+            
+            .cropper-point {
+                width: 20px !important;
+                height: 20px !important;
+                background: #39f !important;
+                border: 2px solid white !important;
+                border-radius: 50% !important;
+            }
+            
+            .cropper-line {
+                background: rgba(57, 255, 255, 0.3) !important;
+            }
+            
+            /* Larger touch targets for crop handles */
+            .cropper-point.point-e,
+            .cropper-point.point-w,
+            .cropper-point.point-n,
+            .cropper-point.point-s,
+            .cropper-point.point-ne,
+            .cropper-point.point-nw,
+            .cropper-point.point-se,
+            .cropper-point.point-sw {
+                width: 24px !important;
+                height: 24px !important;
+            }
+        }
         .instructions {
             text-align: center;
             padding: 20px;
@@ -62,6 +263,72 @@
             max-height: calc(100vh - 40px);
             overflow-y: auto;
             z-index: 1000;
+            transition: transform 0.3s ease, width 0.3s ease, top 0.3s ease, right 0.3s ease;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            #ui-menu {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                top: auto;
+                width: 100%;
+                max-height: 60vh;
+                border-radius: 16px 16px 0 0;
+                padding: 20px;
+                transform: translateY(100%);
+                background: rgba(0, 0, 0, 0.95);
+                backdrop-filter: blur(10px);
+            }
+            
+            #ui-menu.mobile-open {
+                transform: translateY(0);
+            }
+            
+            /* Mobile handle for dragging */
+            #ui-menu::before {
+                content: '';
+                position: absolute;
+                top: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 4px;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 2px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #ui-menu {
+                padding: 16px;
+                max-height: 70vh;
+            }
+            
+            .control-group {
+                margin-bottom: 16px;
+            }
+            
+            .control-group label {
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+            
+            .control-group select,
+            .control-group input[type="range"],
+            .control-group input[type="number"] {
+                font-size: 16px; /* Prevents zoom on iOS */
+                min-height: 44px; /* Touch-friendly size */
+            }
+            
+            .toggle-button {
+                font-size: 24px;
+                padding: 8px;
+                min-width: 44px;
+                min-height: 44px;
+            }
         }
         
         /* Custom scrollbar for the menu */
@@ -243,11 +510,12 @@
                     <textarea id="prompt-input" placeholder="Describe a scene, memory, or image you'd like to create..." 
                               style="width: 100%; height: 80px; padding: 12px; border: 2px solid rgba(255,255,255,0.3); 
                                      border-radius: 8px; background: rgba(255,255,255,0.1); color: white; 
-                                     font-family: Arial, sans-serif; font-size: 14px; resize: vertical; 
-                                     box-sizing: border-box;"></textarea>
+                                     font-family: Arial, sans-serif; font-size: 16px; resize: vertical; 
+                                     box-sizing: border-box; -webkit-appearance: none;"></textarea>
                     <button id="prompt-submit" style="margin-top: 15px; padding: 12px 24px; background: #4CAF50; 
                                                      color: white; border: none; border-radius: 6px; font-size: 16px; 
-                                                     cursor: pointer; font-weight: bold;">Generate Image</button>
+                                                     cursor: pointer; font-weight: bold; min-height: 44px; 
+                                                     touch-action: manipulation; -webkit-appearance: none;">Generate Image</button>
                 </div>
             </div>
         </div>
@@ -269,6 +537,11 @@
         </div>
     </div>
     <div id="canvas-container"></div>
+
+    <!-- Mobile Menu Toggle Button -->
+    <button id="mobile-menu-toggle" aria-label="Toggle Menu">
+        ⚙️
+    </button>
 
     <!-- Replace Image Button - positioned at top of scene -->
     <div id="replace-image-button" style="position:fixed;top:20px;left:20px;z-index:1000;">
@@ -467,6 +740,10 @@
     <!-- Cropper Modal -->
     <div id="cropper-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);z-index:4000;justify-content:center;align-items:center;flex-direction:column;">
         <div style="background:#222;padding:24px;border-radius:10px;box-shadow:0 2px 16px #000;max-width:90vw;max-height:90vh;display:flex;flex-direction:row;align-items:flex-start;gap:32px;">
+            <!-- Mobile cropping instructions -->
+            <div id="mobile-crop-instructions" style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,150,0,0.9);color:white;padding:8px 16px;border-radius:6px;font-size:14px;z-index:1;text-align:center;">
+                📱 Drag corners to crop • Double-tap to reset
+            </div>
             <div style="display:flex;flex-direction:column;align-items:center;">
                 <img id="cropper-image" src="" style="max-width:70vw;max-height:60vh;display:block;background:#111;"/>
                 <!-- Cropper Toolbar -->
@@ -497,7 +774,7 @@
                     <span style="color:#aaa;font-size:0.95em;">Zoom: <span id="cropper-zoom">100%</span></span>
                     <span style="color:#aaa;font-size:0.95em;">Rot: <span id="cropper-rotation">0°</span></span>
                 </div>
-                <div style="margin-top:18px;display:flex;gap:16px;">
+                <div class="action-buttons" style="margin-top:18px;display:flex;gap:16px;justify-content:center;">
                     <button id="cropper-confirm" style="padding:8px 24px;font-size:1.1em;">Crop & Continue</button>
                     <button id="cropper-cancel" style="padding:8px 24px;font-size:1.1em;">Cancel</button>
                 </div>
@@ -510,6 +787,12 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Mobile Debug Panel -->
+    <div id="mobile-debug" style="display:none;position:fixed;top:10px;left:10px;background:rgba(255,0,0,0.9);color:white;padding:10px;border-radius:6px;font-size:12px;z-index:5001;max-width:300px;word-wrap:break-word;">
+        <div style="font-weight:bold;margin-bottom:5px;">Mobile Debug Info:</div>
+        <div id="debug-content"></div>
     </div>
 
     <!-- Deployment GUID Display -->

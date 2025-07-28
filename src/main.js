@@ -33,8 +33,8 @@ const METAL_MATERIALS = {
 
 // Finish properties
 const FINISH_PROPERTIES = {
-    'polished': { roughness: 0.1 }, 
-    'brushed': { roughness: 0.3 }, 
+    'polished': { roughness: 0.1 },
+    'brushed': { roughness: 0.3 },
     'matte': { roughness: 0.7 }
 };
 
@@ -93,7 +93,18 @@ function showNotification(message, type = 'success') {
 
 // Configuration
 const BACKEND_URL = 'https://img2pen-s3-backend.onrender.com'; // S3 backend for file uploads
-const OPENAI_BACKEND_URL = 'https://img2pen-openai-backend.onrender.com'; // Replace with your actual Render service URL
+// Use local proxy for mobile devices to avoid CORS/network issues
+const isMobileDevice = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
+const isLocalDevelopment = window.location.hostname === 'localhost' || window.location.hostname.includes('192.168.');
+const OPENAI_BACKEND_URL = (isMobileDevice && isLocalDevelopment) 
+    ? window.location.origin  // Use local proxy
+    : 'https://img2pen-openai-backend.onrender.com'; // Use direct URL for desktop
+
+console.log('🔧 Backend URL configured:', {
+    isMobile: isMobileDevice,
+    isLocal: isLocalDevelopment,
+    backendUrl: OPENAI_BACKEND_URL
+});
 
 // Function to upload image to S3 (updated from GitHub)
 async function uploadImageToGitHub(file) {
@@ -798,8 +809,20 @@ class HeightfieldViewer {
         const promptSubmitBtn = document.getElementById('prompt-submit');
         const promptInput = document.getElementById('prompt-input');
         if (promptSubmitBtn && promptInput) {
+            // Add mobile debugging info
+            const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
+            console.log('🔧 AI Generation Setup:', {
+                isMobile,
+                hasButton: !!promptSubmitBtn,
+                hasInput: !!promptInput,
+                openAiBackendUrl: OPENAI_BACKEND_URL,
+                networkOnline: navigator.onLine
+            });
+            
             promptSubmitBtn.addEventListener('click', async () => {
                 const prompt = promptInput.value.trim();
+                console.log('🎯 Generate button clicked:', { prompt, length: prompt.length });
+                
                 if (!prompt) {
                     showNotification('Please enter a prompt to generate an image', 'error');
                     return;
@@ -2128,7 +2151,7 @@ class HeightfieldViewer {
 
         console.log('Updating metal material to:', metalType);
         console.log('Available materials:', Object.keys(METAL_MATERIALS));
-        
+
         const materialProps = METAL_MATERIALS[metalType];
         
         if (this.currentObjectType === 'earrings' && this.heightfield.isGroup) {
@@ -3356,20 +3379,78 @@ fetch('./version.json')
     if (el) el.textContent = 'Deployment version: unknown';
   });
 
+// Mobile debugging function
+function showMobileDebug(info, isError = false) {
+    const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
+    if (!isMobile) return;
+    
+    const debugPanel = document.getElementById('mobile-debug');
+    const debugContent = document.getElementById('debug-content');
+    
+    if (debugPanel && debugContent) {
+        debugContent.innerHTML = typeof info === 'object' ? JSON.stringify(info, null, 2) : info;
+        debugPanel.style.display = 'block';
+        debugPanel.style.background = isError ? 'rgba(255,0,0,0.9)' : 'rgba(0,150,0,0.9)';
+        
+        // Auto-hide after 10 seconds unless it's an error
+        if (!isError) {
+            setTimeout(() => {
+                debugPanel.style.display = 'none';
+            }, 10000);
+        }
+    }
+}
+
 // Function to generate image using backend OpenAI proxy
 async function generateImageWithOpenAI(prompt) {
     try {
+        const deviceInfo = {
+            userAgent: navigator.userAgent,
+            isMobile: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent),
+            networkType: navigator.connection?.effectiveType || 'unknown',
+            onLine: navigator.onLine,
+            backendUrl: OPENAI_BACKEND_URL
+        };
+        
+        console.log('📱 Device info:', deviceInfo);
+        showMobileDebug(`Starting AI generation...\n${JSON.stringify(deviceInfo, null, 2)}`);
+        
+        // Test connectivity to backend first
+        console.log('🔗 Testing backend connectivity...');
+        try {
+            const healthCheck = await fetch(`${OPENAI_BACKEND_URL}/health`, {
+                method: 'GET',
+                timeout: 10000
+            });
+            console.log('✅ Backend health check:', healthCheck.status);
+            showMobileDebug(`Backend reachable: ${healthCheck.status}`);
+        } catch (healthError) {
+            console.error('❌ Backend health check failed:', healthError);
+            showMobileDebug(`Backend unreachable: ${healthError.message}`, true);
+            throw new Error(`Backend unreachable: ${healthError.message}`);
+        }
+        
         console.log('🌐 Making request to:', `${OPENAI_BACKEND_URL}/api/generate-image`);
         console.log('⏱️ Request started at:', new Date().toISOString());
+        console.log('📝 Prompt length:', prompt.length);
+        
         showLoadingOverlay();
         document.getElementById('loading-status').textContent = 'Generating image with AI...';
         
-        // Add timeout to the fetch request
+        // Check network connectivity
+        if (!navigator.onLine) {
+            throw new Error('No internet connection detected');
+        }
+        
+        // Add timeout to the fetch request - shorter for mobile
+        const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
+        const timeoutDuration = isMobile ? 45000 : 60000; // 45s mobile, 60s desktop
+        
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
-            console.log('⏰ Request timeout after 60 seconds');
+            console.log(`⏰ Request timeout after ${timeoutDuration/1000} seconds (mobile: ${isMobile})`);
             controller.abort();
-        }, 60000); // 60 second timeout
+        }, timeoutDuration);
         
         console.log('📤 Sending request to OpenAI backend...');
         const response = await fetch(`${OPENAI_BACKEND_URL}/api/generate-image`, {
@@ -3426,13 +3507,42 @@ async function generateImageWithOpenAI(prompt) {
         return data.imageData;
     } catch (error) {
         hideLoadingOverlay();
+        
+        // Enhanced mobile-specific error handling
+        const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
+        
         if (error.name === 'AbortError') {
-            console.error('⏰ Request timed out after 60 seconds');
-            showNotification('Request timed out. The server may be overloaded. Please try again.', 'error');
+            console.error(`⏰ Request timed out (mobile: ${isMobile})`);
+            const timeoutMessage = isMobile 
+                ? 'Request timed out on mobile. Try connecting to WiFi or try again later.'
+                : 'Request timed out. The server may be overloaded. Please try again.';
+            showNotification(timeoutMessage, 'error');
+        } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            console.error('🌐 Network error:', error);
+            const networkMessage = isMobile
+                ? 'Network error on mobile. Check your internet connection and try again.'
+                : 'Network error. Please check your internet connection.';
+            showNotification(networkMessage, 'error');
+        } else if (error.message.includes('No internet connection')) {
+            console.error('📡 No internet connection');
+            showNotification('No internet connection. Please check your network and try again.', 'error');
         } else {
             console.error('💥 Error generating image:', error);
             console.error('💥 Error stack:', error.stack);
-            showNotification(`Error: ${error.message}`, 'error');
+            console.error('💥 Device info:', {
+                isMobile,
+                userAgent: navigator.userAgent,
+                onLine: navigator.onLine,
+                networkType: navigator.connection?.effectiveType || 'unknown'
+            });
+            
+            const friendlyMessage = isMobile
+                ? `Mobile generation error: ${error.message}. Try refreshing the page.`
+                : `Error: ${error.message}`;
+            showNotification(friendlyMessage, 'error');
+            
+            // Show debug info on mobile
+            showMobileDebug(`AI Generation Error:\n${error.message}\n\nStack:\n${error.stack}`, true);
         }
         return null;
     }
@@ -3528,5 +3638,254 @@ function addWatermark() {
 if (typeof scene !== 'undefined') {
     addWatermark();
 }
+
+// Mobile Menu Functionality
+function initializeMobileMenu() {
+    const mobileToggle = document.getElementById('mobile-menu-toggle');
+    const uiMenu = document.getElementById('ui-menu');
+    let isMenuOpen = false;
+
+    // Check if we're on mobile
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
+
+    // Toggle menu function
+    function toggleMenu() {
+        if (!isMobile()) return;
+        
+        isMenuOpen = !isMenuOpen;
+        
+        if (isMenuOpen) {
+            uiMenu.classList.add('mobile-open');
+            mobileToggle.style.transform = 'rotate(45deg)';
+            mobileToggle.innerHTML = '✕';
+        } else {
+            uiMenu.classList.remove('mobile-open');
+            mobileToggle.style.transform = 'rotate(0deg)';
+            mobileToggle.innerHTML = '⚙️';
+        }
+    }
+
+    // Close menu when clicking outside
+    function handleOutsideClick(event) {
+        if (!isMobile() || !isMenuOpen) return;
+        
+        const isClickInsideMenu = uiMenu.contains(event.target);
+        const isClickOnToggle = mobileToggle.contains(event.target);
+        
+        if (!isClickInsideMenu && !isClickOnToggle) {
+            toggleMenu();
+        }
+    }
+
+    // Handle window resize
+    function handleResize() {
+        if (!isMobile() && isMenuOpen) {
+            // Reset menu state when switching to desktop
+            uiMenu.classList.remove('mobile-open');
+            mobileToggle.style.transform = 'rotate(0deg)';
+            mobileToggle.innerHTML = '⚙️';
+            isMenuOpen = false;
+        }
+    }
+
+    // Add event listeners
+    if (mobileToggle) {
+        mobileToggle.addEventListener('click', toggleMenu);
+    }
+    
+    document.addEventListener('click', handleOutsideClick);
+    window.addEventListener('resize', handleResize);
+
+    // Touch support for menu drag
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    function handleTouchStart(event) {
+        if (!isMobile()) return;
+        startY = event.touches[0].clientY;
+        isDragging = true;
+        uiMenu.style.transition = 'none';
+    }
+
+    function handleTouchMove(event) {
+        if (!isMobile() || !isDragging) return;
+        
+        currentY = event.touches[0].clientY;
+        const deltaY = currentY - startY;
+        
+        // Only allow downward drag when menu is open
+        if (isMenuOpen && deltaY > 0) {
+            const translateY = Math.min(deltaY, window.innerHeight * 0.6);
+            uiMenu.style.transform = `translateY(${translateY}px)`;
+        }
+    }
+
+    function handleTouchEnd() {
+        if (!isMobile() || !isDragging) return;
+        
+        isDragging = false;
+        uiMenu.style.transition = 'transform 0.3s ease';
+        
+        const deltaY = currentY - startY;
+        
+        // Close menu if dragged down more than 100px
+        if (isMenuOpen && deltaY > 100) {
+            toggleMenu();
+        } else {
+            // Snap back to position
+            uiMenu.style.transform = isMenuOpen ? 'translateY(0)' : 'translateY(100%)';
+        }
+    }
+
+    // Add touch event listeners to menu
+    if (uiMenu) {
+        uiMenu.addEventListener('touchstart', handleTouchStart, { passive: true });
+        uiMenu.addEventListener('touchmove', handleTouchMove, { passive: true });
+        uiMenu.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+
+    console.log('Mobile menu functionality initialized');
+}
+
+// Test backend connectivity function
+async function testBackendConnectivity() {
+    const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
+    console.log('🧪 Testing backend connectivity...');
+    
+    try {
+        showMobileDebug('Testing backend connection...');
+        const response = await fetch(`${OPENAI_BACKEND_URL}/health`);
+        const data = await response.json();
+        
+        const result = {
+            status: response.status,
+            statusText: response.statusText,
+            data: data,
+            timestamp: new Date().toISOString()
+        };
+        
+        console.log('✅ Backend test result:', result);
+        showMobileDebug(`Backend test successful:\n${JSON.stringify(result, null, 2)}`);
+        return true;
+    } catch (error) {
+        console.error('❌ Backend test failed:', error);
+        showMobileDebug(`Backend test failed:\n${error.message}\n\nThis means AI generation won't work.`, true);
+        return false;
+    }
+}
+
+// Add backend test button for mobile debugging
+if (/Mobile|Android|iPhone|iPad/.test(navigator.userAgent)) {
+    window.testBackend = testBackendConnectivity;
+    console.log('📱 Mobile detected. You can test backend by calling: testBackend()');
+}
+
+// Enhanced mobile cropper experience
+function enhanceMobileCropping() {
+    const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
+    if (!isMobile) return;
+    
+    console.log('📱 Enhancing mobile cropping experience...');
+    
+    // Function to improve cropper for mobile when modal opens
+    function setupMobileCropper() {
+        const cropperModal = document.getElementById('cropper-modal');
+        const cropperImage = document.getElementById('cropper-image');
+        
+        if (!cropperModal || !cropperImage) return;
+        
+        // Add mobile-specific event listeners
+        cropperImage.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // Prevent default touch behavior
+        }, { passive: false });
+        
+        cropperImage.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Prevent scrolling while cropping
+        }, { passive: false });
+        
+        // Add double-tap to zoom
+        let lastTap = 0;
+        cropperImage.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            
+            if (tapLength < 500 && tapLength > 0) {
+                // Double tap detected - zoom to fit
+                if (window.cropper) {
+                    window.cropper.reset();
+                }
+            }
+            lastTap = currentTime;
+        });
+        
+        // Observe when cropper modal is shown
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    const isVisible = cropperModal.style.display !== 'none';
+                    if (isVisible) {
+                        setTimeout(() => {
+                            // Add mobile-friendly cropper styles when shown
+                            const cropBox = document.querySelector('.cropper-crop-box');
+                            const points = document.querySelectorAll('.cropper-point');
+                            const lines = document.querySelectorAll('.cropper-line');
+                            
+                            if (cropBox) {
+                                cropBox.style.border = '3px solid #39f';
+                                cropBox.style.boxShadow = '0 0 0 1px rgba(255,255,255,0.5)';
+                            }
+                            
+                            points.forEach(point => {
+                                point.style.width = '24px';
+                                point.style.height = '24px';
+                                point.style.background = '#39f';
+                                point.style.border = '2px solid white';
+                                point.style.borderRadius = '50%';
+                            });
+                            
+                            lines.forEach(line => {
+                                line.style.background = 'rgba(57, 255, 255, 0.3)';
+                            });
+                            
+                                                         // Show mobile instructions
+                             const mobileInstructions = document.getElementById('mobile-crop-instructions');
+                             if (mobileInstructions) {
+                                 mobileInstructions.style.display = 'block';
+                                 // Hide instructions after 3 seconds
+                                 setTimeout(() => {
+                                     mobileInstructions.style.display = 'none';
+                                 }, 3000);
+                             }
+                             
+                             console.log('✅ Mobile cropper styles applied');
+                         }, 100);
+                    }
+                }
+            });
+        });
+        
+        observer.observe(cropperModal, { attributes: true });
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupMobileCropper);
+    } else {
+        setupMobileCropper();
+    }
+}
+
+// Initialize mobile menu when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeMobileMenu);
+} else {
+    initializeMobileMenu();
+}
+
+// Initialize mobile cropping enhancements
+enhanceMobileCropping();
 
 // ... existing code ...
