@@ -624,6 +624,8 @@ class HeightfieldViewer {
         this.loadEngravingFont(this.defaultFontName);
         
         this.init();
+        this.initializeRulerOverlay();
+        this.setupRulerToggle();
     }
 
     init() {
@@ -3363,6 +3365,144 @@ class HeightfieldViewer {
         this.textBoxes.forEach(textBox => {
             this.updateTextBoxMesh(textBox);
         });
+    }
+
+    // Ruler overlay system
+    initializeRulerOverlay() {
+        this.createRulerMarkings();
+        this.updateReferenceCircle();
+        
+        // Update ruler on window resize only (reference circle stays fixed)
+        window.addEventListener('resize', () => {
+            this.updateReferenceCircle();
+        });
+    }
+    
+    setupRulerToggle() {
+        const rulerToggle = document.getElementById('ruler-toggle');
+        const rulerOverlay = document.getElementById('ruler-overlay');
+        
+        if (!rulerToggle || !rulerOverlay) return;
+        
+        // Initially hide the ruler
+        rulerOverlay.style.display = 'none';
+        
+        rulerToggle.addEventListener('click', () => {
+            const isActive = rulerToggle.getAttribute('data-active') === 'true';
+            
+            if (isActive) {
+                // Hide ruler
+                rulerOverlay.style.display = 'none';
+                rulerToggle.setAttribute('data-active', 'false');
+                rulerToggle.querySelector('.toggle-text').textContent = 'Show Ruler';
+            } else {
+                // Show ruler
+                rulerOverlay.style.display = 'flex';
+                rulerToggle.setAttribute('data-active', 'true');
+                rulerToggle.querySelector('.toggle-text').textContent = 'Hide Ruler';
+            }
+        });
+    }
+    
+    createRulerMarkings() {
+        const horizontalRuler = document.getElementById('horizontal-ruler');
+        const verticalRuler = document.getElementById('vertical-ruler');
+        
+        // Clear existing markings
+        horizontalRuler.innerHTML = '';
+        verticalRuler.innerHTML = '';
+        
+        // Create horizontal ruler markings (50mm range, center at 0)
+        const horizontalRange = 50; // mm
+        const horizontalSteps = 10; // 5mm steps
+        
+        for (let i = 0; i <= horizontalSteps; i++) {
+            const mm = (i - horizontalSteps/2) * (horizontalRange / horizontalSteps);
+            const position = (i / horizontalSteps) * 100; // percentage
+            
+            const mark = document.createElement('div');
+            mark.style.cssText = `
+                position: absolute;
+                left: ${position}%;
+                top: 0;
+                width: 1px;
+                height: ${i % 2 === 0 ? '100%' : '60%'};
+                background: rgba(255,255,255,0.8);
+                transform: translateX(-50%);
+            `;
+            
+            // Add label for major marks (every 10mm)
+            if (i % 2 === 0) {
+                const label = document.createElement('div');
+                label.style.cssText = `
+                    position: absolute;
+                    left: ${position}%;
+                    bottom: -18px;
+                    transform: translateX(-50%);
+                    color: rgba(255,255,255,0.8);
+                    font-size: 10px;
+                    font-weight: bold;
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+                `;
+                label.textContent = `${mm}mm`;
+                horizontalRuler.appendChild(label);
+            }
+            
+            horizontalRuler.appendChild(mark);
+        }
+        
+        // Create vertical ruler markings  
+        const verticalRange = 50; // mm
+        const verticalSteps = 10; // 5mm steps
+        
+        for (let i = 0; i <= verticalSteps; i++) {
+            const mm = (verticalSteps/2 - i) * (verticalRange / verticalSteps);
+            const position = (i / verticalSteps) * 100; // percentage
+            
+            const mark = document.createElement('div');
+            mark.style.cssText = `
+                position: absolute;
+                top: ${position}%;
+                left: 0;
+                height: 1px;
+                width: ${i % 2 === 0 ? '100%' : '60%'};
+                background: rgba(255,255,255,0.8);
+                transform: translateY(-50%);
+            `;
+            
+            // Add label for major marks (every 10mm)
+            if (i % 2 === 0) {
+                const label = document.createElement('div');
+                label.style.cssText = `
+                    position: absolute;
+                    top: ${position}%;
+                    right: -30px;
+                    transform: translateY(-50%);
+                    color: rgba(255,255,255,0.8);
+                    font-size: 10px;
+                    font-weight: bold;
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+                    writing-mode: vertical-rl;
+                `;
+                label.textContent = `${mm}mm`;
+                verticalRuler.appendChild(label);
+            }
+            
+            verticalRuler.appendChild(mark);
+        }
+    }
+    
+    updateReferenceCircle() {
+        const referenceCircle = document.getElementById('reference-circle');
+        if (!referenceCircle) return;
+        
+        // Keep the reference circle at a fixed size representing 25mm
+        // This should NOT scale with the 3D scene - it's a fixed reference
+        const fixedSize = 200; // pixels - represents 25mm at a standard viewing distance
+        
+        // Update circle size to fixed size
+        referenceCircle.style.width = `${fixedSize}px`;
+        referenceCircle.style.height = `${fixedSize}px`;
     }
 }
 
