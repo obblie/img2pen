@@ -1104,12 +1104,12 @@
     <div id="main-site-container" style="width: 100vw; min-height: 100vh; position: relative; margin: 0; padding: 0; overflow-x: hidden;">
         
         <!-- Hero Section -->
-        <div id="hero-container" class="hero-container md:p-10 p-5">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-15 items-center h-full p-5 lg:p-10">
+        <div id="hero-container" class="hero-container">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; height: 100%; padding: 40px;">
                 <!-- Left: Text Content -->
                 <div style="text-align: left;">
-                    <h1 class="font-extrabold text-4xl lg:text-6xl mb-5 leading-tight text-white">Custom Photo Pendant</h1>
-                    <p class="text-lg lg:text-xl mb-8 opacity-90 leading-relaxed text-white">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you everywhere you go, furever 🐶❤️</p>
+                    <h1 style="font-weight: 800; font-size: 3.5em; margin-bottom: 20px; line-height: 1.1; color: white;">Custom Photo Pendant</h1>
+                    <p style="font-size: 1.4em; margin-bottom: 30px; opacity: 0.9; line-height: 1.6; color: white;">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you everywhere you go, furever 🐶❤️</p>
                     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                         <div style="background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 50px; backdrop-filter: blur(10px);">
                             <span style="font-weight: 600; color: white;">✨ High Quality</span>
@@ -1123,7 +1123,7 @@
                 <!-- Right: Sample Image -->
                 <div style="text-align: center;">
                     <div style="position: relative; display: inline-block;">
-                        <img src="/samplePendant.png" alt="Sample Pendant" class="w-64 h-64 lg:w-80 lg:h-80 object-cover rounded-2xl shadow-2xl border-4 border-white/30">
+                        <img src="/samplePendant.png" alt="Sample Pendant" style="width: 300px; height: 300px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3);">
                         <div style="position: absolute; top: -10px; right: -10px; background: #ff6b6b; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">Sample</div>
                     </div>
 
@@ -1195,7 +1195,7 @@
         </div>
 
         <!-- Upload Section -->
-        <div id="upload-container" class="upload-container md:p-10 p-5">
+        <div id="upload-container" class="upload-container">
             <div id="drop-zone" style="padding: 80px 20px; width: 100%; height: 100%;">
                 <div style="width: 100%;">
                 <!-- Section Title -->
@@ -1285,10 +1285,10 @@
 
 
         <!-- Three.js Scene Section -->
-        <div id="scene-container" class="scene-container md:p-10 p-5">
-            <div class="flex flex-col lg:flex-row h-auto lg:h-full w-full relative">
+        <div id="scene-container" class="scene-container">
+            <div style="display: flex; flex-direction: row; height: 100%; width: 100%; position: relative;">
                 <!-- Three.js Canvas Area -->
-                <div id="canvas-container" class="w-full h-auto lg:h-full bg-gray-100 relative border-2 border-gray-300">
+                <div id="canvas-container" style="width: 100%; height: 100%; background: #f0f0f0; position: relative; border: 2px solid #ddd;">
                     <!-- Section Title -->
                     <div style="position: absolute; top: 20px; left: 20px; z-index: 1003; background: rgba(255,255,255,0.9); padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                         <h2 style="color: #2d3748; font-weight: 800; font-size: 1.8em; margin: 0;">3D Preview</h2>
@@ -1318,11 +1318,23 @@
                 </div>
 
                 <!-- Fixed Controls Panel - positioned on the right side -->
-                <div id="ui-menu" class="
-                    lg:absolute lg:top-20 lg:right-20 lg:left-auto lg:w-80 lg:h-4/5
-                    relative w-full h-auto mt-5
-                    z-50 bg-white/95 p-5 overflow-y-auto cursor-default
-                    shadow-lg rounded-xl
+                <div id="ui-menu" style="
+                    position: absolute !important;
+                    top: 80px !important;
+                    right: 80px !important;
+                    left: auto !important;
+                    width: 350px !important;
+                    height: 80vh !important;
+                    z-index: 1000 !important;
+                    display: block !important;
+                    background: rgba(255,255,255,0.95) !important;
+                    padding: 20px !important;
+                    overflow-y: auto !important;
+                    cursor: move !important;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+                    border-radius: 12px !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
                 ">
         
 
