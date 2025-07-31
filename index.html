@@ -713,7 +713,14 @@
                 box-sizing: border-box;
             }
             
-            /* Mobile Hero Section */
+            /* Mobile Hero Section - Fix grid layout */
+            .hero-container > div {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 30px !important;
+                padding: 20px !important;
+            }
+            
             .hero-container h1 {
                 font-size: 2.5em;
                 line-height: 1.2;
@@ -810,6 +817,16 @@
             /* Mobile Ruler Overlay */
             #ruler-overlay {
                 transform: scale(0.7) !important;
+            }
+            
+            /* Mobile sample image */
+            .hero-container img {
+                width: 250px !important;
+                height: 250px !important;
+                display: block !important;
+                margin: 0 auto !important;
+                max-width: 100% !important;
+                object-fit: cover !important;
             }
             
             /* Mobile Buttons */
@@ -1273,7 +1290,7 @@
                 
                 <!-- AI Generation Option -->
                 <div style="background: white; border-radius: 20px; padding: 40px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 20px 40px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.1)'">
-                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px; font-size: 2em;">🤖</div>
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px; font-size: 2em;">🦄🌈</div>
                     <h3 style="color: #2d3748; font-weight: 700; font-size: 1.8em; margin-bottom: 15px;">Imagine</h3>
                     <p style="color: #718096; margin-bottom: 30px; line-height: 1.6;">Describe what you want and let our assistant create it for you</p>
                     <textarea id="prompt-input" placeholder="Describe your perfect pendant..." 
