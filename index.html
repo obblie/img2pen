@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metal Memories - 3D Jewelry Visualization</title>
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼️</text></svg>">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#667eea',
+                        secondary: '#764ba2',
+                        accent: '#48bb78'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             margin: 0;
@@ -13,7 +28,6 @@
             background: #f8f9fa;
             overflow-x: hidden;
             overflow-y: auto;
-            height: 300vh;
             width: 100vw;
         }
         
@@ -342,6 +356,24 @@
             #reference-image-container {
                 padding: 15px;
             }
+            
+            /* Ensure mobile menu toggle is visible on small screens */
+            #mobile-menu-toggle {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                top: 10px;
+                right: 10px;
+            }
+            
+            /* Optimize text for small screens */
+            .hero-container h1 {
+                font-size: 1.8em;
+            }
+            
+            .hero-container p {
+                font-size: 0.9em;
+            }
         }
 
         /* Mobile Menu Toggle Button */
@@ -380,10 +412,9 @@
         }
 
         @media (max-width: 768px) {
+            /* Hide mobile menu toggle on mobile - we don't need it */
             #mobile-menu-toggle {
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                display: none !important;
             }
             
             /* Optimize replace image button for mobile */
@@ -397,6 +428,29 @@
                 font-size: 14px !important;
                 min-height: 44px !important;
             }
+            
+            /* Ensure proper scrolling on mobile */
+            body {
+                overflow-x: hidden;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                height: auto;
+            }
+            
+            html {
+                height: auto;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+            
+            /* Mobile container scrolling */
+            .hero-container,
+            .upload-container,
+            .scene-container {
+                overflow-y: visible;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
             
             /* Mobile-optimized cropper modal */
             #cropper-modal > div {
@@ -617,26 +671,98 @@
 
         /* Mobile Responsive Styles */
         @media (max-width: 768px) {
-            /* Removed conflicting #ui-menu CSS rules - now controlled by JavaScript */
-            
-            #ui-menu.mobile-open {
-                transform: translateY(0);
+            /* Mobile Container Layout - Allow natural scrolling between panels */
+            .hero-container {
+                padding: 20px;
+                height: auto;
+                min-height: auto;
+                margin-bottom: 0;
             }
             
-            /* Mobile handle for dragging */
-            #ui-menu::before {
-                content: '';
-                position: absolute;
-                top: 8px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 40px;
-                height: 4px;
-                background: rgba(255, 255, 255, 0.3);
-                border-radius: 2px;
+            .upload-container {
+                padding: 20px;
+                height: auto;
+                min-height: auto;
+                margin-bottom: 0;
             }
+            
+            .scene-container {
+                padding: 20px;
+                height: auto;
+                min-height: auto;
+                margin: 0;
+            }
+            
+            /* Mobile spacing improvements */
+            .hero-container,
+            .upload-container,
+            .scene-container {
+                box-sizing: border-box;
+            }
+            
+            /* Mobile Hero Section */
+            .hero-container h1 {
+                font-size: 2.5em;
+                line-height: 1.2;
+                margin-bottom: 20px;
+            }
+            
+            .hero-container p {
+                font-size: 1.1em;
+                line-height: 1.6;
+                margin-bottom: 30px;
+            }
+            
+            /* Mobile Upload Section */
+            #drop-zone {
+                min-height: 50vh;
+                padding: 30px 20px;
+            }
+            
+            #drop-zone h2 {
+                font-size: 1.8em;
+                margin-bottom: 15px;
+            }
+            
+            #drop-zone p {
+                font-size: 1em;
+                margin-bottom: 20px;
+            }
+            
+            /* Mobile 3D Scene - Stacked layout */
+            #canvas-container {
+                height: auto;
+                min-height: auto;
+                width: 100% !important;
+            }
+            
+            /* Mobile scene container - stacked instead of side-by-side */
+            .scene-container > div {
+                flex-direction: column !important;
+                height: auto !important;
+            }
+            
+            /* Mobile Control Panel - Stacked layout instead of side-by-side */
+            #ui-menu {
+                position: relative !important;
+                top: auto !important;
+                right: auto !important;
+                left: auto !important;
+                width: 100% !important;
+                height: auto !important;
+                max-height: none !important;
+                border-radius: 12px !important;
+                z-index: 1001 !important;
+                overflow-y: visible !important;
+                padding: 20px !important;
+                background: rgba(255,255,255,0.95) !important;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+                margin-top: 20px !important;
+            }
+            
+            /* Mobile handle removed - not using drawer approach */
 
-            /* Ensure menu sections are properly spaced */
+            /* Mobile Menu Sections */
             .menu-section {
                 margin-bottom: 20px;
             }
@@ -648,18 +774,80 @@
             .control-group {
                 margin-bottom: 16px;
             }
+            
+            /* Mobile Ruler Overlay */
+            #ruler-overlay {
+                transform: scale(0.7) !important;
+            }
+            
+            /* Mobile Buttons */
+            .cta-button {
+                padding: 15px 30px;
+                font-size: 1.1em;
+                min-height: 50px;
+            }
+            
+            /* Mobile Text */
+            h1, h2, h3 {
+                word-wrap: break-word;
+                hyphens: auto;
+            }
         }
 
         @media (max-width: 480px) {
-            /* Removed conflicting #ui-menu CSS rules - now controlled by JavaScript */
+            /* Small Mobile Container Layout */
+            .hero-container {
+                padding: 15px;
+            }
             
+            .upload-container {
+                padding: 15px;
+            }
+            
+            .scene-container {
+                padding: 15px;
+            }
+            
+            /* Small Mobile Hero Section */
+            .hero-container h1 {
+                font-size: 2em;
+                margin-bottom: 15px;
+            }
+            
+            .hero-container p {
+                font-size: 1em;
+                margin-bottom: 25px;
+            }
+            
+            /* Small Mobile Upload Section */
+            #drop-zone {
+                min-height: 45vh;
+                padding: 20px 15px;
+            }
+            
+            #drop-zone h2 {
+                font-size: 1.6em;
+                margin-bottom: 12px;
+            }
+            
+            /* Small Mobile Control Panel */
+            #ui-menu {
+                width: 100% !important;
+                height: auto !important;
+                max-height: none !important;
+                padding: 15px !important;
+                right: auto !important;
+            }
+            
+            /* Touch-friendly controls */
             .control-group {
-                margin-bottom: 16px;
+                margin-bottom: 20px;
             }
             
             .control-group label {
                 font-size: 16px;
                 margin-bottom: 8px;
+                display: block;
             }
             
             .control-group select,
@@ -671,6 +859,8 @@
                 color: #000000;
                 border: 2px solid rgba(0, 0, 0, 0.8);
                 font-weight: 500;
+                width: 100%;
+                box-sizing: border-box;
             }
             
             .toggle-button {
@@ -682,6 +872,20 @@
                 border: 2px solid rgba(0, 0, 0, 0.8);
                 color: #000000;
                 font-weight: bold;
+            }
+            
+            /* Small Mobile Ruler Overlay */
+            #ruler-overlay {
+                transform: scale(0.6) !important;
+            }
+            
+            /* Small Mobile Buttons */
+            .cta-button {
+                padding: 12px 25px;
+                font-size: 1em;
+                min-height: 44px;
+                width: 100%;
+                max-width: 300px;
             }
         }
         
@@ -900,12 +1104,12 @@
     <div id="main-site-container" style="width: 100vw; min-height: 100vh; position: relative; margin: 0; padding: 0; overflow-x: hidden;">
         
         <!-- Hero Section -->
-        <div id="hero-container" class="hero-container">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; height: 100%; padding: 40px;">
+        <div id="hero-container" class="hero-container md:p-10 p-5">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-15 items-center h-full p-5 lg:p-10">
                 <!-- Left: Text Content -->
                 <div style="text-align: left;">
-                    <h1 style="font-weight: 800; font-size: 3.5em; margin-bottom: 20px; line-height: 1.1; color: white;">Custom Photo Pendant</h1>
-                    <p style="font-size: 1.4em; margin-bottom: 30px; opacity: 0.9; line-height: 1.6; color: white;">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you everywhere you go, furever 🐶❤️</p>
+                    <h1 class="font-extrabold text-4xl lg:text-6xl mb-5 leading-tight text-white">Custom Photo Pendant</h1>
+                    <p class="text-lg lg:text-xl mb-8 opacity-90 leading-relaxed text-white">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you everywhere you go, furever 🐶❤️</p>
                     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                         <div style="background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 50px; backdrop-filter: blur(10px);">
                             <span style="font-weight: 600; color: white;">✨ High Quality</span>
@@ -919,7 +1123,7 @@
                 <!-- Right: Sample Image -->
                 <div style="text-align: center;">
                     <div style="position: relative; display: inline-block;">
-                        <img src="/samplePendant.png" alt="Sample Pendant" style="width: 300px; height: 300px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3);">
+                        <img src="/samplePendant.png" alt="Sample Pendant" class="w-64 h-64 lg:w-80 lg:h-80 object-cover rounded-2xl shadow-2xl border-4 border-white/30">
                         <div style="position: absolute; top: -10px; right: -10px; background: #ff6b6b; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">Sample</div>
                     </div>
 
@@ -991,7 +1195,7 @@
         </div>
 
         <!-- Upload Section -->
-        <div id="upload-container" class="upload-container">
+        <div id="upload-container" class="upload-container md:p-10 p-5">
             <div id="drop-zone" style="padding: 80px 20px; width: 100%; height: 100%;">
                 <div style="width: 100%;">
                 <!-- Section Title -->
@@ -1081,10 +1285,10 @@
 
 
         <!-- Three.js Scene Section -->
-        <div id="scene-container" class="scene-container">
-            <div style="display: flex; flex-direction: row; height: 100%; width: 100%; position: relative;">
+        <div id="scene-container" class="scene-container md:p-10 p-5">
+            <div class="flex flex-col lg:flex-row h-auto lg:h-full w-full relative">
                 <!-- Three.js Canvas Area -->
-                <div id="canvas-container" style="width: 100%; height: 100%; background: #f0f0f0; position: relative; border: 2px solid #ddd;">
+                <div id="canvas-container" class="w-full h-auto lg:h-full bg-gray-100 relative border-2 border-gray-300">
                     <!-- Section Title -->
                     <div style="position: absolute; top: 20px; left: 20px; z-index: 1003; background: rgba(255,255,255,0.9); padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                         <h2 style="color: #2d3748; font-weight: 800; font-size: 1.8em; margin: 0;">3D Preview</h2>
@@ -1114,23 +1318,11 @@
                 </div>
 
                 <!-- Fixed Controls Panel - positioned on the right side -->
-                <div id="ui-menu" style="
-                    position: absolute !important;
-                    top: 80px !important;
-                    right: 80px !important;
-                    left: auto !important;
-                    width: 350px !important;
-                    height: 80vh !important;
-                    z-index: 1000 !important;
-                    display: block !important;
-                    background: rgba(255,255,255,0.95) !important;
-                    padding: 20px !important;
-                    overflow-y: auto !important;
-                    cursor: move !important;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
-                    border-radius: 12px !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
+                <div id="ui-menu" class="
+                    lg:absolute lg:top-20 lg:right-20 lg:left-auto lg:w-80 lg:h-4/5
+                    relative w-full h-auto mt-5
+                    z-50 bg-white/95 p-5 overflow-y-auto cursor-default
+                    shadow-lg rounded-xl
                 ">
         
 
