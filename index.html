@@ -776,10 +776,13 @@
             
             /* Mobile 3D Scene - Stacked layout */
             #canvas-container {
-                height: auto !important;
-                min-height: auto !important;
+                height: 400px !important;
+                min-height: 400px !important;
                 width: 100% !important;
                 max-height: none !important;
+                border: 2px solid #ddd !important;
+                border-radius: 12px !important;
+                margin-bottom: 20px !important;
             }
             
             /* Add spacing between containers to prevent overlap */
@@ -803,6 +806,19 @@
             .scene-container > div {
                 flex-direction: column !important;
                 height: auto !important;
+                gap: 20px !important;
+                padding: 20px !important;
+            }
+            
+            /* Mobile scene container title */
+            .scene-container h2 {
+                font-size: 1.8em !important;
+                margin-bottom: 10px !important;
+            }
+            
+            .scene-container p {
+                font-size: 1em !important;
+                margin-bottom: 20px !important;
             }
             
             /* Mobile Control Panel - Stacked layout instead of side-by-side */
@@ -817,25 +833,45 @@
                 border-radius: 12px !important;
                 z-index: 1001 !important;
                 overflow-y: visible !important;
-                padding: 20px !important;
+                padding: 15px !important;
                 background: rgba(255,255,255,0.95) !important;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
-                margin-top: 20px !important;
+                margin-top: 0 !important;
+                margin-bottom: 20px !important;
+                font-size: 0.9em !important;
             }
             
             /* Mobile handle removed - not using drawer approach */
 
             /* Mobile Menu Sections */
             .menu-section {
-                margin-bottom: 20px;
+                margin-bottom: 15px !important;
             }
 
             .menu-header {
-                padding: 12px 0;
+                padding: 8px 0 !important;
+                font-size: 0.95em !important;
+            }
+            
+            .menu-header h3 {
+                font-size: 1em !important;
+                margin: 0 !important;
             }
 
             .control-group {
-                margin-bottom: 16px;
+                margin-bottom: 12px !important;
+                font-size: 0.9em !important;
+            }
+            
+            .control-group label {
+                font-size: 0.9em !important;
+                margin-bottom: 5px !important;
+            }
+            
+            .control-group input,
+            .control-group select {
+                font-size: 0.9em !important;
+                padding: 8px !important;
             }
             
             /* Mobile Ruler Overlay */
