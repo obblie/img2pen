@@ -671,26 +671,39 @@
 
         /* Mobile Responsive Styles */
         @media (max-width: 768px) {
+            /* Fix body and html scrolling */
+            body, html {
+                height: auto !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+            }
+            
             /* Mobile Container Layout - Allow natural scrolling between panels */
             .hero-container {
-                padding: 20px;
-                height: auto;
-                min-height: auto;
-                margin-bottom: 0;
+                padding: 20px !important;
+                height: auto !important;
+                min-height: auto !important;
+                margin-bottom: 0 !important;
+                width: 100% !important;
+                display: block !important;
             }
             
             .upload-container {
-                padding: 20px;
-                height: auto;
-                min-height: auto;
-                margin-bottom: 0;
+                padding: 20px !important;
+                height: auto !important;
+                min-height: auto !important;
+                margin-bottom: 0 !important;
+                width: 100% !important;
+                display: block !important;
             }
             
             .scene-container {
-                padding: 20px;
-                height: auto;
-                min-height: auto;
-                margin: 0;
+                padding: 20px !important;
+                height: auto !important;
+                min-height: auto !important;
+                margin: 0 !important;
+                width: 100% !important;
+                display: block !important;
             }
             
             /* Mobile spacing improvements */
@@ -715,8 +728,9 @@
             
             /* Mobile Upload Section */
             #drop-zone {
-                min-height: 50vh;
-                padding: 30px 20px;
+                min-height: auto !important;
+                height: auto !important;
+                padding: 30px 20px !important;
             }
             
             #drop-zone h2 {
@@ -731,9 +745,27 @@
             
             /* Mobile 3D Scene - Stacked layout */
             #canvas-container {
-                height: auto;
-                min-height: auto;
+                height: auto !important;
+                min-height: auto !important;
                 width: 100% !important;
+                max-height: none !important;
+            }
+            
+            /* Add spacing between containers to prevent overlap */
+            .hero-container {
+                margin-bottom: 20px !important;
+            }
+            
+            .upload-container {
+                margin-bottom: 20px !important;
+            }
+            
+            /* Fix main site container for mobile */
+            #main-site-container {
+                min-height: auto !important;
+                height: auto !important;
+                overflow-x: hidden !important;
+                overflow-y: visible !important;
             }
             
             /* Mobile scene container - stacked instead of side-by-side */
