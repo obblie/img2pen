@@ -587,7 +587,7 @@ const ENGRAVING_FONTS = {
 class HeightfieldViewer {
     constructor() {
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.controls = null;
         this.heightfield = null;
@@ -630,21 +630,22 @@ class HeightfieldViewer {
 
     init() {
         // Setup renderer with improved quality settings
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        const canvasContainer = document.getElementById('canvas-container');
+        this.renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
         this.renderer.setClearColor(0x333333);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.2;
-        document.getElementById('canvas-container').appendChild(this.renderer.domElement);
+        canvasContainer.appendChild(this.renderer.domElement);
 
         // Setup camera - angled view to show pendant standing upright on platform
-        this.camera.position.set(25, 15, 35);
+        this.camera.position.set(33, 20, 47);
         this.camera.lookAt(0, 0, 0);
         
         // Store default camera position for reset functionality
-        this.defaultCameraPosition = new THREE.Vector3(25, 15, 35);
+        this.defaultCameraPosition = new THREE.Vector3(33, 20, 47);
 
         // Setup controls
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -721,6 +722,19 @@ class HeightfieldViewer {
         // Setup event listeners and UI controls
         this.setupEventListeners();
         this.setupUIControls();
+        
+        // Setup back to upload button
+        const backButton = document.getElementById('back-to-upload');
+        if (backButton) {
+            backButton.addEventListener('click', () => {
+                // Hide UI menu
+                document.getElementById('ui-menu').style.display = 'none';
+                // Scroll to upload container
+                document.getElementById('upload-container').scrollIntoView({ behavior: 'smooth' });
+                // Reset scene
+                this.resetScene();
+            });
+        }
 
         // Start animation loop
         this.animate();
@@ -802,9 +816,17 @@ class HeightfieldViewer {
 
         // Handle window resize
         window.addEventListener('resize', () => {
-            this.camera.aspect = window.innerWidth / window.innerHeight;
+            const canvasContainer = document.getElementById('canvas-container');
+            if (canvasContainer && canvasContainer.style.display !== 'none') {
+                // Use the full container dimensions for the 3D scene
+                const containerWidth = canvasContainer.clientWidth;
+                const containerHeight = canvasContainer.clientHeight;
+                
+                // Update camera and renderer with container dimensions
+                this.camera.aspect = containerWidth / containerHeight;
             this.camera.updateProjectionMatrix();
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setSize(containerWidth, containerHeight);
+            }
         });
 
         // Handle prompt submit for AI image generation
@@ -1228,7 +1250,79 @@ class HeightfieldViewer {
             const image = await this.loadImage(file);
             const heightfieldData = this.generateHeightfieldData(image);
             this.createHeightfieldMesh(heightfieldData);
-            document.getElementById('drop-zone').classList.add('hidden');
+            // Show the canvas container when image is processed
+            const canvasContainer = document.getElementById('canvas-container');
+            
+            // Use the full container dimensions for the 3D scene
+            const containerWidth = canvasContainer.clientWidth;
+            const containerHeight = canvasContainer.clientHeight;
+            
+            console.log('Container dimensions:', containerWidth, 'x', containerHeight);
+            
+            // Set explicit dimensions to ensure proper sizing
+            const targetWidth = Math.max(containerWidth, 1200);
+            const targetHeight = Math.max(containerHeight, 600);
+            
+            console.log('Target dimensions:', targetWidth, 'x', targetHeight);
+            
+            // Resize renderer to match canvas container dimensions
+            this.renderer.setSize(targetWidth, targetHeight);
+            this.renderer.domElement.style.width = '100%';
+            this.renderer.domElement.style.height = '100%';
+            this.renderer.domElement.style.display = 'block';
+            this.camera.aspect = containerWidth / containerHeight;
+            this.camera.updateProjectionMatrix();
+            
+            // Show the UI menu when canvas is visible
+            const uiMenu = document.getElementById('ui-menu');
+            console.log('Positioning control panel in upper right corner...');
+            // Force positioning to upper right corner with !important
+            uiMenu.setAttribute('style', `
+                position: absolute !important;
+                top: 80px !important;
+                right: 80px !important;
+                left: auto !important;
+                width: 350px !important;
+                height: 80vh !important;
+                z-index: 1000 !important;
+                display: block !important;
+                background: rgba(255,255,255,0.95) !important;
+                padding: 20px !important;
+                overflow-y: auto !important;
+                cursor: move !important;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+                border-radius: 12px !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            `);
+            console.log('Control panel positioned! Current styles:', uiMenu.style.cssText);
+            // Drag functionality is already initialized in DOMContentLoaded
+            
+            // Force positioning again after a delay to ensure it takes effect
+            setTimeout(() => {
+                console.log('Re-applying control panel positioning...');
+                uiMenu.setAttribute('style', `
+                    position: absolute !important;
+                    top: 80px !important;
+                    right: 80px !important;
+                    left: auto !important;
+                    width: 350px !important;
+                    height: 80vh !important;
+                    z-index: 1000 !important;
+                    display: block !important;
+                    background: rgba(255,255,255,0.95) !important;
+                    padding: 20px !important;
+                    overflow-y: auto !important;
+                    cursor: move !important;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+                    border-radius: 12px !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                `);
+                console.log('Control panel re-positioned!');
+            }, 500);
+            // Scroll to the scene container
+            document.getElementById('scene-container').scrollIntoView({ behavior: 'smooth' });
             hideLoadingOverlay();
         }, 7000);
     }
@@ -3384,8 +3478,8 @@ class HeightfieldViewer {
         
         if (!rulerToggle || !rulerOverlay) return;
         
-        // Initially hide the ruler
-        rulerOverlay.style.display = 'none';
+        // Initially show the ruler
+        rulerOverlay.style.display = 'flex';
         
         rulerToggle.addEventListener('click', () => {
             const isActive = rulerToggle.getAttribute('data-active') === 'true';
@@ -3476,7 +3570,7 @@ class HeightfieldViewer {
                 label.style.cssText = `
                     position: absolute;
                     top: ${position}%;
-                    right: -30px;
+                    left: -30px;
                     transform: translateY(-50%);
                     color: rgba(255,255,255,0.8);
                     font-size: 10px;
@@ -3831,10 +3925,20 @@ function initializeMobileMenu() {
 
     // Close menu when clicking outside
     function handleOutsideClick(event) {
-        if (!isMobile() || !isMenuOpen) return;
+        console.log('handleOutsideClick triggered on:', event.target);
+        console.log('isMobile():', isMobile());
+        console.log('isMenuOpen:', isMenuOpen);
+        
+        if (!isMobile() || !isMenuOpen) {
+            console.log('handleOutsideClick returning early');
+            return;
+        }
         
         const isClickInsideMenu = uiMenu && uiMenu.contains(event.target);
         const isClickOnToggle = mobileToggle && mobileToggle.contains(event.target);
+        
+        console.log('isClickInsideMenu:', isClickInsideMenu);
+        console.log('isClickOnToggle:', isClickOnToggle);
         
         if (!isClickInsideMenu && !isClickOnToggle) {
             console.log('Outside click detected, closing menu');
@@ -4068,4 +4172,20 @@ if (document.readyState === 'loading') {
 // Initialize mobile cropping enhancements
 enhanceMobileCropping();
 
-// ... existing code ...
+// Draggable control panel functionality
+// Control panel is fixed - no drag functionality needed
+
+// Control panel is fixed - no drag initialization needed
+
+// Simple draggable control panel
+let dragInitialized = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded - setting up control panel...');
+    
+
+    
+        // Control panel is fixed in position - no drag functionality
+    console.log('Control panel is fixed in position');
+});
+
