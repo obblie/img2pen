@@ -721,6 +721,15 @@
                 padding: 20px !important;
             }
             
+            /* Mobile Hero Section - Photo first, then text */
+            .hero-container > div > div:first-child {
+                order: 2 !important;
+            }
+            
+            .hero-container > div > div:last-child {
+                order: 1 !important;
+            }
+            
             .hero-container h1 {
                 font-size: 2em !important;
                 font-weight: normal !important;
@@ -729,12 +738,15 @@
                 text-align: center !important;
                 white-space: normal !important;
                 word-wrap: normal !important;
+                word-break: keep-all !important;
+                overflow-wrap: normal !important;
             }
             
             .hero-container p {
                 font-size: 1.1em;
                 line-height: 1.6;
                 margin-bottom: 30px;
+                text-align: center !important;
             }
             
             /* Mobile Upload Section */
@@ -1186,7 +1198,7 @@
                 <!-- Left: Text Content -->
                 <div style="text-align: left;">
                     <h1 style="font-weight: 800; font-size: 3.5em; margin-bottom: 20px; line-height: 1.1; color: white;">Custom Photo Pendant</h1>
-                    <p style="font-size: 1.4em; margin-bottom: 30px; opacity: 0.9; line-height: 1.6; color: white;">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you everywhere you go, furever 🐶❤️</p>
+                    <p style="font-size: 1.4em; margin-bottom: 30px; opacity: 0.9; line-height: 1.6; color: white;">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you wherever you go, furever 🐶❤️</p>
                     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                         <div style="background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 50px; backdrop-filter: blur(10px);">
                             <span style="font-weight: 600; color: white;">✨ High Quality</span>
