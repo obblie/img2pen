@@ -1266,41 +1266,48 @@ class HeightfieldViewer {
             console.log('Target dimensions:', targetWidth, 'x', targetHeight);
             
             // Resize renderer to match canvas container dimensions
-            this.renderer.setSize(targetWidth, targetHeight);
-            this.renderer.domElement.style.width = '100%';
-            this.renderer.domElement.style.height = '100%';
-            this.renderer.domElement.style.display = 'block';
-            this.camera.aspect = containerWidth / containerHeight;
-            this.camera.updateProjectionMatrix();
+            const isMobileDevice = window.innerWidth <= 768;
             
-            // Show the UI menu when canvas is visible
+            if (isMobileDevice) {
+                // For mobile, use the mobile container dimensions
+                const mobileContainer = document.getElementById('mobile-canvas-container');
+                if (mobileContainer) {
+                    const mobileWidth = mobileContainer.clientWidth;
+                    const mobileHeight = mobileContainer.clientHeight;
+                    console.log('Mobile container dimensions:', mobileWidth, 'x', mobileHeight);
+                    
+                    // Ensure minimum dimensions
+                    const finalWidth = Math.max(mobileWidth, 300);
+                    const finalHeight = Math.max(mobileHeight, 300);
+                    
+                    this.renderer.setSize(finalWidth, finalHeight);
+                    this.renderer.domElement.style.width = '100%';
+                    this.renderer.domElement.style.height = '100%';
+                    this.renderer.domElement.style.display = 'block';
+                    this.camera.aspect = finalWidth / finalHeight;
+                    this.camera.updateProjectionMatrix();
+                    
+                    console.log('Mobile renderer resized to:', finalWidth, 'x', finalHeight);
+                } else {
+                    console.error('Mobile container not found');
+                }
+            } else {
+                // For desktop, use the original logic
+                this.renderer.setSize(targetWidth, targetHeight);
+                this.renderer.domElement.style.width = '100%';
+                this.renderer.domElement.style.height = '100%';
+                this.renderer.domElement.style.display = 'block';
+                this.camera.aspect = containerWidth / containerHeight;
+                this.camera.updateProjectionMatrix();
+            }
+            
+            // Show the UI menu when canvas is visible (only on desktop)
+            const isMobile = window.innerWidth <= 768;
             const uiMenu = document.getElementById('ui-menu');
-            console.log('Positioning control panel in upper right corner...');
-            // Force positioning to upper right corner with !important
-            uiMenu.setAttribute('style', `
-                position: absolute !important;
-                top: 80px !important;
-                right: 80px !important;
-                left: auto !important;
-                width: 350px !important;
-                height: 80vh !important;
-                z-index: 1000 !important;
-                display: block !important;
-                background: rgba(255,255,255,0.95) !important;
-                padding: 20px !important;
-                overflow-y: auto !important;
-                cursor: move !important;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
-                border-radius: 12px !important;
-                visibility: visible !important;
-                opacity: 1 !important;
-            `);
-            console.log('Control panel positioned! Current styles:', uiMenu.style.cssText);
-            // Drag functionality is already initialized in DOMContentLoaded
             
-            // Force positioning again after a delay to ensure it takes effect
-            setTimeout(() => {
-                console.log('Re-applying control panel positioning...');
+            if (!isMobile) {
+                console.log('Positioning control panel in upper right corner...');
+                // Force positioning to upper right corner with !important
                 uiMenu.setAttribute('style', `
                     position: absolute !important;
                     top: 80px !important;
@@ -1319,8 +1326,42 @@ class HeightfieldViewer {
                     visibility: visible !important;
                     opacity: 1 !important;
                 `);
-                console.log('Control panel re-positioned!');
-            }, 500);
+                console.log('Control panel positioned! Current styles:', uiMenu.style.cssText);
+                // Drag functionality is already initialized in DOMContentLoaded
+                
+                // Force positioning again after a delay to ensure it takes effect
+                setTimeout(() => {
+                    console.log('Re-applying control panel positioning...');
+                    uiMenu.setAttribute('style', `
+                        position: absolute !important;
+                        top: 80px !important;
+                        right: 80px !important;
+                        left: auto !important;
+                        width: 350px !important;
+                        height: 80vh !important;
+                        z-index: 1000 !important;
+                        display: block !important;
+                        background: rgba(255,255,255,0.95) !important;
+                        padding: 20px !important;
+                        overflow-y: auto !important;
+                        cursor: move !important;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+                        border-radius: 12px !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                    `);
+                    console.log('Control panel re-positioned!');
+                }, 500);
+            } else {
+                console.log('Mobile detected - keeping UI menu hidden');
+                // Ensure UI menu is hidden on mobile
+                uiMenu.setAttribute('style', `
+                    display: none !important;
+                    visibility: hidden !important;
+                    opacity: 0 !important;
+                    z-index: -1 !important;
+                `);
+            }
             // Scroll to the scene container
             document.getElementById('scene-container').scrollIntoView({ behavior: 'smooth' });
             hideLoadingOverlay();

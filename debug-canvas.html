@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Canvas Debug Tool</title>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .debug-section { border: 1px solid #ccc; margin: 10px 0; padding: 10px; }
+        .element-info { background: #f0f0f0; margin: 5px 0; padding: 5px; }
+        .covering { background: #ffcccc; }
+        .visible { background: #ccffcc; }
+    </style>
+</head>
+<body>
+    <h1>Canvas Coverage Debug Tool</h1>
+    <button onclick="debugCanvas()">Debug Canvas Coverage</button>
+    <div id="debug-output"></div>
+
+    <script>
+        function debugCanvas() {
+            const output = document.getElementById('debug-output');
+            output.innerHTML = '';
+
+            // Find the canvas
+            const canvas = document.querySelector('canvas');
+            if (!canvas) {
+                output.innerHTML = '<div class="debug-section">❌ No canvas found!</div>';
+                return;
+            }
+
+            const canvasRect = canvas.getBoundingClientRect();
+            const canvasStyle = getComputedStyle(canvas);
+
+            output.innerHTML += `
+                <div class="debug-section">
+                    <h3>📊 Canvas Information</h3>
+                    <div>Element: ${canvas.tagName}</div>
+                    <div>Parent: ${canvas.parentElement ? canvas.parentElement.tagName + (canvas.parentElement.id ? '#' + canvas.parentElement.id : '') : 'None'}</div>
+                    <div>Width: ${canvas.width} (attribute) | ${canvasStyle.width} (style) | ${canvasRect.width} (computed)</div>
+                    <div>Height: ${canvas.height} (attribute) | ${canvasStyle.height} (style) | ${canvasRect.height} (computed)</div>
+                    <div>Position: left: ${canvasRect.left}, top: ${canvasRect.top}</div>
+                    <div>Display: ${canvasStyle.display}</div>
+                    <div>Visibility: ${canvasStyle.visibility}</div>
+                    <div>Opacity: ${canvasStyle.opacity}</div>
+                    <div>Z-Index: ${canvasStyle.zIndex}</div>
+                    <div class="${canvasRect.width > 0 && canvasRect.height > 0 ? 'visible' : 'covering'}">
+                        Visible: ${canvasRect.width > 0 && canvasRect.height > 0 ? 'YES' : 'NO'}
+                    </div>
+                </div>
+            `;
+
+            // Check parent containers
+            let parent = canvas.parentElement;
+            let level = 1;
+            while (parent && level <= 5) {
+                const parentRect = parent.getBoundingClientRect();
+                const parentStyle = getComputedStyle(parent);
+                
+                output.innerHTML += `
+                    <div class="debug-section">
+                        <h3>📦 Parent Level ${level}: ${parent.tagName}${parent.id ? '#' + parent.id : ''}</h3>
+                        <div>Width: ${parentRect.width} | Height: ${parentRect.height}</div>
+                        <div>Display: ${parentStyle.display}</div>
+                        <div>Visibility: ${parentStyle.visibility}</div>
+                        <div>Opacity: ${parentStyle.opacity}</div>
+                        <div>Z-Index: ${parentStyle.zIndex}</div>
+                        <div>Background: ${parentStyle.backgroundColor}</div>
+                        <div>Position: ${parentStyle.position}</div>
+                        <div class="${parentRect.width > 0 && parentRect.height > 0 ? 'visible' : 'covering'}">
+                            Container Visible: ${parentRect.width > 0 && parentRect.height > 0 ? 'YES' : 'NO'}
+                        </div>
+                    </div>
+                `;
+                parent = parent.parentElement;
+                level++;
+            }
+
+            // Find elements that might be covering the canvas
+            const allElements = document.querySelectorAll('*');
+            const coveringElements = [];
+
+            allElements.forEach(element => {
+                if (element === canvas) return; // Skip the canvas itself
+
+                const elementRect = element.getBoundingClientRect();
+                const elementStyle = getComputedStyle(element);
+                const zIndex = parseInt(elementStyle.zIndex) || 0;
+
+                // Check if element has dimensions and is visible
+                if (elementRect.width > 0 && elementRect.height > 0 && 
+                    elementStyle.display !== 'none' && 
+                    elementStyle.visibility !== 'hidden' &&
+                    elementStyle.opacity !== '0') {
+                    
+                    // Check if this element overlaps with the canvas
+                    const overlaps = !(elementRect.right < canvasRect.left || 
+                                     elementRect.left > canvasRect.right || 
+                                     elementRect.bottom < canvasRect.top || 
+                                     elementRect.top > canvasRect.bottom);
+
+                    if (overlaps && zIndex >= 0) {
+                        coveringElements.push({
+                            element: element,
+                            tag: element.tagName,
+                            id: element.id,
+                            className: element.className,
+                            zIndex: zIndex,
+                            rect: elementRect,
+                            style: elementStyle
+                        });
+                    }
+                }
+            });
+
+            // Sort by z-index (highest first)
+            coveringElements.sort((a, b) => b.zIndex - a.zIndex);
+
+            output.innerHTML += `
+                <div class="debug-section">
+                    <h3>🚫 Elements That Might Be Covering Canvas (${coveringElements.length} found)</h3>
+                    ${coveringElements.length === 0 ? '<div>No covering elements found!</div>' : ''}
+                </div>
+            `;
+
+            coveringElements.slice(0, 10).forEach((item, index) => {
+                const isDefinitelyCovering = item.zIndex > parseInt(canvasStyle.zIndex || 0);
+                output.innerHTML += `
+                    <div class="element-info ${isDefinitelyCovering ? 'covering' : ''}">
+                        <strong>${index + 1}. ${item.tag}${item.id ? '#' + item.id : ''}${item.className ? '.' + item.className.split(' ')[0] : ''}</strong><br>
+                        Z-Index: ${item.zIndex} ${isDefinitelyCovering ? '⚠️ HIGHER THAN CANVAS' : ''}<br>
+                        Position: ${item.rect.left}, ${item.rect.top}, ${item.rect.width}x${item.rect.height}<br>
+                        Background: ${item.style.backgroundColor}<br>
+                        Display: ${item.style.display} | Visibility: ${item.style.visibility} | Opacity: ${item.style.opacity}
+                        <button onclick="highlightElement(this, '${item.tag}', '${item.id}', '${item.className}')">Highlight This Element</button>
+                    </div>
+                `;
+            });
+        }
+
+        function highlightElement(button, tag, id, className) {
+            // Remove previous highlights
+            document.querySelectorAll('.debug-highlight').forEach(el => {
+                el.classList.remove('debug-highlight');
+                el.style.outline = '';
+            });
+
+            // Find and highlight the element
+            let selector = tag.toLowerCase();
+            if (id) selector += '#' + id;
+            if (className) selector += '.' + className.split(' ')[0];
+
+            const element = document.querySelector(selector);
+            if (element) {
+                element.classList.add('debug-highlight');
+                element.style.outline = '3px solid red';
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                button.textContent = 'Highlighted!';
+                setTimeout(() => {
+                    button.textContent = 'Highlight This Element';
+                }, 2000);
+            }
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            setTimeout(debugCanvas, 1000);
+        });
+    </script>
+</body>
+</html> 

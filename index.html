@@ -665,8 +665,165 @@
             border: 3px solid rgba(0, 0, 0, 0.8);
         }
 
-        /* Mobile Responsive Styles */
+        /* Mobile Responsive Styles - Shopify-style Layout */
         @media (max-width: 768px) {
+            /* CRITICAL: Override ALL conflicting mobile rules */
+            body {
+                display: block !important;
+                flex-direction: unset !important;
+                min-height: auto !important;
+                background: unset !important;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                height: auto !important;
+            }
+            
+            html {
+                height: auto !important;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+            }
+            
+            /* Override ALL container layouts */
+            .hero-container,
+            .upload-container,
+            .scene-container {
+                padding: 0 !important;
+                height: auto !important;
+                min-height: auto !important;
+                margin: 0 !important;
+                width: 100% !important;
+                display: block !important;
+                overflow-y: visible !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            /* Override ALL drop-zone rules */
+            #drop-zone {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+                min-height: unset !important;
+            }
+            
+            /* Override ALL reference-image-container rules */
+            #reference-image-container {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                text-align: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+                position: unset !important;
+                top: unset !important;
+                left: unset !important;
+                max-width: unset !important;
+                width: unset !important;
+            }
+            
+            /* Override ALL ui-menu rules */
+            #ui-menu {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                width: unset !important;
+                height: unset !important;
+                max-height: unset !important;
+                padding: unset !important;
+                right: unset !important;
+            }
+            
+            /* Override ALL control-group rules */
+            .control-group {
+                margin-bottom: unset !important;
+            }
+            
+            .control-group label {
+                font-size: unset !important;
+                margin-bottom: unset !important;
+                display: unset !important;
+            }
+            
+            .control-group select,
+            .control-group input[type="range"],
+            .control-group input[type="number"] {
+                font-size: unset !important;
+                min-height: unset !important;
+                background: unset !important;
+                color: unset !important;
+                border: unset !important;
+                font-weight: unset !important;
+                width: unset !important;
+                box-sizing: unset !important;
+                padding: unset !important;
+            }
+            
+            /* Override ALL toggle-button rules */
+            .toggle-button {
+                font-size: unset !important;
+                padding: unset !important;
+                min-width: unset !important;
+                min-height: unset !important;
+                background: unset !important;
+                border: unset !important;
+                color: unset !important;
+                font-weight: unset !important;
+            }
+            
+            /* Override ALL menu-section rules */
+            .menu-section {
+                margin-bottom: unset !important;
+                padding-bottom: unset !important;
+                border-bottom: unset !important;
+            }
+            
+            /* Override ALL ruler-overlay rules */
+            #ruler-overlay {
+                transform: unset !important;
+            }
+            
+            /* Override ALL cta-button rules */
+            .cta-button {
+                padding: unset !important;
+                font-size: unset !important;
+                min-height: unset !important;
+                width: unset !important;
+                max-width: unset !important;
+            }
+            
+            /* Disable canvas-container lightbox effect on mobile */
+            #canvas-container::before {
+                display: none !important;
+                content: none !important;
+                background: none !important;
+                backdrop-filter: none !important;
+            }
+            
+            /* Force mobile layout at exactly 768px and below */
+            .mobile-shopify-layout {
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            
+            .desktop-layout {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+            }
+            /* Force mobile layout at exactly 768px and below */
+            .mobile-shopify-layout {
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            
+            .desktop-layout {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+            }
             /* Fix body and html scrolling */
             body, html {
                 height: auto !important;
@@ -674,9 +831,9 @@
                 overflow-x: hidden !important;
             }
             
-            /* Mobile Container Layout - Allow natural scrolling between panels */
+            /* Mobile Container Layout - Shopify-style */
             .hero-container {
-                padding: 20px !important;
+                padding: 0 !important;
                 height: auto !important;
                 min-height: auto !important;
                 margin-bottom: 0 !important;
@@ -685,7 +842,7 @@
             }
             
             .upload-container {
-                padding: 20px !important;
+                padding: 0 !important;
                 height: auto !important;
                 min-height: auto !important;
                 margin-bottom: 0 !important;
@@ -694,7 +851,7 @@
             }
             
             .scene-container {
-                padding: 20px !important;
+                padding: 0 !important;
                 height: auto !important;
                 min-height: auto !important;
                 margin: 0 !important;
@@ -709,12 +866,257 @@
                 box-sizing: border-box;
             }
             
+            /* Shopify-style Mobile Layout */
+            .mobile-shopify-layout {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                height: 100vh !important;
+                overflow-y: auto !important;
+            }
+            
+            /* Product Carousel Section */
+            .product-carousel-section {
+                flex: 1 !important;
+                min-height: 60vh !important;
+                height: 60vh !important;
+                background: transparent !important;
+                position: relative !important;
+                overflow: hidden !important;
+            }
+            
+            /* Main Product Viewer */
+            .main-product-viewer {
+                width: 100% !important;
+                height: 100% !important;
+                position: relative !important;
+                background: transparent !important;
+                overflow: hidden !important;
+            }
+            
+            /* Mobile Canvas Container */
+            #mobile-canvas-container {
+                width: 100% !important;
+                height: 100% !important;
+                position: relative !important;
+                background: transparent !important;
+                overflow: hidden !important;
+                min-height: 400px !important;
+            }
+            
+            #mobile-canvas-container canvas {
+                width: 100% !important;
+                height: 100% !important;
+                display: block !important;
+            }
+            
+            /* Carousel Thumbnails */
+            .carousel-thumbnails {
+                display: flex !important;
+                gap: 8px !important;
+                padding: 12px !important;
+                background: #ffffff !important;
+                border-top: 1px solid #e2e8f0 !important;
+                overflow-x: auto !important;
+            }
+            
+            .carousel-thumbnail {
+                flex-shrink: 0 !important;
+                width: 60px !important;
+                height: 60px !important;
+                border: 2px solid #e2e8f0 !important;
+                border-radius: 8px !important;
+                background: #f8f9fa !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                cursor: pointer !important;
+                transition: border-color 0.2s ease !important;
+            }
+            
+            .carousel-thumbnail.active {
+                border-color: #667eea !important;
+                background: #667eea !important;
+                color: white !important;
+            }
+            
+            /* Product Details Section */
+            .product-details-section {
+                background: #ffffff !important;
+                padding: 20px !important;
+                border-top: 1px solid #e2e8f0 !important;
+            }
+            
+            /* Product Title and Price */
+            .product-title {
+                font-size: 1.5em !important;
+                font-weight: 700 !important;
+                color: #2d3748 !important;
+                margin-bottom: 8px !important;
+            }
+            
+            .product-price {
+                font-size: 1.2em !important;
+                font-weight: 600 !important;
+                color: #667eea !important;
+                margin-bottom: 16px !important;
+            }
+            
+            .product-subtitle {
+                font-size: 0.9em !important;
+                color: #718096 !important;
+                margin-bottom: 20px !important;
+            }
+            
+            /* Customization Options */
+            .customization-options {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 16px !important;
+            }
+            
+            .option-group {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+            
+            .option-label {
+                font-size: 0.9em !important;
+                font-weight: 600 !important;
+                color: #2d3748 !important;
+            }
+            
+            .option-buttons {
+                display: flex !important;
+                gap: 8px !important;
+                flex-wrap: wrap !important;
+            }
+            
+            .option-button {
+                padding: 8px 16px !important;
+                border: 2px solid #e2e8f0 !important;
+                border-radius: 6px !important;
+                background: #ffffff !important;
+                color: #2d3748 !important;
+                font-size: 0.9em !important;
+                font-weight: 500 !important;
+                cursor: pointer !important;
+                transition: all 0.2s ease !important;
+                min-height: 44px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            
+            .option-button.active {
+                border-color: #667eea !important;
+                background: #667eea !important;
+                color: #ffffff !important;
+            }
+            
+            .option-select {
+                padding: 12px !important;
+                border: 2px solid #e2e8f0 !important;
+                border-radius: 6px !important;
+                background: #ffffff !important;
+                color: #2d3748 !important;
+                font-size: 0.9em !important;
+                min-height: 44px !important;
+            }
+            
+            /* Add Photo Button */
+            .add-photo-section {
+                margin-top: 20px !important;
+                padding: 16px !important;
+                background: #f8f9fa !important;
+                border-radius: 8px !important;
+                border: 2px dashed #cbd5e0 !important;
+            }
+            
+            .add-photo-button {
+                width: 100% !important;
+                padding: 16px !important;
+                background: #667eea !important;
+                color: #ffffff !important;
+                border: none !important;
+                border-radius: 8px !important;
+                font-size: 1em !important;
+                font-weight: 600 !important;
+                cursor: pointer !important;
+                transition: background 0.2s ease !important;
+                min-height: 44px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 8px !important;
+            }
+            
+            .add-photo-button:hover {
+                background: #5a67d8 !important;
+            }
+            
             /* Mobile Hero Section - Fix grid layout */
             .hero-container > div {
                 display: grid !important;
                 grid-template-columns: 1fr !important;
                 gap: 30px !important;
                 padding: 20px !important;
+            }
+            
+            /* Show mobile layout, hide desktop layout */
+            .mobile-shopify-layout {
+                display: flex !important;
+            }
+            
+            .desktop-layout {
+                display: none !important;
+            }
+            
+            /* Hide desktop controls on mobile */
+            .ui-menu-panel {
+                display: none !important;
+            }
+            
+            #dat-gui-container {
+                display: none !important;
+            }
+            
+            /* Override conflicting canvas-container rules */
+            #canvas-container {
+                flex: none !important;
+                position: relative !important;
+                min-height: auto !important;
+            }
+            
+            /* Override conflicting body rules */
+            body {
+                display: block !important;
+                flex-direction: unset !important;
+                min-height: auto !important;
+                background: unset !important;
+            }
+            
+            /* Override conflicting drop-zone rules */
+            #drop-zone {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+            }
+            
+            /* Override conflicting reference-image-container rules */
+            #reference-image-container {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                text-align: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+                position: unset !important;
+                top: unset !important;
+                left: unset !important;
+                max-width: unset !important;
+                width: unset !important;
             }
             
             /* Mobile Hero Section - Photo first, then text */
@@ -1370,10 +1772,74 @@
                 max-height: 150px !important;
                 padding: 2px !important;
             }
+            
+            /* Ensure mobile layout is shown on small screens */
+            .mobile-shopify-layout {
+                display: flex !important;
+            }
+            
+            .desktop-layout {
+                display: none !important;
+            }
+            
+            /* Hide desktop controls on small mobile */
+            .ui-menu-panel {
+                display: none !important;
+            }
+            
+            #dat-gui-container {
+                display: none !important;
+            }
+            
+            /* Override conflicting rules for small mobile */
+            #canvas-container {
+                flex: none !important;
+                position: relative !important;
+                min-height: auto !important;
+            }
+            
+            body {
+                display: block !important;
+                flex-direction: unset !important;
+                min-height: auto !important;
+                background: unset !important;
+            }
+            
+            #drop-zone {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+            }
+            
+            #reference-image-container {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                text-align: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+                position: unset !important;
+                top: unset !important;
+                left: unset !important;
+                max-width: unset !important;
+                width: unset !important;
+            }
+            
+            /* Adjust mobile container for smaller screens */
+            .product-carousel-section {
+                min-height: 50vh !important;
+                height: 50vh !important;
+            }
+            
+            #mobile-canvas-container {
+                min-height: 300px !important;
+            }
         }
     </style>
     <!-- Cropper.js CSS -->
     <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <!-- dat.GUI -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
 </head>
 <body>
     <!-- Main Site Container -->
@@ -1562,7 +2028,85 @@
 
         <!-- Three.js Scene Section -->
         <div id="scene-container" class="scene-container">
-            <div style="display: flex; flex-direction: row; height: 100%; width: 100%; position: relative;">
+            <!-- Mobile Shopify-style Layout (hidden on desktop) -->
+            <div class="mobile-shopify-layout" style="display: none;">
+                <!-- Product Carousel Section -->
+                <div class="product-carousel-section">
+                    <!-- Main Product Viewer (3D Canvas) -->
+                    <div class="main-product-viewer">
+                        <div id="mobile-canvas-container" style="width: 100%; height: 100%; background: transparent; position: relative;">
+                            <!-- 3D Canvas will be moved here on mobile -->
+                        </div>
+                    </div>
+                    
+                    <!-- Carousel Thumbnails -->
+                    <div class="carousel-thumbnails">
+                        <div class="carousel-thumbnail active" data-view="3d">
+                            <span style="font-size: 1.2em;">🎨</span>
+                        </div>
+                        <div class="carousel-thumbnail" data-view="front">
+                            <span style="font-size: 1.2em;">📷</span>
+                        </div>
+                        <div class="carousel-thumbnail" data-view="side">
+                            <span style="font-size: 1.2em;">📐</span>
+                        </div>
+                        <div class="carousel-thumbnail" data-view="video">
+                            <span style="font-size: 1.2em;">🎥</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Details Section -->
+                <div class="product-details-section">
+                    <!-- Product Title and Price -->
+                    <div class="product-title">Custom Photo Pendant</div>
+                    <div class="product-price">$89.99</div>
+                    <div class="product-subtitle">Sterling Silver, 18" Chain</div>
+                    
+                    <!-- Customization Options -->
+                    <div class="customization-options">
+                        <!-- Metal Type Selection -->
+                        <div class="option-group">
+                            <div class="option-label">Metal Type:</div>
+                            <div class="option-buttons">
+                                <button class="option-button active" data-metal="silver">Silver</button>
+                                <button class="option-button" data-metal="gold">Gold</button>
+                                <button class="option-button" data-metal="rose-gold">Rose Gold</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Chain Length Selection -->
+                        <div class="option-group">
+                            <div class="option-label">Chain Length:</div>
+                            <select class="option-select" id="mobile-chain-length">
+                                <option value="16">16"</option>
+                                <option value="18" selected>18"</option>
+                                <option value="20">20"</option>
+                                <option value="24">24"</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Add Engraving Option -->
+                        <div class="option-group">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="mobile-engraving" style="width: 18px; height: 18px;">
+                                <span style="font-size: 0.9em; color: #2d3748;">Add Engraving (+$49)</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Add Photo Button -->
+                        <div class="add-photo-section">
+                            <button class="add-photo-button" id="mobile-add-photo">
+                                <span style="font-size: 1.2em;">📷</span>
+                                Add Your Photo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Desktop Layout (hidden on mobile) -->
+            <div class="desktop-layout" style="display: flex; flex-direction: row; height: 100%; width: 100%; position: relative;">
                 <!-- Three.js Canvas Area -->
                 <div id="canvas-container" style="width: 100%; height: 100%; background: #f0f0f0; position: relative; border: 2px solid #ddd;">
                     <!-- Section Title -->
@@ -1591,6 +2135,20 @@
                         <!-- Corner connector to make rulers meet perpendicularly -->
                         <div id="ruler-corner" style="position:absolute;width:20px;height:20px;top:50%;left:50%;transform:translate(calc(-50% - 220px), -50%);background:rgba(0,0,0,0.7);border-radius:2px 0 0 0;"></div>
                     </div>
+                </div>
+
+                <!-- dat.GUI Menu Container -->
+                <div id="dat-gui-container" style="
+                    position: absolute !important;
+                    top: 80px !important;
+                    left: 80px !important;
+                    right: auto !important;
+                    z-index: 1000 !important;
+                    display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                ">
+                    <!-- dat.GUI will be initialized here -->
                 </div>
 
                 <!-- Fixed Controls Panel - positioned on the right side -->
@@ -1914,6 +2472,903 @@
     <script type="module" src="./src/main.js?v=4&t=1234567890"></script>
     <!-- Cropper.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <!-- dat.GUI Initialization Script -->
+    <script>
+        // Wait for the page to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile Shopify-style interactions
+            initializeMobileInteractions();
+            
+            // Force initial layout visibility
+            setTimeout(() => {
+                forceLayoutVisibility();
+            }, 100);
+            
+            // Monitor for image processing completion
+            monitorImageProcessing();
+            
+            // Handle mobile orientation changes
+            handleOrientationChange();
+            
+            // Initialize dat.GUI
+            const gui = new dat.GUI({ autoPlace: false });
+            
+            // Move dat.GUI to our container
+            const container = document.getElementById('dat-gui-container');
+            if (container) {
+                container.appendChild(gui.domElement);
+            }
+            
+            // Create control object to mirror the existing controls
+            const controls = {
+                // Object Type Controls
+                designMethod: '3d-design',
+                objectType: 'circular-pendant',
+                
+                // Metal Settings
+                metalType: 'sterling-silver',
+                metalFinish: 'polished',
+                antiquingAmount: 0.5,
+                
+                // Text Box Controls
+                addTextBox: function() {
+                    // Trigger the add text box button
+                    const addButton = document.getElementById('add-text-box');
+                    if (addButton) addButton.click();
+                },
+                
+                // Camera Controls
+                resetView: function() {
+                    const resetButton = document.getElementById('reset-view');
+                    if (resetButton) resetButton.click();
+                },
+                
+                screenshot: function() {
+                    const screenshotButton = document.getElementById('screenshot');
+                    if (screenshotButton) screenshotButton.click();
+                },
+                
+                submitOrder: function() {
+                    const submitButton = document.getElementById('export-stl');
+                    if (submitButton) submitButton.click();
+                }
+            };
+            
+            // Create folders for organization
+            const objectFolder = gui.addFolder('Object Type');
+            objectFolder.add(controls, 'designMethod', ['3d-design', '2d-laser-etch']).name('Design Method').onChange(function(value) {
+                const select = document.getElementById('design-method');
+                if (select) {
+                    select.value = value;
+                    select.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            objectFolder.add(controls, 'objectType', ['circular-pendant', 'earrings']).name('Object Type').onChange(function(value) {
+                const select = document.getElementById('object-type');
+                if (select) {
+                    select.value = value;
+                    select.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            const metalFolder = gui.addFolder('Metal Settings');
+            metalFolder.add(controls, 'metalType', ['sterling-silver', 'gold-14k']).name('Metal Type').onChange(function(value) {
+                const select = document.getElementById('metal-type');
+                if (select) {
+                    select.value = value;
+                    select.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            metalFolder.add(controls, 'metalFinish', ['polished', 'brushed', 'matte']).name('Metal Finish').onChange(function(value) {
+                const select = document.getElementById('metal-finish');
+                if (select) {
+                    select.value = value;
+                    select.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            metalFolder.add(controls, 'antiquingAmount', 0, 1, 0.01).name('Antiquing Amount').onChange(function(value) {
+                const slider = document.getElementById('antiquing-amount');
+                if (slider) {
+                    slider.value = value;
+                    slider.dispatchEvent(new Event('input'));
+                }
+            });
+            
+            const textFolder = gui.addFolder('Text Boxes');
+            textFolder.add(controls, 'addTextBox').name('Add Text Box');
+            
+            const actionsFolder = gui.addFolder('Actions');
+            actionsFolder.add(controls, 'resetView').name('Reset View');
+            actionsFolder.add(controls, 'screenshot').name('Screenshot');
+            actionsFolder.add(controls, 'submitOrder').name('Submit Order');
+            
+            // Open all folders by default
+            objectFolder.open();
+            metalFolder.open();
+            textFolder.open();
+            actionsFolder.open();
+            
+            // Sync dat.GUI with existing controls
+            function syncWithExistingControls() {
+                // Sync design method
+                const designMethodSelect = document.getElementById('design-method');
+                if (designMethodSelect) {
+                    controls.designMethod = designMethodSelect.value;
+                }
+                
+                // Sync object type
+                const objectTypeSelect = document.getElementById('object-type');
+                if (objectTypeSelect) {
+                    controls.objectType = objectTypeSelect.value;
+                }
+                
+                // Sync metal type
+                const metalTypeSelect = document.getElementById('metal-type');
+                if (metalTypeSelect) {
+                    controls.metalType = metalTypeSelect.value;
+                }
+                
+                // Sync metal finish
+                const metalFinishSelect = document.getElementById('metal-finish');
+                if (metalFinishSelect) {
+                    controls.metalFinish = metalFinishSelect.value;
+                }
+                
+                // Sync antiquing amount
+                const antiquingSlider = document.getElementById('antiquing-amount');
+                if (antiquingSlider) {
+                    controls.antiquingAmount = parseFloat(antiquingSlider.value);
+                }
+            }
+            
+            // Sync on page load
+            setTimeout(syncWithExistingControls, 1000);
+            
+            // Listen for changes in the existing controls
+            document.addEventListener('change', function(e) {
+                if (e.target.id === 'design-method') {
+                    controls.designMethod = e.target.value;
+                } else if (e.target.id === 'object-type') {
+                    controls.objectType = e.target.value;
+                } else if (e.target.id === 'metal-type') {
+                    controls.metalType = e.target.value;
+                } else if (e.target.id === 'metal-finish') {
+                    controls.metalFinish = e.target.value;
+                }
+            });
+            
+            document.addEventListener('input', function(e) {
+                if (e.target.id === 'antiquing-amount') {
+                    controls.antiquingAmount = parseFloat(e.target.value);
+                }
+            });
+        });
+        
+        // Mobile Shopify-style interactions
+        function initializeMobileInteractions() {
+            // Move 3D canvas to mobile container on mobile devices
+            moveCanvasToMobileContainer();
+            
+            // Handle window resize to move canvas appropriately
+            window.addEventListener('resize', function() {
+                console.log('Window resized to:', window.innerWidth, 'x', window.innerHeight);
+                moveCanvasToMobileContainer();
+                
+                // Force layout visibility check on resize
+                setTimeout(() => {
+                    forceLayoutVisibility();
+                    handleMobileResize();
+                }, 100);
+            });
+            
+            // Check for canvas periodically until it's created
+            const checkForCanvas = setInterval(function() {
+                const canvas = document.querySelector('canvas');
+                if (canvas) {
+                    clearInterval(checkForCanvas);
+                    console.log('Canvas found, moving to appropriate container');
+                    moveCanvasToMobileContainer();
+                    
+                    // Debug: Check canvas state after moving
+                    setTimeout(() => {
+                        debugCanvasState();
+                        forceCanvasVisibility();
+                    }, 200);
+                    
+                    // Start continuous canvas monitoring
+                    startCanvasMonitoring();
+                }
+            }, 100);
+            // Carousel thumbnail interactions
+            const thumbnails = document.querySelectorAll('.carousel-thumbnail');
+            thumbnails.forEach(thumbnail => {
+                thumbnail.addEventListener('click', function() {
+                    // Remove active class from all thumbnails
+                    thumbnails.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked thumbnail
+                    this.classList.add('active');
+                    
+                    // Handle different view types
+                    const viewType = this.getAttribute('data-view');
+                    handleViewChange(viewType);
+                });
+            });
+            
+            // Metal type button interactions
+            const metalButtons = document.querySelectorAll('.option-button[data-metal]');
+            metalButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all metal buttons
+                    metalButtons.forEach(b => b.classList.remove('active'));
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Update metal type
+                    const metalType = this.getAttribute('data-metal');
+                    updateMetalType(metalType);
+                });
+            });
+            
+            // Add photo button interaction
+            const addPhotoButton = document.getElementById('mobile-add-photo');
+            if (addPhotoButton) {
+                addPhotoButton.addEventListener('click', function() {
+                    // Trigger file input
+                    const fileInput = document.getElementById('file-input');
+                    if (fileInput) {
+                        fileInput.click();
+                    }
+                });
+            }
+            
+            // Chain length selection
+            const chainLengthSelect = document.getElementById('mobile-chain-length');
+            if (chainLengthSelect) {
+                chainLengthSelect.addEventListener('change', function() {
+                    updateChainLength(this.value);
+                });
+            }
+            
+            // Engraving checkbox
+            const engravingCheckbox = document.getElementById('mobile-engraving');
+            if (engravingCheckbox) {
+                engravingCheckbox.addEventListener('change', function() {
+                    updateEngraving(this.checked);
+                });
+            }
+        }
+        
+        // Handle view changes in carousel
+        function handleViewChange(viewType) {
+            console.log('Switching to view:', viewType);
+            // Here you can implement different view logic
+            // For now, we'll just log the change
+            switch(viewType) {
+                case '3d':
+                    // Show 3D viewer
+                    break;
+                case 'front':
+                    // Show front view image
+                    break;
+                case 'side':
+                    // Show side view image
+                    break;
+                case 'video':
+                    // Show video
+                    break;
+            }
+        }
+        
+        // Update metal type
+        function updateMetalType(metalType) {
+            console.log('Updating metal type to:', metalType);
+            // Update the 3D model material
+            // This would integrate with your existing 3D rendering logic
+        }
+        
+        // Update chain length
+        function updateChainLength(length) {
+            console.log('Updating chain length to:', length);
+            // Update the chain length in the 3D model
+        }
+        
+        // Update engraving option
+        function updateEngraving(enabled) {
+            console.log('Engraving enabled:', enabled);
+            // Show/hide engraving options
+        }
+        
+        // Move 3D canvas between desktop and mobile containers
+        function moveCanvasToMobileContainer() {
+            const canvas = document.querySelector('canvas');
+            const mobileContainer = document.getElementById('mobile-canvas-container');
+            const desktopContainer = document.getElementById('canvas-container');
+            
+            if (!canvas || !mobileContainer || !desktopContainer) {
+                console.log('Canvas or containers not found, waiting for 3D scene to load...');
+                return;
+            }
+            
+            // Check if we're on mobile (width <= 768px)
+            const isMobile = window.innerWidth <= 768;
+            console.log('Window width:', window.innerWidth, 'Is mobile:', isMobile);
+            console.log('Exact boundary check - width === 768:', window.innerWidth === 768);
+            console.log('Exact boundary check - width === 767:', window.innerWidth === 767);
+            
+            // Force mobile layout visibility if on mobile
+            if (isMobile) {
+                const mobileLayout = document.querySelector('.mobile-shopify-layout');
+                const desktopLayout = document.querySelector('.desktop-layout');
+                
+                if (mobileLayout) {
+                    mobileLayout.style.display = 'flex !important';
+                    mobileLayout.style.visibility = 'visible !important';
+                    mobileLayout.style.opacity = '1 !important';
+                    mobileLayout.style.position = 'relative !important';
+                    mobileLayout.style.zIndex = '1000 !important';
+                    console.log('Forced mobile layout to display: flex');
+                }
+                
+                if (desktopLayout) {
+                    desktopLayout.style.display = 'none !important';
+                    desktopLayout.style.visibility = 'hidden !important';
+                    desktopLayout.style.opacity = '0 !important';
+                    desktopLayout.style.position = 'absolute !important';
+                    desktopLayout.style.zIndex = '-1 !important';
+                    console.log('Forced desktop layout to display: none');
+                }
+                
+                // Also hide all conflicting elements
+                const conflictingElements = [
+                    '#ui-menu',
+                    '#drop-zone',
+                    '#reference-image-container',
+                    '.ui-menu-panel',
+                    '#dat-gui-container'
+                ];
+                
+                conflictingElements.forEach(selector => {
+                    const element = document.querySelector(selector);
+                    if (element) {
+                        element.style.display = 'none !important';
+                        element.style.visibility = 'hidden !important';
+                        element.style.opacity = '0 !important';
+                        console.log('Hidden conflicting element:', selector);
+                    }
+                });
+            }
+            
+            if (isMobile) {
+                // Move canvas to mobile container
+                if (canvas.parentElement !== mobileContainer) {
+                    console.log('Moving canvas to mobile container');
+                    mobileContainer.appendChild(canvas);
+                    // Ensure canvas fills the mobile container
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    canvas.style.display = 'block';
+                    
+                    // Update renderer size for mobile container
+                    setTimeout(() => {
+                        updateRendererSize(mobileContainer);
+                    }, 100);
+                }
+            } else {
+                // Move canvas back to desktop container
+                if (canvas.parentElement !== desktopContainer) {
+                    console.log('Moving canvas to desktop container');
+                    desktopContainer.appendChild(canvas);
+                    // Reset canvas styling for desktop
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    canvas.style.display = 'block';
+                    
+                    // Update renderer size for desktop container
+                    setTimeout(() => {
+                        updateRendererSize(desktopContainer);
+                    }, 100);
+                }
+            }
+        }
+        
+        // Debug canvas state
+        function debugCanvasState() {
+            const canvas = document.querySelector('canvas');
+            const mobileContainer = document.getElementById('mobile-canvas-container');
+            const desktopContainer = document.getElementById('canvas-container');
+            
+            console.log('=== Canvas Debug Info ===');
+            console.log('Canvas exists:', !!canvas);
+            if (canvas) {
+                console.log('Canvas parent:', canvas.parentElement.id);
+                console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+                console.log('Canvas style dimensions:', canvas.style.width, 'x', canvas.style.height);
+                console.log('Canvas display:', canvas.style.display);
+            }
+            console.log('Mobile container exists:', !!mobileContainer);
+            if (mobileContainer) {
+                console.log('Mobile container dimensions:', mobileContainer.clientWidth, 'x', mobileContainer.clientHeight);
+            }
+            console.log('Desktop container exists:', !!desktopContainer);
+            if (desktopContainer) {
+                console.log('Desktop container dimensions:', desktopContainer.clientWidth, 'x', desktopContainer.clientHeight);
+            }
+            console.log('Window viewer exists:', !!window.viewer);
+            if (window.viewer) {
+                console.log('Viewer renderer exists:', !!window.viewer.renderer);
+                console.log('Viewer camera exists:', !!window.viewer.camera);
+            }
+            console.log('Is mobile:', window.innerWidth <= 768);
+            
+            // Check mobile layout visibility
+            const mobileLayout = document.querySelector('.mobile-shopify-layout');
+            const desktopLayout = document.querySelector('.desktop-layout');
+            console.log('Mobile layout display:', mobileLayout ? getComputedStyle(mobileLayout).display : 'not found');
+            console.log('Desktop layout display:', desktopLayout ? getComputedStyle(desktopLayout).display : 'not found');
+            
+            console.log('========================');
+        }
+        
+        // EMERGENCY DEBUG FUNCTION - Call this from console
+        window.debugCanvasIssue = function() {
+            console.log('🔍 DEBUGGING CANVAS COVERAGE ISSUE');
+            console.log('=====================================');
+            
+            const canvas = document.querySelector('canvas');
+            if (!canvas) {
+                console.log('❌ NO CANVAS FOUND!');
+                return;
+            }
+            
+            const rect = canvas.getBoundingClientRect();
+            const style = getComputedStyle(canvas);
+            
+            console.log('📊 CANVAS INFO:');
+            console.log('- Element:', canvas);
+            console.log('- Parent:', canvas.parentElement);
+            console.log('- Width (attr):', canvas.width);
+            console.log('- Height (attr):', canvas.height);
+            console.log('- Width (style):', style.width);
+            console.log('- Height (style):', style.height);
+            console.log('- Width (computed):', rect.width);
+            console.log('- Height (computed):', rect.height);
+            console.log('- Display:', style.display);
+            console.log('- Visibility:', style.visibility);
+            console.log('- Opacity:', style.opacity);
+            console.log('- Z-Index:', style.zIndex);
+            console.log('- Position:', rect.left, rect.top);
+            console.log('- IS VISIBLE:', rect.width > 0 && rect.height > 0);
+            
+            console.log('\n📦 PARENT CHAIN:');
+            let parent = canvas.parentElement;
+            let level = 1;
+            while (parent && level <= 3) {
+                const pRect = parent.getBoundingClientRect();
+                const pStyle = getComputedStyle(parent);
+                console.log(`Level ${level}: ${parent.tagName}${parent.id ? '#' + parent.id : ''}`);
+                console.log('  - Size:', pRect.width + 'x' + pRect.height);
+                console.log('  - Display:', pStyle.display);
+                console.log('  - Background:', pStyle.backgroundColor);
+                parent = parent.parentElement;
+                level++;
+            }
+            
+            console.log('\n🚫 COVERING ELEMENTS:');
+            const allElements = document.querySelectorAll('*');
+            const covering = [];
+            
+            allElements.forEach(el => {
+                if (el === canvas) return;
+                const eRect = el.getBoundingClientRect();
+                const eStyle = getComputedStyle(el);
+                const zIndex = parseInt(eStyle.zIndex) || 0;
+                
+                if (eRect.width > 0 && eRect.height > 0 && 
+                    eStyle.display !== 'none' && 
+                    eStyle.visibility !== 'hidden') {
+                    
+                    const overlaps = !(eRect.right < rect.left || 
+                                     eRect.left > rect.right || 
+                                     eRect.bottom < rect.top || 
+                                     eRect.top > rect.bottom);
+                    
+                    if (overlaps) {
+                        covering.push({
+                            element: el,
+                            tag: el.tagName + (el.id ? '#' + el.id : '') + (el.className ? '.' + el.className.split(' ')[0] : ''),
+                            zIndex: zIndex,
+                            isHigher: zIndex > parseInt(style.zIndex || 0)
+                        });
+                    }
+                }
+            });
+            
+            covering.sort((a, b) => b.zIndex - a.zIndex);
+            covering.slice(0, 10).forEach((item, i) => {
+                console.log(`${i + 1}. ${item.tag} (z-index: ${item.zIndex}) ${item.isHigher ? '⚠️ HIGHER' : ''}`);
+                if (i < 3) console.log('   Element:', item.element);
+            });
+            
+            console.log('\n💡 TO FIX: If canvas has 0x0 dimensions, that\'s the problem!');
+            console.log('💡 TO FIX: If elements have higher z-index, that\'s the problem!');
+            console.log('=====================================');
+            
+            // Try to fix common issues
+            if (rect.width === 0 || rect.height === 0) {
+                console.log('🔧 ATTEMPTING AUTO-FIX: Canvas has zero dimensions');
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+                if (window.viewer && window.viewer.renderer) {
+                    const container = canvas.parentElement;
+                    const w = Math.max(container.clientWidth, 300);
+                    const h = Math.max(container.clientHeight, 300);
+                    window.viewer.renderer.setSize(w, h);
+                    console.log('🔧 Renderer resized to:', w, 'x', h);
+                }
+            }
+        };
+        
+        // Monitor for image processing completion and ensure canvas visibility
+        function monitorImageProcessing() {
+            // Check every 500ms for changes that might affect canvas visibility
+            setInterval(() => {
+                const isMobile = window.innerWidth <= 768;
+                if (isMobile) {
+                    // Debug: Check what's covering the canvas
+                    debugCanvasCoverage();
+                    
+                    // Force canvas visibility on mobile
+                    const canvas = document.querySelector('canvas');
+                    if (canvas) {
+                        canvas.style.display = 'block !important';
+                        canvas.style.visibility = 'visible !important';
+                        canvas.style.opacity = '1 !important';
+                        canvas.style.zIndex = '1 !important';
+                    }
+                    
+                    // Ensure mobile layout is visible
+                    const mobileLayout = document.querySelector('.mobile-shopify-layout');
+                    if (mobileLayout) {
+                        mobileLayout.style.display = 'flex !important';
+                        mobileLayout.style.visibility = 'visible !important';
+                        mobileLayout.style.opacity = '1 !important';
+                        mobileLayout.style.zIndex = '1000 !important';
+                    }
+                    
+                    // Keep desktop layout hidden
+                    const desktopLayout = document.querySelector('.desktop-layout');
+                    if (desktopLayout) {
+                        desktopLayout.style.display = 'none !important';
+                        desktopLayout.style.visibility = 'hidden !important';
+                        desktopLayout.style.opacity = '0 !important';
+                        desktopLayout.style.zIndex = '-1 !important';
+                    }
+                    
+                    // Keep UI menu hidden on mobile
+                    const uiMenu = document.getElementById('ui-menu');
+                    if (uiMenu) {
+                        uiMenu.style.display = 'none !important';
+                        uiMenu.style.visibility = 'hidden !important';
+                        uiMenu.style.opacity = '0 !important';
+                        uiMenu.style.zIndex = '-1 !important';
+                    }
+                }
+            }, 500);
+        }
+        
+        // Handle mobile resize events to keep Three.js renderer properly sized
+        function handleMobileResize() {
+            const isMobile = window.innerWidth <= 768;
+            console.log('Handling resize - isMobile:', isMobile);
+            
+            if (isMobile) {
+                const canvas = document.querySelector('canvas');
+                const mobileContainer = document.getElementById('mobile-canvas-container');
+                
+                if (canvas && mobileContainer && window.viewer && window.viewer.renderer) {
+                    // Get current container dimensions
+                    const containerWidth = mobileContainer.clientWidth;
+                    const containerHeight = mobileContainer.clientHeight;
+                    
+                    console.log('Mobile container dimensions after resize:', containerWidth, 'x', containerHeight);
+                    
+                    // Ensure minimum dimensions
+                    const finalWidth = Math.max(containerWidth, 300);
+                    const finalHeight = Math.max(containerHeight, 300);
+                    
+                    // Update renderer size
+                    window.viewer.renderer.setSize(finalWidth, finalHeight);
+                    
+                    // Update camera aspect ratio
+                    window.viewer.camera.aspect = finalWidth / finalHeight;
+                    window.viewer.camera.updateProjectionMatrix();
+                    
+                    // Force canvas styling
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    canvas.style.display = 'block';
+                    canvas.style.visibility = 'visible';
+                    canvas.style.opacity = '1';
+                    
+                    // Force a render
+                    window.viewer.renderer.render(window.viewer.scene, window.viewer.camera);
+                    
+                    console.log('Mobile renderer resized to:', finalWidth, 'x', finalHeight);
+                    console.log('Canvas after resize:', {
+                        width: canvas.width,
+                        height: canvas.height,
+                        styleWidth: canvas.style.width,
+                        styleHeight: canvas.style.height
+                    });
+                } else {
+                    console.warn('Missing elements for mobile resize:', {
+                        canvas: !!canvas,
+                        mobileContainer: !!mobileContainer,
+                        viewer: !!window.viewer,
+                        renderer: !!(window.viewer && window.viewer.renderer)
+                    });
+                }
+            }
+        }
+        
+        // Handle mobile orientation changes
+        function handleOrientationChange() {
+            // Listen for orientation change events
+            window.addEventListener('orientationchange', function() {
+                console.log('Orientation changed');
+                setTimeout(() => {
+                    handleMobileResize();
+                    // Run debug to check state after orientation change
+                    if (window.debugCanvasIssue) {
+                        console.log('Running post-orientation debug...');
+                        window.debugCanvasIssue();
+                    }
+                }, 500); // Wait for orientation change to complete
+            });
+            
+            // Also listen for screen orientation API if available
+            if (screen && screen.orientation) {
+                screen.orientation.addEventListener('change', function() {
+                    console.log('Screen orientation changed to:', screen.orientation.angle);
+                    setTimeout(() => {
+                        handleMobileResize();
+                    }, 300);
+                });
+            }
+        }
+        
+        // Continuous canvas monitoring to ensure it stays in mobile container
+        function startCanvasMonitoring() {
+            setInterval(() => {
+                const isMobile = window.innerWidth <= 768;
+                if (isMobile) {
+                    const canvas = document.querySelector('canvas');
+                    const mobileContainer = document.getElementById('mobile-canvas-container');
+                    const desktopContainer = document.getElementById('canvas-container');
+                    
+                    if (canvas && mobileContainer && desktopContainer) {
+                        // Check if canvas is in the wrong container
+                        if (canvas.parentElement === desktopContainer) {
+                            console.log('Canvas moved to desktop container, moving back to mobile');
+                            moveCanvasToMobileContainer();
+                        }
+                        
+                        // Ensure canvas is properly sized and visible
+                        canvas.style.width = '100% !important';
+                        canvas.style.height = '100% !important';
+                        canvas.style.display = 'block !important';
+                        canvas.style.visibility = 'visible !important';
+                        canvas.style.opacity = '1 !important';
+                        canvas.style.zIndex = '1 !important';
+                    }
+                }
+            }, 1000);
+        }
+        
+        // Debug function to check what's covering the canvas
+        function debugCanvasCoverage() {
+            const canvas = document.querySelector('canvas');
+            if (!canvas) {
+                console.log('No canvas found');
+                return;
+            }
+            
+            const rect = canvas.getBoundingClientRect();
+            console.log('Canvas position:', rect);
+            console.log('Canvas visible:', rect.width > 0 && rect.height > 0);
+            
+            // Check all elements that might be covering the canvas
+            const coveringElements = [];
+            
+            // Check for loading overlay
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                const overlayRect = loadingOverlay.getBoundingClientRect();
+                const overlayStyle = getComputedStyle(loadingOverlay);
+                console.log('Loading overlay:', {
+                    display: overlayStyle.display,
+                    visibility: overlayStyle.visibility,
+                    opacity: overlayStyle.opacity,
+                    zIndex: overlayStyle.zIndex,
+                    rect: overlayRect
+                });
+                if (overlayStyle.display !== 'none') {
+                    coveringElements.push('loading-overlay');
+                }
+            }
+            
+            // Check for any elements with high z-index that might be covering
+            const allElements = document.querySelectorAll('*');
+            allElements.forEach(element => {
+                const style = getComputedStyle(element);
+                const zIndex = parseInt(style.zIndex);
+                if (zIndex > 0 && style.display !== 'none' && style.visibility !== 'hidden') {
+                    const elementRect = element.getBoundingClientRect();
+                    if (elementRect.width > 0 && elementRect.height > 0) {
+                        // Check if this element overlaps with the canvas
+                        if (elementRect.left < rect.right && elementRect.right > rect.left &&
+                            elementRect.top < rect.bottom && elementRect.bottom > rect.top) {
+                            coveringElements.push({
+                                element: element.tagName + (element.id ? '#' + element.id : ''),
+                                zIndex: zIndex,
+                                rect: elementRect
+                            });
+                        }
+                    }
+                }
+            });
+            
+            if (coveringElements.length > 0) {
+                console.log('Elements that might be covering the canvas:', coveringElements);
+            } else {
+                console.log('No obvious covering elements found');
+            }
+        }
+        
+        // Force correct layout visibility based on screen size
+        function forceLayoutVisibility() {
+            const isMobile = window.innerWidth <= 768;
+            const mobileLayout = document.querySelector('.mobile-shopify-layout');
+            const desktopLayout = document.querySelector('.desktop-layout');
+            
+            console.log('Force layout visibility - Is mobile:', isMobile);
+            
+            if (isMobile) {
+                // Show mobile layout
+                if (mobileLayout) {
+                    mobileLayout.style.display = 'flex !important';
+                    mobileLayout.style.visibility = 'visible !important';
+                    console.log('Mobile layout forced to visible');
+                }
+                
+                // Hide desktop layout
+                if (desktopLayout) {
+                    desktopLayout.style.display = 'none !important';
+                    desktopLayout.style.visibility = 'hidden !important';
+                    console.log('Desktop layout forced to hidden');
+                }
+            } else {
+                // Show desktop layout
+                if (desktopLayout) {
+                    desktopLayout.style.display = 'flex !important';
+                    desktopLayout.style.visibility = 'visible !important';
+                    console.log('Desktop layout forced to visible');
+                }
+                
+                // Hide mobile layout
+                if (mobileLayout) {
+                    mobileLayout.style.display = 'none !important';
+                    mobileLayout.style.visibility = 'hidden !important';
+                    console.log('Mobile layout forced to hidden');
+                }
+            }
+        }
+        
+        // Force canvas to be visible and properly sized
+        function forceCanvasVisibility() {
+            const canvas = document.querySelector('canvas');
+            if (!canvas) {
+                console.error('No canvas found for forceCanvasVisibility');
+                return;
+            }
+            
+            console.log('Forcing canvas visibility...');
+            
+            // Force canvas to be visible
+            canvas.style.display = 'block !important';
+            canvas.style.visibility = 'visible !important';
+            canvas.style.opacity = '1 !important';
+            canvas.style.position = 'relative !important';
+            canvas.style.zIndex = '1 !important';
+            
+            // Force canvas dimensions
+            canvas.style.width = '100% !important';
+            canvas.style.height = '100% !important';
+            canvas.style.minWidth = '300px !important';
+            canvas.style.minHeight = '300px !important';
+            
+            // Remove any transforms that might be hiding it
+            canvas.style.transform = 'none !important';
+            canvas.style.transformOrigin = 'initial !important';
+            
+            // Ensure parent container is visible and transparent
+            const parent = canvas.parentElement;
+            if (parent) {
+                parent.style.display = 'block !important';
+                parent.style.visibility = 'visible !important';
+                parent.style.overflow = 'visible !important';
+                parent.style.position = 'relative !important';
+                parent.style.background = 'transparent !important';
+                parent.style.backgroundColor = 'transparent !important';
+            }
+            
+            // Also ensure all ancestor containers are transparent
+            let ancestor = parent;
+            while (ancestor && ancestor !== document.body) {
+                if (ancestor.classList.contains('main-product-viewer') || 
+                    ancestor.classList.contains('product-carousel-section') ||
+                    ancestor.classList.contains('mobile-shopify-layout')) {
+                    ancestor.style.background = 'transparent !important';
+                    ancestor.style.backgroundColor = 'transparent !important';
+                }
+                ancestor = ancestor.parentElement;
+            }
+            
+            console.log('Canvas forced visibility complete');
+            
+            // Check if canvas is actually visible
+            const rect = canvas.getBoundingClientRect();
+            console.log('Canvas bounding rect:', rect);
+            console.log('Canvas is visible:', rect.width > 0 && rect.height > 0);
+            
+            // Check computed styles
+            const computedStyle = getComputedStyle(canvas);
+            console.log('Canvas computed display:', computedStyle.display);
+            console.log('Canvas computed visibility:', computedStyle.visibility);
+            console.log('Canvas computed opacity:', computedStyle.opacity);
+        }
+        
+        // Update renderer size when canvas is moved
+        function updateRendererSize(container) {
+            // Try to find the global viewer instance
+            if (window.viewer && window.viewer.renderer) {
+                const newWidth = container.clientWidth;
+                const newHeight = container.clientHeight;
+                console.log('Updating renderer size to:', newWidth, 'x', newHeight);
+                console.log('Container computed style:', getComputedStyle(container).height);
+                console.log('Container offset dimensions:', container.offsetWidth, 'x', container.offsetHeight);
+                
+                // Force a minimum size if container is too small
+                const finalWidth = Math.max(newWidth, 300);
+                const finalHeight = Math.max(newHeight, 300);
+                
+                window.viewer.renderer.setSize(finalWidth, finalHeight);
+                
+                // Update camera aspect ratio
+                if (window.viewer.camera) {
+                    window.viewer.camera.aspect = finalWidth / finalHeight;
+                    window.viewer.camera.updateProjectionMatrix();
+                }
+                
+                // Update controls if they exist
+                if (window.viewer.controls) {
+                    window.viewer.controls.update();
+                }
+                
+                // Force a render
+                if (window.viewer.renderer && window.viewer.scene && window.viewer.camera) {
+                    window.viewer.renderer.render(window.viewer.scene, window.viewer.camera);
+                }
+            } else {
+                console.error('Viewer or renderer not found!');
+            }
+        }
+    </script>
+    
     <!-- Add this in the <head> or before the closing </body> tag -->
     <script id="threejs-font-json" type="application/json">
     // The font will be loaded via JS from the official Three.js CDN
