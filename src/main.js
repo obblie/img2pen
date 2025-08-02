@@ -24,7 +24,13 @@ const METAL_MATERIALS = {
         envMapIntensity: 1.0
     },
     'gold-14k': {
-        color: 0xDAA520,
+        color: 0xE7C76E,
+        metalness: 1.0,
+        roughness: 0.1,
+        envMapIntensity: 1.0
+    },
+    'rose-gold-14k': {
+        color: 0xE8B4A0,
         metalness: 1.0,
         roughness: 0.1,
         envMapIntensity: 1.0
@@ -92,13 +98,17 @@ function showNotification(message, type = 'success') {
 }
 
 // Configuration
-const BACKEND_URL = 'https://img2pen-s3-backend.onrender.com'; // S3 backend for file uploads
 // Use local proxy for mobile devices to avoid CORS/network issues
 const isMobileDevice = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
 const isLocalDevelopment = window.location.hostname === 'localhost' || window.location.hostname.includes('192.168.');
-const OPENAI_BACKEND_URL = (isMobileDevice && isLocalDevelopment) 
-    ? window.location.origin  // Use local proxy
-    : 'https://img2pen-openai-backend.onrender.com'; // Use direct URL for desktop
+
+const BACKEND_URL = isLocalDevelopment
+    ? window.location.origin  // Use local proxy for all local development
+    : 'https://img2pen-s3-backend.onrender.com'; // Use direct URL for production
+
+const OPENAI_BACKEND_URL = isLocalDevelopment
+    ? window.location.origin  // Use local proxy for all local development
+    : 'https://img2pen-openai-backend.onrender.com'; // Use direct URL for production
 
 console.log('🔧 Backend URL configured:', {
     isMobile: isMobileDevice,
@@ -559,15 +569,22 @@ function showLoadingOverlay() {
     bar.style.width = '0%';
     let steps = [
         { t: 0, text: 'Analyzing image...', pct: 10 },
-        { t: 1200, text: 'Detecting features...', pct: 30 },
-        { t: 2500, text: 'Processing image...', pct: 55 },
-        { t: 4000, text: 'Generating 3D Geometries...', pct: 80 },
-        { t: 6000, text: 'Finalizing model...', pct: 100 }
+        { t: 800, text: 'Detecting features...', pct: 30 },
+        { t: 1600, text: 'Processing image...', pct: 55 },
+        { t: 2400, text: 'Generating 3D Geometries...', pct: 80 },
+        { t: 3200, text: 'Finalizing model...', pct: 100 }
     ];
     steps.forEach(step => {
         setTimeout(() => {
             status.textContent = step.text;
             bar.style.width = step.pct + '%';
+            
+            // Hide overlay when finalizing is complete
+            if (step.pct === 100) {
+                setTimeout(() => {
+                    hideLoadingOverlay();
+                }, 800); // Brief delay after showing 100%
+            }
         }, step.t);
     });
 }
@@ -587,7 +604,7 @@ const ENGRAVING_FONTS = {
 class HeightfieldViewer {
     constructor() {
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera = new THREE.PerspectiveCamera(56, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.controls = null;
         this.heightfield = null;
@@ -630,21 +647,22 @@ class HeightfieldViewer {
 
     init() {
         // Setup renderer with improved quality settings
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        const canvasContainer = document.getElementById('canvas-container');
+        this.renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
         this.renderer.setClearColor(0x333333);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.2;
-        document.getElementById('canvas-container').appendChild(this.renderer.domElement);
+        canvasContainer.appendChild(this.renderer.domElement);
 
         // Setup camera - angled view to show pendant standing upright on platform
-        this.camera.position.set(25, 15, 35);
+        this.camera.position.set(33, 20, 47);
         this.camera.lookAt(0, 0, 0);
         
         // Store default camera position for reset functionality
-        this.defaultCameraPosition = new THREE.Vector3(25, 15, 35);
+        this.defaultCameraPosition = new THREE.Vector3(33, 20, 47);
 
         // Setup controls
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -721,6 +739,19 @@ class HeightfieldViewer {
         // Setup event listeners and UI controls
         this.setupEventListeners();
         this.setupUIControls();
+        
+        // Setup back to upload button
+        const backButton = document.getElementById('back-to-upload');
+        if (backButton) {
+            backButton.addEventListener('click', () => {
+                // Hide UI menu
+                document.getElementById('ui-menu').style.display = 'none';
+                // Scroll to upload container
+                document.getElementById('upload-container').scrollIntoView({ behavior: 'smooth' });
+                // Reset scene
+                this.resetScene();
+            });
+        }
 
         // Start animation loop
         this.animate();
@@ -802,15 +833,31 @@ class HeightfieldViewer {
 
         // Handle window resize
         window.addEventListener('resize', () => {
-            this.camera.aspect = window.innerWidth / window.innerHeight;
+            const canvasContainer = document.getElementById('canvas-container');
+            if (canvasContainer && canvasContainer.style.display !== 'none') {
+                // Use the full container dimensions for the 3D scene
+                const containerWidth = canvasContainer.clientWidth;
+                const containerHeight = canvasContainer.clientHeight;
+                
+                // Update camera and renderer with container dimensions
+                this.camera.aspect = containerWidth / containerHeight;
             this.camera.updateProjectionMatrix();
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setSize(containerWidth, containerHeight);
+            }
         });
 
         // Handle prompt submit for AI image generation
         const promptSubmitBtn = document.getElementById('prompt-submit');
         const promptInput = document.getElementById('prompt-input');
+        console.log('🔧 Looking for AI generation elements:', {
+            promptSubmitBtn: !!promptSubmitBtn,
+            promptInput: !!promptInput,
+            promptSubmitBtnElement: promptSubmitBtn,
+            promptInputElement: promptInput
+        });
+        
         if (promptSubmitBtn && promptInput) {
+            console.log('✅ Found AI generation elements, setting up event listeners');
             // Add mobile debugging info
             const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
             console.log('🔧 AI Generation Setup:', {
@@ -822,16 +869,19 @@ class HeightfieldViewer {
             });
             
             promptSubmitBtn.addEventListener('click', async () => {
+                console.log('🔴 PROMPT SUBMIT BUTTON CLICKED!');
                 const prompt = promptInput.value.trim();
                 console.log('🎯 Generate button clicked:', { prompt, length: prompt.length });
                 
                 if (!prompt) {
+                    console.log('❌ No prompt provided, showing notification');
                     showNotification('Please enter a prompt to generate an image', 'error');
                     return;
                 }
 
                 try {
                     console.log('🎨 Starting image generation with prompt:', prompt);
+                    console.log('🎨 About to call generateImageWithOpenAI...');
                     const imageDataUrl = await generateImageWithOpenAI(prompt);
                     console.log('✅ Image generated, data URL length:', imageDataUrl ? imageDataUrl.length : 'null');
                     
@@ -872,6 +922,13 @@ class HeightfieldViewer {
                     e.preventDefault();
                     promptSubmitBtn.click();
                 }
+            });
+        } else {
+            console.error('❌ AI generation elements not found:', {
+                promptSubmitBtn: !!promptSubmitBtn,
+                promptInput: !!promptInput,
+                allElementsWithPrompt: document.querySelectorAll('[id*="prompt"]'),
+                allButtons: document.querySelectorAll('button')
             });
         }
     }
@@ -1228,9 +1285,121 @@ class HeightfieldViewer {
             const image = await this.loadImage(file);
             const heightfieldData = this.generateHeightfieldData(image);
             this.createHeightfieldMesh(heightfieldData);
-            document.getElementById('drop-zone').classList.add('hidden');
-            hideLoadingOverlay();
-        }, 7000);
+            // Show the canvas container when image is processed
+            const canvasContainer = document.getElementById('canvas-container');
+            
+            // Use the full container dimensions for the 3D scene
+            const containerWidth = canvasContainer.clientWidth;
+            const containerHeight = canvasContainer.clientHeight;
+            
+            console.log('Container dimensions:', containerWidth, 'x', containerHeight);
+            
+            // Set explicit dimensions to ensure proper sizing
+            const targetWidth = Math.max(containerWidth, 1200);
+            const targetHeight = Math.max(containerHeight, 600);
+            
+            console.log('Target dimensions:', targetWidth, 'x', targetHeight);
+            
+            // Resize renderer to match canvas container dimensions
+            const isMobileDevice = window.innerWidth <= 768;
+            
+            if (isMobileDevice) {
+                // For mobile, use the mobile container dimensions
+                const mobileContainer = document.getElementById('mobile-canvas-container');
+                if (mobileContainer) {
+                    const mobileWidth = mobileContainer.clientWidth;
+                    const mobileHeight = mobileContainer.clientHeight;
+                    console.log('Mobile container dimensions:', mobileWidth, 'x', mobileHeight);
+                    
+                    // Ensure minimum dimensions
+                    const finalWidth = Math.max(mobileWidth, 300);
+                    const finalHeight = Math.max(mobileHeight, 300);
+                    
+                    this.renderer.setSize(finalWidth, finalHeight);
+                    this.renderer.domElement.style.width = '100%';
+                    this.renderer.domElement.style.height = '100%';
+                    this.renderer.domElement.style.display = 'block';
+                    this.camera.aspect = finalWidth / finalHeight;
+                    this.camera.updateProjectionMatrix();
+                    
+                    console.log('Mobile renderer resized to:', finalWidth, 'x', finalHeight);
+                } else {
+                    console.error('Mobile container not found');
+                }
+            } else {
+                // For desktop, use the original logic
+                this.renderer.setSize(targetWidth, targetHeight);
+                this.renderer.domElement.style.width = '100%';
+                this.renderer.domElement.style.height = '100%';
+                this.renderer.domElement.style.display = 'block';
+                this.camera.aspect = containerWidth / containerHeight;
+                this.camera.updateProjectionMatrix();
+            }
+            
+            // Show the UI menu when canvas is visible (only on desktop)
+            const isMobile = window.innerWidth <= 768;
+            const uiMenu = document.getElementById('ui-menu');
+            
+            if (!isMobile) {
+                console.log('Positioning control panel in upper right corner...');
+                // Force positioning to upper right corner with !important
+                uiMenu.setAttribute('style', `
+                    position: absolute !important;
+                    top: 80px !important;
+                    right: 80px !important;
+                    left: auto !important;
+                    width: 350px !important;
+                    height: 80vh !important;
+                    z-index: 1000 !important;
+                    display: block !important;
+                    background: rgba(255,255,255,0.95) !important;
+                    padding: 20px !important;
+                    overflow-y: auto !important;
+                    cursor: move !important;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+                    border-radius: 12px !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                `);
+                console.log('Control panel positioned! Current styles:', uiMenu.style.cssText);
+                // Drag functionality is already initialized in DOMContentLoaded
+                
+                // Force positioning again after a delay to ensure it takes effect
+                setTimeout(() => {
+                    console.log('Re-applying control panel positioning...');
+                    uiMenu.setAttribute('style', `
+                        position: absolute !important;
+                        top: 80px !important;
+                        right: 80px !important;
+                        left: auto !important;
+                        width: 350px !important;
+                        height: 80vh !important;
+                        z-index: 1000 !important;
+                        display: block !important;
+                        background: rgba(255,255,255,0.95) !important;
+                        padding: 20px !important;
+                        overflow-y: auto !important;
+                        cursor: move !important;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+                        border-radius: 12px !important;
+                        visibility: visible !important;
+                        opacity: 1 !important;
+                    `);
+                    console.log('Control panel re-positioned!');
+                }, 500);
+            } else {
+                console.log('Mobile detected - keeping UI menu hidden');
+                // Ensure UI menu is hidden on mobile
+                uiMenu.setAttribute('style', `
+                    display: none !important;
+                    visibility: hidden !important;
+                    opacity: 0 !important;
+                    z-index: -1 !important;
+                `);
+            }
+            // Scroll to the scene container
+            document.getElementById('scene-container').scrollIntoView({ behavior: 'smooth' });
+        }, 100); // Process immediately since loading overlay is handled separately
     }
 
     loadImage(fileOrBlob) {
@@ -3384,8 +3553,8 @@ class HeightfieldViewer {
         
         if (!rulerToggle || !rulerOverlay) return;
         
-        // Initially hide the ruler
-        rulerOverlay.style.display = 'none';
+        // Initially show the ruler
+        rulerOverlay.style.display = 'flex';
         
         rulerToggle.addEventListener('click', () => {
             const isActive = rulerToggle.getAttribute('data-active') === 'true';
@@ -3407,6 +3576,12 @@ class HeightfieldViewer {
     createRulerMarkings() {
         const horizontalRuler = document.getElementById('horizontal-ruler');
         const verticalRuler = document.getElementById('vertical-ruler');
+        
+        // Check if ruler elements exist before proceeding
+        if (!horizontalRuler || !verticalRuler) {
+            console.log('⚠️ Ruler elements not found, skipping ruler initialization');
+            return;
+        }
         
         // Clear existing markings
         horizontalRuler.innerHTML = '';
@@ -3476,7 +3651,7 @@ class HeightfieldViewer {
                 label.style.cssText = `
                     position: absolute;
                     top: ${position}%;
-                    right: -30px;
+                    left: -30px;
                     transform: translateY(-50%);
                     color: rgba(255,255,255,0.8);
                     font-size: 10px;
@@ -3507,7 +3682,18 @@ class HeightfieldViewer {
 }
 
 // Initialize the viewer
-window.viewer = new HeightfieldViewer(); 
+console.log('🔧 About to create HeightfieldViewer...');
+try {
+    window.viewer = new HeightfieldViewer(); 
+    console.log('✅ HeightfieldViewer created successfully:', window.viewer);
+} catch (error) {
+    console.error('❌ Failed to create HeightfieldViewer:', error);
+    throw error;
+}
+
+// Add OpenAI functions to viewer object for modal access
+window.viewer.generateImageWithOpenAI = generateImageWithOpenAI;
+window.viewer.uploadDalleImageToS3 = uploadDalleImageToS3;
 
 // Show deployment GUID in lower left
 fetch('./version.json')
@@ -3547,6 +3733,7 @@ function showMobileDebug(info, isError = false) {
 
 // Function to generate image using backend OpenAI proxy
 async function generateImageWithOpenAI(prompt) {
+    console.log('🚀 generateImageWithOpenAI called with prompt:', prompt);
     try {
         const deviceInfo = {
             userAgent: navigator.userAgent,
@@ -3561,6 +3748,7 @@ async function generateImageWithOpenAI(prompt) {
         
         // Test connectivity to backend first
         console.log('🔗 Testing backend connectivity...');
+        console.log('🔗 Backend URL:', OPENAI_BACKEND_URL);
         try {
             const healthCheck = await fetch(`${OPENAI_BACKEND_URL}/health`, {
                 method: 'GET',
@@ -3583,6 +3771,7 @@ async function generateImageWithOpenAI(prompt) {
         
         // Check network connectivity
         if (!navigator.onLine) {
+            console.error('❌ No internet connection');
             throw new Error('No internet connection detected');
         }
         
@@ -3597,6 +3786,8 @@ async function generateImageWithOpenAI(prompt) {
         }, timeoutDuration);
         
         console.log('📤 Sending request to OpenAI backend...');
+        console.log('📤 Request body:', JSON.stringify({ prompt: prompt }));
+        
         const response = await fetch(`${OPENAI_BACKEND_URL}/api/generate-image`, {
             method: 'POST',
             headers: {
@@ -3645,52 +3836,86 @@ async function generateImageWithOpenAI(prompt) {
         
         document.getElementById('loading-status').textContent = 'Processing generated image...';
         
-        hideLoadingOverlay();
-        
-        // Return the base64 data URL directly
-        return data.imageData;
-    } catch (error) {
-        hideLoadingOverlay();
-        
-        // Enhanced mobile-specific error handling
-        const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
-        
-        if (error.name === 'AbortError') {
-            console.error(`⏰ Request timed out (mobile: ${isMobile})`);
-            const timeoutMessage = isMobile 
-                ? 'Request timed out on mobile. Try connecting to WiFi or try again later.'
-                : 'Request timed out. The server may be overloaded. Please try again.';
-            showNotification(timeoutMessage, 'error');
-        } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            console.error('🌐 Network error:', error);
-            const networkMessage = isMobile
-                ? 'Network error on mobile. Check your internet connection and try again.'
-                : 'Network error. Please check your internet connection.';
-            showNotification(networkMessage, 'error');
-        } else if (error.message.includes('No internet connection')) {
-            console.error('📡 No internet connection');
-            showNotification('No internet connection. Please check your network and try again.', 'error');
-        } else {
-            console.error('💥 Error generating image:', error);
-            console.error('💥 Error stack:', error.stack);
-            console.error('💥 Device info:', {
-                isMobile,
-                userAgent: navigator.userAgent,
-                onLine: navigator.onLine,
-                networkType: navigator.connection?.effectiveType || 'unknown'
-            });
-            
-            const friendlyMessage = isMobile
-                ? `Mobile generation error: ${error.message}. Try refreshing the page.`
-                : `Error: ${error.message}`;
-            showNotification(friendlyMessage, 'error');
-            
-            // Show debug info on mobile
-            showMobileDebug(`AI Generation Error:\n${error.message}\n\nStack:\n${error.stack}`, true);
+        // Enhanced image data validation
+        if (!data.imageData) {
+            console.error('❌ No image data in response');
+            throw new Error('No image data received from AI generation');
         }
-        return null;
+        
+        if (typeof data.imageData !== 'string') {
+            console.error('❌ Image data is not a string:', typeof data.imageData);
+            throw new Error('Invalid image data format received');
+        }
+        
+        if (data.imageData.length === 0) {
+            console.error('❌ Image data is empty string');
+            throw new Error('Empty image data received');
+        }
+        
+        if (data.imageData.length < 100) {
+            console.error('❌ Image data too short:', data.imageData.length, 'content:', data.imageData);
+            throw new Error('Image data appears to be invalid (too short)');
+        }
+        
+        console.log('✅ Image data validation passed:', {
+            type: typeof data.imageData,
+            length: data.imageData.length,
+            firstChars: data.imageData.substring(0, 50),
+            lastChars: data.imageData.substring(data.imageData.length - 50)
+        });
+
+        // Check if imageData is already a data URL or needs conversion
+        let dataUrl;
+        if (data.imageData.startsWith('data:')) {
+            // Already a data URL
+            dataUrl = data.imageData;
+            console.log('✅ Image data is already a data URL, length:', dataUrl.length);
+        } else {
+            // Convert base64 to data URL
+            dataUrl = `data:image/png;base64,${data.imageData}`;
+            console.log('✅ Converted base64 to data URL, length:', dataUrl.length);
+        }
+        console.log('✅ Data URL preview:', dataUrl.substring(0, 100) + '...');
+        
+        // Test if the data URL is valid by creating an image
+        const testImage = new Image();
+        const imageLoadPromise = new Promise((resolve, reject) => {
+            testImage.onload = () => {
+                console.log('✅ Data URL is valid image:', testImage.width, 'x', testImage.height);
+                resolve(true);
+            };
+            testImage.onerror = (error) => {
+                console.error('❌ Data URL is invalid image:', error);
+                reject(new Error('Generated image data is corrupted or invalid'));
+            };
+        });
+        
+        testImage.src = dataUrl;
+        
+        // Wait for image validation (with timeout)
+        try {
+            await Promise.race([
+                imageLoadPromise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Image validation timeout')), 5000))
+            ]);
+        } catch (validationError) {
+            console.error('❌ Image validation failed:', validationError);
+            throw validationError;
+        }
+        
+        hideLoadingOverlay();
+        console.log('✅ generateImageWithOpenAI completed successfully');
+        return dataUrl;
+        
+    } catch (error) {
+        console.error('❌ Error in generateImageWithOpenAI:', error);
+        console.error('❌ Error stack:', error.stack);
+        hideLoadingOverlay();
+        throw error;
     }
 }
+
+// Functions will be made globally available at the end of the file
 
 // Function to upload DALL-E generated image to S3
 async function uploadDalleImageToS3(imageBlob, prompt) {
@@ -3831,10 +4056,20 @@ function initializeMobileMenu() {
 
     // Close menu when clicking outside
     function handleOutsideClick(event) {
-        if (!isMobile() || !isMenuOpen) return;
+        console.log('handleOutsideClick triggered on:', event.target);
+        console.log('isMobile():', isMobile());
+        console.log('isMenuOpen:', isMenuOpen);
+        
+        if (!isMobile() || !isMenuOpen) {
+            console.log('handleOutsideClick returning early');
+            return;
+        }
         
         const isClickInsideMenu = uiMenu && uiMenu.contains(event.target);
         const isClickOnToggle = mobileToggle && mobileToggle.contains(event.target);
+        
+        console.log('isClickInsideMenu:', isClickInsideMenu);
+        console.log('isClickOnToggle:', isClickOnToggle);
         
         if (!isClickInsideMenu && !isClickOnToggle) {
             console.log('Outside click detected, closing menu');
@@ -4068,4 +4303,36 @@ if (document.readyState === 'loading') {
 // Initialize mobile cropping enhancements
 enhanceMobileCropping();
 
-// ... existing code ...
+// Draggable control panel functionality
+// Control panel is fixed - no drag functionality needed
+
+// Control panel is fixed - no drag initialization needed
+
+// Simple draggable control panel
+let dragInitialized = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded - setting up control panel...');
+    
+
+    
+        // Control panel is fixed in position - no drag functionality
+    console.log('Control panel is fixed in position');
+});
+
+// Make functions globally available at the end of the file
+// This ensures all functions are defined before being assigned to window
+if (typeof generateImageWithOpenAI === 'function') {
+    window.generateImageWithOpenAI = generateImageWithOpenAI;
+    console.log('✅ generateImageWithOpenAI assigned to window');
+} else {
+    console.error('❌ generateImageWithOpenAI not defined');
+}
+
+if (typeof uploadDalleImageToS3 === 'function') {
+    window.uploadDalleImageToS3 = uploadDalleImageToS3;
+    console.log('✅ uploadDalleImageToS3 assigned to window');
+} else {
+    console.error('❌ uploadDalleImageToS3 not defined');
+}
+

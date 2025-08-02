@@ -5,41 +5,358 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Metal Memories - 3D Jewelry Visualization</title>
     <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼️</text></svg>">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#667eea',
+                        secondary: '#764ba2',
+                        accent: '#48bb78'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             margin: 0;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            overflow-x: hidden;
+            overflow-y: auto;
+            width: 100vw;
         }
+        
+        .hero-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+        
+        .upload-container {
+            background: #f8f9fa;
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+        
+        .scene-container {
+            background: #f0f0f0;
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            margin: 90px 0 0 0;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+
         #drop-zone {
-            position: fixed;
-            top: 0;
-            left: 0;
+            position: relative;
             width: 100%;
-            height: 100%;
+            min-height: 60vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            color: black;
+            border: 3px solid rgba(0, 0, 0, 0.8);
+            border-radius: 16px;
             transition: opacity 0.3s;
         }
         #drop-zone.dragover {
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px dashed #fff;
+            background: rgba(0, 0, 0, 0.1);
+            border: 3px dashed rgba(0, 0, 0, 0.8);
         }
         #drop-zone.hidden {
-            opacity: 0;
-            pointer-events: none;
+            display: none;
         }
         #canvas-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: relative !important;
+            width: 100% !important;
+            height: 600px;
+            margin: 0 !important;
+            max-width: none !important;
+            z-index: 1;
+        }
+        
+        /* Removed conflicting #ui-menu CSS rules - now controlled by JavaScript */
+
+        /* Lightbox effect for 3D scene */
+        #canvas-container::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.15),
+                0 8px 16px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(0, 0, 0, 0.05);
+            z-index: -1;
+            backdrop-filter: blur(10px);
+        }
+
+        #canvas {
+            position: relative;
+            z-index: 1;
+            border-radius: 16px;
+            overflow: hidden;
+            width: 100% !important;
+            height: 100% !important;
+            display: block !important;
+        }
+        
+        /* Ensure Three.js canvas fills container */
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block !important;
+        }
+
+
+
+
+
+        /* Desktop layout - vertical stacking */
+        @media (min-width: 769px) {
+            body {
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+                background: #f8f9fa;
+            }
+            
+            #drop-zone {
+                flex-shrink: 0;
+                padding: 40px 20px;
+                background: rgba(255, 255, 255, 0.9);
+                border-bottom: 3px solid rgba(0, 0, 0, 0.8);
+            }
+            
+            #reference-image-container {
+                flex-shrink: 0;
+                padding: 20px;
+                text-align: center;
+                background: rgba(255, 255, 255, 0.9);
+                border-bottom: 3px solid rgba(0, 0, 0, 0.8);
+            }
+            
+            #canvas-container {
+                flex: 1;
+                position: relative;
+                min-height: 500px;
+            }
+
+            #canvas-container::before {
+                top: 20px;
+                left: 20px;
+                right: 20px;
+                bottom: 20px;
+            }
+        }
+
+        /* Mobile layout - vertical stacking */
+        @media (max-width: 768px) {
+            body {
+                display: flex;
+                flex-direction: column;
+                min-height: 100vh;
+                background: #f8f9fa;
+            }
+            
+            #drop-zone {
+                flex-shrink: 0;
+                padding: 20px;
+                background: rgba(255, 255, 255, 0.9);
+                border-bottom: 2px solid rgba(0, 0, 0, 0.8);
+            }
+            
+            #reference-image-container {
+                flex-shrink: 0;
+                padding: 15px;
+                text-align: center;
+                background: rgba(255, 255, 255, 0.9);
+                border-bottom: 2px solid rgba(0, 0, 0, 0.8);
+                position: relative !important;
+                top: auto !important;
+                left: auto !important;
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+
+            #reference-image {
+                cursor: pointer;
+                width: 150px;
+                height: 150px;
+            }
+            
+            #canvas-container {
+                flex: 1;
+                position: relative;
+                min-height: 400px;
+            }
+        }
+
+        /* Reference Image Container - Base Styles */
+        #reference-image-container {
+            position: relative;
+            padding: 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 3px solid rgba(0, 0, 0, 0.8);
+            display: block;
+        }
+
+        #reference-image-container:hover {
+            transform: scale(1.05);
+            opacity: 1;
+        }
+
+        #reference-image-container.collapsed {
+            opacity: 0.7;
+            max-width: 60px;
+            overflow: hidden;
+        }
+
+        #reference-image-container.collapsed #reference-image {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+        }
+
+        #reference-image-container.collapsed #reference-label {
+            display: none;
+        }
+
+        #reference-image {
+            width: 180px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            display: block;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #reference-image:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        #reference-label {
+            color: #333;
+            font-size: 12px;
+            text-align: center;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        #reference-toggle {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            border: none;
+            color: #333;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+        #reference-toggle:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* Make canvas fill available space */
+        #canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Hide the floating UI menu - now using integrated version */
+        #ui-menu {
+            display: none !important;
+        }
+
+            /* Adjust mobile menu toggle position */
+            #mobile-menu-toggle {
+                top: 15px;
+                right: 15px;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                background: rgba(255, 255, 255, 0.9);
+                border: 2px solid rgba(0, 0, 0, 0.1);
+                color: #333;
+            }
+
+            /* Adjust replace image button position */
+            #replace-image-button {
+                top: 15px;
+                left: 15px;
+            }
+
+            #replace-file {
+                background: rgba(255, 255, 255, 0.9) !important;
+                border: 2px solid rgba(0, 0, 0, 0.1) !important;
+                color: #333 !important;
+            }
+
+        /* Extra small mobile devices */
+        @media (max-width: 480px) {
+            #reference-image {
+                width: 150px;
+                height: 150px;
+            }
+
+            #reference-label {
+                font-size: 14px;
+            }
+
+            #reference-image-container {
+                padding: 15px;
+            }
+            
+            /* Ensure mobile menu toggle is visible on small screens */
+            #mobile-menu-toggle {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                top: 10px;
+                right: 10px;
+            }
+            
+            /* Optimize text for small screens */
+            .hero-container h1 {
+                font-size: 1.8em;
+            }
+            
+            .hero-container p {
+                font-size: 0.9em;
+            }
         }
 
         /* Mobile Menu Toggle Button */
@@ -50,10 +367,10 @@
             right: 20px;
             width: 60px;
             height: 60px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.9);
+            border: 3px solid rgba(0, 0, 0, 0.8);
             border-radius: 50%;
-            color: white;
+            color: #000000;
             font-size: 24px;
             cursor: pointer;
             z-index: 1001;
@@ -63,11 +380,14 @@
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             -webkit-user-select: none;
+            font-weight: bold;
         }
+
+
 
         #mobile-menu-toggle:hover {
             transform: scale(1.1);
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(255, 255, 255, 1);
         }
 
         #mobile-menu-toggle:active {
@@ -75,10 +395,9 @@
         }
 
         @media (max-width: 768px) {
+            /* Hide mobile menu toggle on mobile - we don't need it */
             #mobile-menu-toggle {
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                display: none !important;
             }
             
             /* Optimize replace image button for mobile */
@@ -92,6 +411,29 @@
                 font-size: 14px !important;
                 min-height: 44px !important;
             }
+            
+            /* Ensure proper scrolling on mobile */
+            body {
+                overflow-x: hidden;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                height: auto;
+            }
+            
+            html {
+                height: auto;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+            
+            /* Mobile container scrolling */
+            .hero-container,
+            .upload-container,
+            .scene-container {
+                overflow-y: visible;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
             
             /* Mobile-optimized cropper modal */
             #cropper-modal > div {
@@ -294,82 +636,788 @@
 
         /* UI Menu Styles */
         #ui-menu {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
+            position: fixed !important;
+            top: 500px !important;
+            left: calc(50% - 600px + 20px) !important;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
             padding: 15px;
-            border-radius: 8px;
-            width: 300px;
-            max-height: calc(100vh - 40px);
+            border-radius: 12px;
+            width: 280px;
+            height: 60vh;
             overflow-y: auto;
-            z-index: 1000;
-            transition: transform 0.3s ease, width 0.3s ease, top 0.3s ease, right 0.3s ease;
+            z-index: 1001 !important;
+            transition: transform 0.3s ease, width 0.3s ease, top 0.3s ease, left 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border: 3px solid rgba(0, 0, 0, 0.8);
         }
 
-        /* Mobile Responsive Styles */
+        /* Mobile Responsive Styles - Shopify-style Layout */
         @media (max-width: 768px) {
+            /* CRITICAL: Override ALL conflicting mobile rules */
+            body {
+                display: block !important;
+                flex-direction: unset !important;
+                min-height: auto !important;
+                background: unset !important;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                height: auto !important;
+            }
+            
+            html {
+                height: auto !important;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+            }
+            
+            /* Override ALL container layouts */
+            .hero-container,
+            .upload-container,
+            .scene-container {
+                padding: 0 !important;
+                height: auto !important;
+                min-height: auto !important;
+                margin: 0 !important;
+                width: 100% !important;
+                display: block !important;
+                overflow-y: visible !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            
+            /* Override ALL drop-zone rules */
+            #drop-zone {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+                min-height: unset !important;
+            }
+            
+            /* Override ALL reference-image-container rules */
+            #reference-image-container {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                text-align: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+                position: unset !important;
+                top: unset !important;
+                left: unset !important;
+                max-width: unset !important;
+                width: unset !important;
+            }
+            
+            /* Override ALL ui-menu rules */
             #ui-menu {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                top: auto;
-                width: 100%;
-                max-height: 60vh;
-                border-radius: 16px 16px 0 0;
-                padding: 20px;
-                transform: translateY(100%);
-                background: rgba(0, 0, 0, 0.95);
-                backdrop-filter: blur(10px);
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                width: unset !important;
+                height: unset !important;
+                max-height: unset !important;
+                padding: unset !important;
+                right: unset !important;
             }
             
-            #ui-menu.mobile-open {
-                transform: translateY(0);
-            }
-            
-            /* Mobile handle for dragging */
-            #ui-menu::before {
-                content: '';
-                position: absolute;
-                top: 8px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 40px;
-                height: 4px;
-                background: rgba(255, 255, 255, 0.3);
-                border-radius: 2px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            #ui-menu {
-                padding: 16px;
-                max-height: 70vh;
-            }
-            
+            /* Override ALL control-group rules */
             .control-group {
-                margin-bottom: 16px;
+                margin-bottom: unset !important;
             }
             
             .control-group label {
-                font-size: 16px;
-                margin-bottom: 8px;
+                font-size: unset !important;
+                margin-bottom: unset !important;
+                display: unset !important;
             }
             
             .control-group select,
             .control-group input[type="range"],
             .control-group input[type="number"] {
-                font-size: 16px; /* Prevents zoom on iOS */
-                min-height: 44px; /* Touch-friendly size */
+                font-size: unset !important;
+                min-height: unset !important;
+                background: unset !important;
+                color: unset !important;
+                border: unset !important;
+                font-weight: unset !important;
+                width: unset !important;
+                box-sizing: unset !important;
+                padding: unset !important;
+            }
+            
+            /* Override ALL toggle-button rules */
+            .toggle-button {
+                font-size: unset !important;
+                padding: unset !important;
+                min-width: unset !important;
+                min-height: unset !important;
+                background: unset !important;
+                border: unset !important;
+                color: unset !important;
+                font-weight: unset !important;
+            }
+            
+            /* Override ALL menu-section rules */
+            .menu-section {
+                margin-bottom: unset !important;
+                padding-bottom: unset !important;
+                border-bottom: unset !important;
+            }
+            
+            /* Override ALL ruler-overlay rules */
+            #ruler-overlay {
+                transform: unset !important;
+            }
+            
+            /* Override ALL cta-button rules */
+            .cta-button {
+                padding: unset !important;
+                font-size: unset !important;
+                min-height: unset !important;
+                width: unset !important;
+                max-width: unset !important;
+            }
+            
+            /* Disable canvas-container lightbox effect on mobile */
+            #canvas-container::before {
+                display: none !important;
+                content: none !important;
+                background: none !important;
+                backdrop-filter: none !important;
+            }
+            
+            /* Force mobile layout at exactly 768px and below */
+            .mobile-shopify-layout {
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            
+            .desktop-layout {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+            }
+            /* Force mobile layout at exactly 768px and below */
+            .mobile-shopify-layout {
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            
+            .desktop-layout {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+            }
+            /* Fix body and html scrolling */
+            body, html {
+                height: auto !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+            }
+            
+            /* Mobile Container Layout - Shopify-style */
+            .hero-container {
+                padding: 0 !important;
+                height: auto !important;
+                min-height: auto !important;
+                margin-bottom: 0 !important;
+                width: 100% !important;
+                display: block !important;
+            }
+            
+            .upload-container {
+                padding: 0 !important;
+                height: auto !important;
+                min-height: auto !important;
+                margin-bottom: 0 !important;
+                width: 100% !important;
+                display: block !important;
+            }
+            
+            .scene-container {
+                padding: 0 !important;
+                height: auto !important;
+                min-height: auto !important;
+                margin: 0 !important;
+                width: 100% !important;
+                display: block !important;
+            }
+            
+            /* Mobile spacing improvements */
+            .hero-container,
+            .upload-container,
+            .scene-container {
+                box-sizing: border-box;
+            }
+            
+            /* Shopify-style Mobile Layout */
+            .mobile-shopify-layout {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                height: 100vh !important;
+                overflow-y: auto !important;
+            }
+            
+            /* Product Carousel Section */
+            .product-carousel-section {
+                flex: 1 !important;
+                min-height: 60vh !important;
+                height: 60vh !important;
+                background: transparent !important;
+                position: relative !important;
+                overflow: hidden !important;
+            }
+            
+            /* Main Product Viewer */
+            .main-product-viewer {
+                width: 100% !important;
+                height: 100% !important;
+                position: relative !important;
+                background: transparent !important;
+                overflow: hidden !important;
+            }
+            
+            /* Mobile Canvas Container */
+            #mobile-canvas-container {
+                width: 100% !important;
+                height: 100% !important;
+                position: relative !important;
+                background: transparent !important;
+                overflow: hidden !important;
+                min-height: 400px !important;
+            }
+            
+            #mobile-canvas-container canvas {
+                width: 100% !important;
+                height: 100% !important;
+                display: block !important;
+            }
+            
+            /* Carousel Thumbnails */
+            .carousel-thumbnails {
+                display: flex !important;
+                gap: 8px !important;
+                padding: 12px !important;
+                background: #ffffff !important;
+                border-top: 1px solid #e2e8f0 !important;
+                overflow-x: auto !important;
+            }
+            
+            .carousel-thumbnail {
+                flex-shrink: 0 !important;
+                width: 60px !important;
+                height: 60px !important;
+                border: 2px solid #e2e8f0 !important;
+                border-radius: 8px !important;
+                background: #f8f9fa !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                cursor: pointer !important;
+                transition: border-color 0.2s ease !important;
+            }
+            
+            .carousel-thumbnail.active {
+                border-color: #667eea !important;
+                background: #667eea !important;
+                color: white !important;
+            }
+            
+            /* Product Details Section */
+            .product-details-section {
+                background: #ffffff !important;
+                padding: 20px !important;
+                border-top: 1px solid #e2e8f0 !important;
+            }
+            
+            /* Product Title and Price */
+            .product-title {
+                font-size: 1.5em !important;
+                font-weight: 700 !important;
+                color: #2d3748 !important;
+                margin-bottom: 8px !important;
+            }
+            
+            .product-price {
+                font-size: 1.2em !important;
+                font-weight: 600 !important;
+                color: #667eea !important;
+                margin-bottom: 16px !important;
+            }
+            
+            .product-subtitle {
+                font-size: 0.9em !important;
+                color: #718096 !important;
+                margin-bottom: 20px !important;
+            }
+            
+            /* Customization Options */
+            .customization-options {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 16px !important;
+            }
+            
+            .option-group {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+            }
+            
+            .option-label {
+                font-size: 0.9em !important;
+                font-weight: 600 !important;
+                color: #2d3748 !important;
+            }
+            
+            .option-buttons {
+                display: flex !important;
+                gap: 8px !important;
+                flex-wrap: wrap !important;
+            }
+            
+            .option-button {
+                padding: 8px 16px !important;
+                border: 2px solid #e2e8f0 !important;
+                border-radius: 6px !important;
+                background: #ffffff !important;
+                color: #2d3748 !important;
+                font-size: 0.9em !important;
+                font-weight: 500 !important;
+                cursor: pointer !important;
+                transition: all 0.2s ease !important;
+                min-height: 44px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            
+            .option-button.active {
+                border-color: #667eea !important;
+                background: #667eea !important;
+                color: #ffffff !important;
+            }
+            
+            .option-select {
+                padding: 12px !important;
+                border: 2px solid #e2e8f0 !important;
+                border-radius: 6px !important;
+                background: #ffffff !important;
+                color: #2d3748 !important;
+                font-size: 0.9em !important;
+                min-height: 44px !important;
+            }
+            
+            /* Add Photo Button */
+            .add-photo-section {
+                margin-top: 0 !important;
+                padding: 12px !important;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                border-radius: 16px !important;
+                border: none !important;
+                text-align: center !important;
+            }
+            
+            .add-photo-button {
+                width: 100% !important;
+                height: 50px !important;
+                padding: 12px 16px !important;
+                background: rgba(255, 255, 255, 0.9) !important;
+                color: #4a5568 !important;
+                border: none !important;
+                border-radius: 12px !important;
+                font-size: 0.9em !important;
+                font-weight: 600 !important;
+                cursor: pointer !important;
+                transition: all 0.3s ease !important;
+                min-height: 44px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 8px !important;
+                backdrop-filter: blur(10px) !important;
+            }
+            
+            .add-photo-button:hover {
+                background: rgba(255, 255, 255, 1) !important;
+                transform: translateY(-2px) !important;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+            }
+            
+            .photo-help-text {
+                color: rgba(255, 255, 255, 0.9) !important;
+                margin: 8px 0 0 0 !important;
+                font-size: 0.8em !important;
+                line-height: 1.4 !important;
+            }
+            
+            .action-buttons-container {
+                flex-direction: row !important;
+                gap: 8px !important;
+            }
+            
+            .action-buttons-container .add-photo-section,
+            .action-buttons-container .imagine-section {
+                width: 50% !important;
+                min-width: 0 !important;
+            }
+            
+            /* Mobile Hero Section - Fix grid layout */
+            .hero-container > div {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 30px !important;
+                padding: 20px !important;
+            }
+            
+            /* Show mobile layout, hide desktop layout */
+            .mobile-shopify-layout {
+                display: flex !important;
+            }
+            
+            .desktop-layout {
+                display: none !important;
+            }
+            
+            /* Hide desktop controls on mobile */
+            .ui-menu-panel {
+                display: none !important;
+            }
+            
+            #dat-gui-container {
+                display: none !important;
+            }
+            
+            /* Override conflicting canvas-container rules */
+            #canvas-container {
+                flex: none !important;
+                position: relative !important;
+                min-height: auto !important;
+            }
+            
+            /* Override conflicting body rules */
+            body {
+                display: block !important;
+                flex-direction: unset !important;
+                min-height: auto !important;
+                background: unset !important;
+            }
+            
+            /* Override conflicting drop-zone rules */
+            #drop-zone {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+            }
+            
+            /* Override conflicting reference-image-container rules */
+            #reference-image-container {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                text-align: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+                position: unset !important;
+                top: unset !important;
+                left: unset !important;
+                max-width: unset !important;
+                width: unset !important;
+            }
+            
+            /* Mobile Hero Section - Photo first, then text */
+            .hero-container > div > div:first-child {
+                order: 2 !important;
+            }
+            
+            .hero-container > div > div:last-child {
+                order: 1 !important;
+            }
+            
+            .hero-container h1 {
+                font-size: 2em !important;
+                font-weight: normal !important;
+                line-height: 1.2 !important;
+                margin-bottom: 20px !important;
+                text-align: center !important;
+                white-space: normal !important;
+                word-wrap: normal !important;
+                word-break: keep-all !important;
+                overflow-wrap: normal !important;
+            }
+            
+            .hero-container p {
+                font-size: 1.1em;
+                line-height: 1.6;
+                margin-bottom: 30px;
+                text-align: center !important;
+            }
+            
+            /* Mobile Upload Section */
+            #drop-zone {
+                min-height: auto !important;
+                height: auto !important;
+                padding: 30px 20px !important;
+            }
+            
+            /* Mobile Upload/Imagine containers - stack vertically */
+            #upload-options-grid {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+                margin-bottom: 20px !important;
+            }
+            
+            #drop-zone h2 {
+                font-size: 1.8em;
+                margin-bottom: 15px;
+            }
+            
+            #drop-zone p {
+                font-size: 1em;
+                margin-bottom: 20px;
+            }
+            
+            /* Mobile 3D Scene - Stacked layout */
+            #canvas-container {
+                height: 400px !important;
+                min-height: 400px !important;
+                width: 100% !important;
+                max-height: none !important;
+                border: 2px solid #ddd !important;
+                border-radius: 12px !important;
+                margin-bottom: 20px !important;
+            }
+            
+            /* Add spacing between containers to prevent overlap */
+            .hero-container {
+                margin-bottom: 20px !important;
+            }
+            
+            .upload-container {
+                margin-bottom: 20px !important;
+            }
+            
+            /* Fix main site container for mobile */
+            #main-site-container {
+                min-height: auto !important;
+                height: auto !important;
+                overflow-x: hidden !important;
+                overflow-y: visible !important;
+            }
+            
+            /* Mobile scene container - stacked instead of side-by-side */
+            .scene-container > div {
+                flex-direction: column !important;
+                height: auto !important;
+                gap: 20px !important;
+                padding: 20px !important;
+            }
+            
+            /* Mobile scene container title */
+            .scene-container h2 {
+                font-size: 1.8em !important;
+                margin-bottom: 10px !important;
+            }
+            
+            .scene-container p {
+                font-size: 1em !important;
+                margin-bottom: 20px !important;
+            }
+            
+                    /* Mobile Control Panel - Compact layout */
+        #ui-menu {
+            position: relative !important;
+            top: auto !important;
+            right: auto !important;
+            left: auto !important;
+            width: 45% !important;
+            height: auto !important;
+            max-height: 200px !important;
+            border-radius: 8px !important;
+            z-index: 1001 !important;
+            overflow-y: auto !important;
+            padding: 6px !important;
+            background: rgba(255,255,255,0.95) !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3) !important;
+            margin: 0 auto 10px auto !important;
+            font-size: 0.7em !important;
+        }
+            
+            /* Mobile handle removed - not using drawer approach */
+
+            /* Mobile Menu Sections - Compact */
+            .menu-section {
+                margin-bottom: 2px !important;
+            }
+
+            .menu-header {
+                padding: 1px 0 !important;
+                font-size: 0.6em !important;
+            }
+            
+            .menu-header h3 {
+                font-size: 0.65em !important;
+                margin: 0 !important;
+            }
+
+            .control-group {
+                margin-bottom: 2px !important;
+                font-size: 0.6em !important;
+            }
+            
+            .control-group label {
+                font-size: 0.6em !important;
+                margin-bottom: 1px !important;
+            }
+            
+            .control-group input,
+            .control-group select {
+                font-size: 0.6em !important;
+                padding: 1px !important;
+            }
+            
+            /* Mobile Ruler Overlay */
+            #ruler-overlay {
+                transform: scale(0.7) !important;
+            }
+            
+            /* Mobile sample image */
+            .hero-container img {
+                width: 250px !important;
+                height: 250px !important;
+                display: block !important;
+                margin: 0 auto !important;
+                max-width: 100% !important;
+                object-fit: cover !important;
+            }
+            
+            /* Mobile hero badges - keep horizontal but adjust spacing */
+            .hero-container div[style*="display: flex; gap: 20px; flex-wrap: wrap;"] {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 10px !important;
+                justify-content: center !important;
+                flex-wrap: nowrap !important;
+            }
+            
+            /* Mobile hero badge styling - make smaller */
+            .hero-container div[style*="display: flex; gap: 20px; flex-wrap: wrap;"] > div {
+                padding: 10px 15px !important;
+                font-size: 0.9em !important;
+                white-space: nowrap !important;
+            }
+            
+            /* Mobile Buttons */
+            .cta-button {
+                padding: 15px 30px;
+                font-size: 1.1em;
+                min-height: 50px;
+            }
+            
+            /* Mobile Text */
+            h1, h2, h3 {
+                word-wrap: break-word;
+                hyphens: auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            /* Small Mobile Container Layout */
+            .hero-container {
+                padding: 15px;
+            }
+            
+            .upload-container {
+                padding: 15px;
+            }
+            
+            .scene-container {
+                padding: 15px;
+            }
+            
+            /* Small Mobile Hero Section */
+            .hero-container h1 {
+                font-size: 2em;
+                margin-bottom: 15px;
+            }
+            
+            .hero-container p {
+                font-size: 1em;
+                margin-bottom: 25px;
+            }
+            
+            /* Small Mobile Upload Section */
+            #drop-zone {
+                min-height: 45vh;
+                padding: 20px 15px;
+            }
+            
+            #drop-zone h2 {
+                font-size: 1.6em;
+                margin-bottom: 12px;
+            }
+            
+            /* Small Mobile Control Panel */
+            #ui-menu {
+                width: 40% !important;
+                height: auto !important;
+                max-height: 150px !important;
+                padding: 4px !important;
+                right: auto !important;
+            }
+            
+            /* Touch-friendly controls - Compact */
+            .control-group {
+                margin-bottom: 4px;
+            }
+            
+            .control-group label {
+                font-size: 12px;
+                margin-bottom: 2px;
+                display: block;
+            }
+            
+            .control-group select,
+            .control-group input[type="range"],
+            .control-group input[type="number"] {
+                font-size: 12px; /* Prevents zoom on iOS */
+                min-height: 24px; /* Smaller touch-friendly size */
+                background: rgba(255, 255, 255, 0.9);
+                color: #000000;
+                border: 2px solid rgba(0, 0, 0, 0.8);
+                font-weight: 500;
+                width: 100%;
+                box-sizing: border-box;
             }
             
             .toggle-button {
-                font-size: 24px;
-                padding: 8px;
-                min-width: 44px;
+                font-size: 14px;
+                padding: 2px;
+                min-width: 24px;
+                min-height: 24px;
+                background: rgba(255, 255, 255, 0.9);
+                border: 2px solid rgba(0, 0, 0, 0.8);
+                color: #000000;
+                font-weight: bold;
+            }
+            
+            /* Small Mobile Ruler Overlay */
+            #ruler-overlay {
+                transform: scale(0.6) !important;
+            }
+            
+            /* Small Mobile Buttons */
+            .cta-button {
+                padding: 12px 25px;
+                font-size: 1em;
                 min-height: 44px;
+                width: 100%;
+                max-width: 300px;
             }
         }
         
@@ -394,7 +1442,16 @@
         .menu-section {
             margin-bottom: 15px;
             padding-bottom: 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.8);
+        }
+        
+        /* Mobile-specific menu section styling */
+        @media (max-width: 768px) {
+            .menu-section {
+                margin-bottom: 3px;
+                padding-bottom: 3px;
+                border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+            }
         }
         .menu-section:last-child {
             border-bottom: none;
@@ -407,6 +1464,9 @@
             align-items: center;
             cursor: pointer;
             user-select: none;
+            color: #000000;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
         }
         .menu-content {
             margin-top: 10px;
@@ -418,50 +1478,102 @@
         .control-group {
             margin-bottom: 10px;
         }
+        
+        /* Mobile-specific control group styling */
+        @media (max-width: 768px) {
+            .control-group {
+                margin-bottom: 2px;
+            }
+        }
         .control-group label {
             display: block;
             margin-bottom: 5px;
+            color: #000000;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
         }
         .control-group input[type="range"] {
             width: 100%;
+            border: 2px solid rgba(0, 0, 0, 0.8);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        /* Mobile-specific input styling */
+        @media (max-width: 768px) {
+            .control-group input[type="range"] {
+                height: 16px;
+            }
         }
         .control-group select {
             width: 100%;
             padding: 5px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.9);
+            color: #000000;
+            border: 2px solid rgba(0, 0, 0, 0.8);
             border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        /* Mobile-specific select styling */
+        @media (max-width: 768px) {
+            .control-group select {
+                padding: 2px;
+                font-size: 11px;
+            }
         }
         .control-group input[type="number"] {
             width: 60px;
             padding: 5px;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.9);
+            color: #000000;
+            border: 2px solid rgba(0, 0, 0, 0.8);
             border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        /* Mobile-specific number input styling */
+        @media (max-width: 768px) {
+            .control-group input[type="number"] {
+                width: 40px;
+                padding: 2px;
+                font-size: 11px;
+            }
         }
         .toggle-button {
-            background: none;
-            border: none;
-            color: white;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(0, 0, 0, 0.8);
+            color: #000000;
             font-size: 20px;
             cursor: pointer;
-            padding: 0 5px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        /* Mobile-specific toggle button styling */
+        @media (max-width: 768px) {
+            .toggle-button {
+                font-size: 12px;
+                padding: 1px 4px;
+            }
         }
         
         /* Ruler toggle button styles */
         #ruler-toggle {
-            background: #4a5568 !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            background: rgba(255, 255, 255, 0.9) !important;
+            border: 2px solid rgba(0, 0, 0, 0.8) !important;
             padding: 8px 16px !important;
             border-radius: 4px !important;
             font-size: 14px !important;
             transition: background-color 0.2s !important;
+            color: #000000 !important;
+            font-weight: 600 !important;
         }
         
         #ruler-toggle[data-active="true"] {
             background: #48bb78 !important;
+            color: white !important;
         }
 
         /* Additional UI styles */
@@ -469,8 +1581,8 @@
             width: 100%;
             height: 30px;
             padding: 2px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(0, 0, 0, 0.8);
             border-radius: 4px;
         }
         .control-group .position-controls {
@@ -484,12 +1596,20 @@
 
         /* Text Box Styles */
         .text-box-item {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(0, 0, 0, 0.8);
             border-radius: 6px;
             padding: 12px;
             margin-bottom: 12px;
             position: relative;
+        }
+        
+        /* Mobile-specific text box styling */
+        @media (max-width: 768px) {
+            .text-box-item {
+                padding: 4px;
+                margin-bottom: 4px;
+            }
         }
         .text-box-header {
             display: flex;
@@ -498,9 +1618,25 @@
             margin-bottom: 10px;
             cursor: pointer;
         }
+        
+        /* Mobile-specific text box header styling */
+        @media (max-width: 768px) {
+            .text-box-header {
+                margin-bottom: 3px;
+            }
+        }
         .text-box-title {
             font-weight: bold;
             font-size: 0.9em;
+            color: #000000;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Mobile-specific text box title styling */
+        @media (max-width: 768px) {
+            .text-box-title {
+                font-size: 0.7em;
+            }
         }
         .text-box-controls {
             display: none;
@@ -511,18 +1647,22 @@
         .text-box-delete {
             background: #f44336;
             color: white;
-            border: none;
+            border: 2px solid rgba(0, 0, 0, 0.8);
             padding: 4px 8px;
             border-radius: 3px;
             cursor: pointer;
             font-size: 0.8em;
+            font-weight: bold;
         }
         .text-box-toggle {
-            background: none;
-            border: none;
-            color: white;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(0, 0, 0, 0.8);
+            color: #000000;
             font-size: 16px;
             cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
         }
         .control-row {
             display: grid;
@@ -530,52 +1670,1060 @@
             gap: 10px;
             margin-bottom: 8px;
         }
+        
+        /* Mobile-specific control row styling */
+        @media (max-width: 768px) {
+            .control-row {
+                gap: 3px;
+                margin-bottom: 2px;
+            }
+        }
         .control-row.full-width {
             grid-template-columns: 1fr;
         }
         .control-row label {
             font-size: 0.85em;
             margin-bottom: 3px;
+            color: #000000;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Mobile-specific control row label styling */
+        @media (max-width: 768px) {
+            .control-row label {
+                font-size: 0.65em;
+                margin-bottom: 1px;
+            }
         }
         .control-row input, .control-row select, .control-row textarea {
             font-size: 0.85em;
             padding: 4px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000000;
+            border: 2px solid rgba(0, 0, 0, 0.8);
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        /* Mobile-specific control row input styling */
+        @media (max-width: 768px) {
+            .control-row input, .control-row select, .control-row textarea {
+                font-size: 0.65em;
+                padding: 1px;
+            }
         }
         .char-counter {
             text-align: right;
             font-size: 0.8em;
-            color: #aaa;
+            color: #000000;
             margin-top: 2px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Mobile-specific scene title container styling */
+        @media (max-width: 768px) {
+            .scene-title-container {
+                padding: 6px 12px !important;
+                border-radius: 8px !important;
+                top: 10px !important;
+                left: 10px !important;
+            }
+            
+            .scene-title-container h2 {
+                font-size: 1.2em !important;
+                margin: 0 !important;
+            }
+            
+            .scene-title-container p {
+                font-size: 0.7em !important;
+                margin: 2px 0 0 0 !important;
+            }
+            
+            /* Override inline styles for mobile */
+            .ui-menu-panel {
+                width: 30% !important;
+                min-width: 200px !important;
+                position: relative !important;
+                top: auto !important;
+                right: auto !important;
+                left: auto !important;
+                height: auto !important;
+                max-height: 200px !important;
+                padding: 4px !important;
+                border-radius: 8px !important;
+                margin: 0 auto 10px auto !important;
+                font-size: 0.7em !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .scene-title-container {
+                padding: 4px 8px !important;
+                border-radius: 6px !important;
+                top: 8px !important;
+                left: 8px !important;
+            }
+            
+            .scene-title-container h2 {
+                font-size: 1em !important;
+            }
+            
+            .scene-title-container p {
+                font-size: 0.6em !important;
+                margin: 1px 0 0 0 !important;
+            }
+            
+            /* Override inline styles for small mobile */
+            .ui-menu-panel {
+                width: 25% !important;
+                min-width: 150px !important;
+                max-height: 150px !important;
+                padding: 2px !important;
+            }
+            
+            /* Ensure mobile layout is shown on small screens */
+            .mobile-shopify-layout {
+                display: flex !important;
+            }
+            
+            .desktop-layout {
+                display: none !important;
+            }
+            
+            /* Hide desktop controls on small mobile */
+            .ui-menu-panel {
+                display: none !important;
+            }
+            
+            #dat-gui-container {
+                display: none !important;
+            }
+            
+            /* Override conflicting rules for small mobile */
+            #canvas-container {
+                flex: none !important;
+                position: relative !important;
+                min-height: auto !important;
+            }
+            
+            body {
+                display: block !important;
+                flex-direction: unset !important;
+                min-height: auto !important;
+                background: unset !important;
+            }
+            
+            #drop-zone {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+            }
+            
+            #reference-image-container {
+                flex-shrink: unset !important;
+                padding: unset !important;
+                text-align: unset !important;
+                background: unset !important;
+                border-bottom: unset !important;
+                position: unset !important;
+                top: unset !important;
+                left: unset !important;
+                max-width: unset !important;
+                width: unset !important;
+            }
+            
+            /* Adjust mobile container for smaller screens */
+            .product-carousel-section {
+                min-height: 50vh !important;
+                height: 50vh !important;
+            }
+            
+            #mobile-canvas-container {
+                min-height: 300px !important;
+            }
+        }
+
+        /* ======================================
+           UNIFIED ECOMMERCE LAYOUT STYLES
+           ====================================== */
+        
+        /* Main Ecommerce Layout Container */
+        .ecommerce-layout {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Desktop Layout (768px+) */
+        @media (min-width: 768px) {
+            .ecommerce-layout {
+                flex-direction: row;
+            }
+            
+            .product-gallery-section {
+                flex: 1;
+                min-width: 60%;
+                height: 100vh;
+            }
+            
+            .product-details-section {
+                flex: 0 0 400px;
+                height: 100vh;
+                overflow-y: auto;
+                background: #ffffff;
+                border-left: 1px solid #e2e8f0;
+            }
+            
+            .desktop-only {
+                display: block !important;
+            }
+            
+            .mobile-only {
+                display: none !important;
+            }
+        }
+        
+        /* Mobile Layout (< 768px) */
+        @media (max-width: 767px) {
+            .ecommerce-layout {
+                flex-direction: column;
+            }
+            
+            .product-gallery-section {
+                flex: 0 0 60vh;
+                height: 60vh;
+            }
+            
+            .product-details-section {
+                flex: 1;
+                overflow-y: auto;
+                background: #ffffff;
+                border-top: 1px solid #e2e8f0;
+            }
+            
+            .desktop-only {
+                display: none !important;
+            }
+            
+            .mobile-only {
+                display: block !important;
+            }
+        }
+        
+        /* ======================================
+           PRODUCT GALLERY SECTION
+           ====================================== */
+        
+        .product-gallery-section {
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            position: relative;
+        }
+        
+        .main-product-viewer {
+            flex: 1;
+            position: relative;
+            background: transparent;
+            overflow: hidden;
+        }
+        
+        #canvas-container {
+            width: 100% !important;
+            height: 100% !important;
+            background: transparent !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        
+        #canvas-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block !important;
+        }
+        
+        /* Scene Title (Desktop Only) */
+        .scene-title-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1003;
+            background: rgba(255,255,255,0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+        }
+        
+        .scene-title-container h2 {
+            color: #2d3748;
+            font-weight: 800;
+            font-size: 1.8em;
+            margin: 0;
+        }
+        
+        .scene-title-container p {
+            color: #718096;
+            font-size: 0.9em;
+            margin: 5px 0 0 0;
+        }
+        
+        /* ======================================
+           PRODUCT CAROUSEL
+           ====================================== */
+        
+        .product-carousel {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        .product-carousel::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .carousel-thumbnail {
+            flex-shrink: 0;
+            min-width: 80px;
+            height: 80px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: 4px;
+        }
+        
+        .carousel-thumbnail:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .carousel-thumbnail.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .carousel-thumbnail.active .carousel-image {
+            filter: brightness(1.1) contrast(1.1);
+        }
+        
+        .carousel-3d-icon {
+            font-size: 1.8em;
+            line-height: 1;
+            color: #667eea;
+        }
+        
+        .carousel-thumbnail.active .carousel-3d-icon {
+            color: white;
+        }
+        
+        .carousel-icon {
+            font-size: 1.5em;
+            line-height: 1;
+        }
+        
+        .carousel-label {
+            font-size: 0.7em;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1;
+            margin-top: 4px;
+        }
+        
+        @media (max-width: 767px) {
+            .product-carousel {
+                gap: 8px;
+                padding: 12px;
+            }
+            
+            .carousel-thumbnail {
+                min-width: 60px;
+                height: 60px;
+            }
+            
+            .carousel-image {
+                border-radius: 6px;
+            }
+            
+            .carousel-icon {
+                font-size: 1.2em;
+            }
+            
+            .carousel-label {
+                font-size: 0.6em;
+            }
+        }
+        
+        /* ======================================
+           PRODUCT DETAILS SECTION
+           ====================================== */
+        
+        .product-details-section {
+            padding: 24px;
+            color: #2d3748;
+        }
+        
+        @media (max-width: 767px) {
+            .product-details-section {
+                padding: 20px;
+            }
+        }
+        
+        /* Product Header */
+        .product-header {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .product-title {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0 0 12px 0;
+            line-height: 1.2;
+        }
+        
+        .product-price {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #667eea;
+            margin: 0 0 8px 0;
+        }
+        
+        .product-subtitle {
+            font-size: 1em;
+            color: #718096;
+            margin: 0;
+            font-weight: 400;
+        }
+        
+        @media (max-width: 767px) {
+            .product-header {
+                margin-bottom: 24px;
+                padding-bottom: 20px;
+            }
+            
+            .product-title {
+                font-size: 1.8em;
+            }
+            
+            .product-price {
+                font-size: 1.5em;
+            }
+        }
+        
+        /* ======================================
+           PRODUCT OPTIONS
+           ====================================== */
+        
+        .product-options {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .option-label {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.95em;
+            margin: 0;
+        }
+        
+        /* Option Buttons */
+        .option-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .option-button {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #2d3748;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .option-button:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .option-button.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .option-icon {
+            font-size: 1.1em;
+        }
+        
+        @media (max-width: 767px) {
+            .option-button {
+                min-width: 100px;
+                padding: 10px 14px;
+                font-size: 0.9em;
+            }
+        }
+        
+        /* Option Select */
+        .option-select {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #2d3748;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        
+        .option-select:hover,
+        .option-select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        /* Option Checkbox */
+        .option-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 12px 0;
+        }
+        
+        .option-checkbox input[type="checkbox"] {
+            display: none;
+        }
+        
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 4px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .option-checkbox input[type="checkbox"]:checked + .checkmark {
+            background: #667eea;
+            border-color: #667eea;
+        }
+        
+        .option-checkbox input[type="checkbox"]:checked + .checkmark::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .checkbox-label {
+            font-weight: 500;
+            color: #2d3748;
+        }
+        
+        .checkbox-price {
+            color: #667eea;
+            font-weight: 600;
+            margin-left: auto;
+        }
+        
+        /* ======================================
+           ACTION BUTTONS CONTAINER
+           ====================================== */
+        
+        .action-buttons-container {
+            display: flex;
+            gap: 16px;
+            margin-top: 24px;
+        }
+        
+        .action-buttons-container .add-photo-section,
+        .action-buttons-container .imagine-section {
+            flex: 1;
+            margin-top: 0;
+            width: 50%;
+            min-width: 0;
+        }
+        
+        /* ======================================
+           ADD PHOTO SECTION
+           ====================================== */
+        
+        .add-photo-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            text-align: center;
+        }
+        
+        .add-photo-button {
+            width: 100%;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #4a5568;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 24px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .add-photo-button:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .add-photo-button:active {
+            transform: translateY(0);
+        }
+        
+        .button-icon {
+            font-size: 1.3em;
+        }
+        
+        .button-arrow {
+            font-size: 1.2em;
+            margin-left: auto;
+        }
+        
+        .photo-help-text {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 12px 0 0 0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        @media (max-width: 767px) {
+            .add-photo-section {
+                margin-top: 20px;
+                padding: 16px;
+            }
+            
+            .add-photo-button {
+                padding: 14px 20px;
+                font-size: 1em;
+            }
+        }
+        
+        /* ======================================
+           IMAGINE SECTION STYLES
+           ====================================== */
+        
+        .imagine-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            text-align: center;
+        }
+        
+        .imagine-button {
+            width: 100%;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #4a5568;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 24px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .imagine-button:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .imagine-help-text {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 12px 0 0 0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .ai-prompt-container {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+        }
+        
+        .prompt-input-group textarea {
+            width: 100%;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.95em;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+        
+        .prompt-input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .prompt-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            justify-content: flex-end;
+        }
+        
+        .prompt-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .prompt-button.primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .prompt-button.primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        
+        .prompt-button.secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .prompt-button.secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        @media (max-width: 767px) {
+            .action-buttons-container {
+                flex-direction: row;
+                gap: 8px;
+            }
+            
+            .action-buttons-container .add-photo-section,
+            .action-buttons-container .imagine-section {
+                width: 50%;
+                min-width: 0;
+            }
+            
+            .add-photo-section {
+                margin-top: 0;
+                padding: 12px;
+            }
+            
+            .add-photo-button {
+                height: 50px;
+                padding: 12px 16px;
+                font-size: 0.9em;
+            }
+            
+            .photo-help-text {
+                font-size: 0.8em;
+                margin: 8px 0 0 0;
+            }
+            
+            .imagine-section {
+                margin-top: 0;
+                padding: 12px;
+            }
+            
+            .imagine-button {
+                height: 50px;
+                padding: 12px 16px;
+                font-size: 0.9em;
+            }
+            
+            .imagine-help-text {
+                font-size: 0.8em;
+                margin: 8px 0 0 0;
+            }
+            
+            .prompt-buttons {
+                flex-direction: column;
+            }
+            
+            .prompt-button {
+                justify-content: center;
+            }
+        }
+        
+        /* ======================================
+           UI CONTROLS SECTION (Desktop Only)
+           ====================================== */
+        
+        .ui-controls-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .controls-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0 0 16px 0;
+        }
+        
+        #ui-menu-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
         }
     </style>
     <!-- Cropper.js CSS -->
     <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <!-- dat.GUI -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
 </head>
 <body>
-    <div id="drop-zone">
-        <div class="instructions">
-            <h2>Drop your image here</h2>
-            <p>or</p>
-            <input type="file" id="file-input" accept="image/*" style="display: none;">
-            <button onclick="document.getElementById('file-input').click()">Select Image</button>
-            <p>Supported formats: JPG, PNG, BMP</p>
+
+    
+    <!-- Mobile Debug Panel -->
+    <div id="mobile-debug" style="display:none;position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.9);color:white;padding:15px;border-radius:8px;z-index:9999;max-width:300px;font-family:monospace;font-size:12px;">
+        <div id="debug-content"></div>
+        <button onclick="this.parentElement.style.display='none'" style="float:right;background:red;color:white;border:none;padding:2px 6px;margin-top:5px;">X</button>
+    </div>
+    
+    <!-- Main Site Container -->
+    <div id="main-site-container" style="width: 100vw; min-height: 100vh; position: relative; margin: 0; padding: 0; overflow-x: hidden;">
+        
+        <!-- Hero Section -->
+        <div id="hero-container" class="hero-container">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; height: 100%; padding: 40px;">
+                <!-- Left: Text Content -->
+                <div style="text-align: left;">
+                    <h1 style="font-weight: 800; font-size: 3.5em; margin-bottom: 20px; line-height: 1.1; color: white;">Custom Photo Pendant</h1>
+                    <p style="font-size: 1.4em; margin-bottom: 30px; opacity: 0.9; line-height: 1.6; color: white;">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you wherever you go, furever 🐶❤️</p>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 50px; backdrop-filter: blur(10px);">
+                            <span style="font-weight: 600; color: white;">✨ High Quality</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 50px; backdrop-filter: blur(10px);">
+                            <span style="font-weight: 600; color: white;">🚀 Fast Delivery</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right: Sample Image -->
+                <div style="text-align: center;">
+                    <div style="position: relative; display: inline-block;">
+                        <img src="/samplePendant.png" alt="Sample Pendant" style="width: 300px; height: 300px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3);">
+                        <div style="position: absolute; top: -10px; right: -10px; background: #ff6b6b; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">Sample</div>
+                    </div>
+
+                    <div class="menu-section" style="display: none;">
+                        <div class="menu-header">
+                            <h3>Jumpring Settings</h3>
+                            <button class="toggle-button">▼</button>
+                        </div>
+                        <div class="menu-content">
+                            <div class="control-group">
+                                <label>Jumpring Size</label>
+                                <select id="jumpring-size">
+                                    <option value="small">Small (4mm)</option>
+                                    <option value="medium">Medium (6mm)</option>
+                                    <option value="large">Large (8mm)</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="highlight-layer-color">Highlight Color</label>
+                                <input type="color" id="highlight-layer-color" value="#ffffff">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="menu-section" style="display: none;">
+                        <div class="menu-header">
+                            <h3>Camera Controls</h3>
+                            <button class="toggle-button">▼</button>
+                        </div>
+                        <div class="menu-content">
+                            <div class="control-group">
+                                <label>Field of View</label>
+                                <input type="range" id="fov" min="30" max="120" value="75">
+                            </div>
+                            <div class="control-group">
+                                <label>Camera Distance</label>
+                                <input type="range" id="camera-distance" min="10" max="200" value="50">
+                            </div>
+                            <div class="control-group">
+                                <label><input type="checkbox" id="rotate-toggle"> Rotate Object</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="menu-section" style="display: none;">
+                        <div class="menu-header">
+                            <h3>Scene Settings</h3>
+                            <button class="toggle-button">▼</button>
+                        </div>
+                        <div class="menu-content">
+                            <div class="control-group">
+                                <label>Light Intensity</label>
+                                <input type="range" id="light-intensity" min="0" max="2" step="0.1" value="0.8">
+                            </div>
+                            <div class="control-group">
+                                <label>Material Color</label>
+                                <input type="color" id="material-color" value="#808080">
+                            </div>
+                            <div class="control-group">
+                                <label>Material Shine</label>
+                                <input type="range" id="material-shine" min="0" max="100" value="30">
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div id="upload-container" class="upload-container">
+            <div id="drop-zone" style="padding: 80px 20px; width: 100%; height: 100%;">
+                <div style="width: 100%;">
+                <!-- Section Title -->
+                <div style="text-align: center; margin-bottom: 60px; width: 100%;">
+                    <h2 style="color: #2d3748; font-weight: 800; font-size: 2.5em; margin-bottom: 20px;">Create Your Pendant</h2>
+                    <p style="color: #718096; font-size: 1.1em;">Upload a photo or describe what you want to create</p>
+                </div>
+                
+                <!-- How it works section -->
+            <div style="text-align: center; margin-bottom: 60px; padding-bottom: 60px; border-bottom: 1px solid #e2e8f0; width: 100%;">
+                <h3 style="color: #2d3748; font-weight: 700; font-size: 2em; margin-bottom: 40px;">Easy Three Step Process</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;">
+                    <div style="text-align: center;">
+                        <div style="width: 60px; height: 60px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-weight: bold; font-size: 1.2em;">1</div>
+                        <h4 style="color: #2d3748; font-weight: 600; margin-bottom: 10px;">Upload or Generate</h4>
+                        <p style="color: #718096;">Choose your photo or describe what you want</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 60px; height: 60px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-weight: bold; font-size: 1.2em;">2</div>
+                        <h4 style="color: #2d3748; font-weight: 600; margin-bottom: 10px;">Customize</h4>
+                        <p style="color: #718096;">Adjust settings and preview your design</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 60px; height: 60px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; font-weight: bold; font-size: 1.2em;">3</div>
+                        <h4 style="color: #2d3748; font-weight: 600; margin-bottom: 10px;">Order</h4>
+                        <p style="color: #718096;">Place your order and wait 📦</p>
+                    </div>
+                </div>
+            </div>
             
-            <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.3);">
-                <p style="font-size: 1.1em; margin-bottom: 20px;">Or... write a prompt of a scene, or memory</p>
-                <div style="max-width: 400px; margin: 0 auto;">
-                    <textarea id="prompt-input" placeholder="Describe a scene, memory, or image you'd like to create..." 
-                              style="width: 100%; height: 80px; padding: 12px; border: 2px solid rgba(255,255,255,0.3); 
-                                     border-radius: 8px; background: rgba(255,255,255,0.1); color: white; 
-                                     font-family: Arial, sans-serif; font-size: 16px; resize: vertical; 
-                                     box-sizing: border-box; -webkit-appearance: none;"></textarea>
-                    <button id="prompt-submit" style="margin-top: 15px; padding: 12px 24px; background: #4CAF50; 
-                                                     color: white; border: none; border-radius: 6px; font-size: 16px; 
-                                                     cursor: pointer; font-weight: bold; min-height: 44px; 
-                                                     touch-action: manipulation; -webkit-appearance: none;">Generate Image</button>
+
+            
+            <div id="upload-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; width: 100%;">
+                <!-- Upload Option -->
+                <div style="background: white; border-radius: 20px; padding: 40px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 20px 40px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.1)'">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px; font-size: 2em;">📷</div>
+                    <h3 style="color: #2d3748; font-weight: 700; font-size: 1.8em; margin-bottom: 15px;">Upload Photo</h3>
+                    <p style="color: #718096; margin-bottom: 30px; line-height: 1.6;">Upload your own photo to create a personalized pendant</p>
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
+                    <button onclick="document.getElementById('file-input').click()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 18px 36px; border-radius: 50px; font-weight: 600; font-size: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">Choose File</button>
+                    <p style="color: #a0aec0; margin-top: 15px; font-size: 0.9em;">JPG, PNG, BMP supported</p>
+                </div>
+                
+                <!-- AI Generation Option -->
+                <div style="background: white; border-radius: 20px; padding: 40px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; transition: transform 0.3s ease, box-shadow 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 20px 40px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.1)'">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 30px; font-size: 2em;">🦄🌈</div>
+                    <h3 style="color: #2d3748; font-weight: 700; font-size: 1.8em; margin-bottom: 15px;">Imagine</h3>
+                    <p style="color: #718096; margin-bottom: 30px; line-height: 1.6;">Describe what you want and let our assistant create it for you</p>
+                    <textarea id="prompt-input" placeholder="Describe your perfect pendant..." 
+                              style="width: 100%; height: 80px; padding: 15px; border: 2px solid #e2e8f0; 
+                                     border-radius: 12px; background: #f7fafc; color: #2d3748; 
+                                     font-family: inherit; font-size: 16px; resize: vertical; 
+                                     box-sizing: border-box; margin-bottom: 20px; transition: border-color 0.3s ease;" 
+                              onfocus="this.style.borderColor='#48bb78'; this.style.background='white'" 
+                              onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f7fafc'"></textarea>
+                    <button id="prompt-submit" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; 
+                                                     padding: 18px 36px; border-radius: 50px; font-size: 16px; 
+                                                     cursor: pointer; font-weight: 600; min-height: 44px; 
+                                                     transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);">Generate Image</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Loading Overlay -->
     <div id="loading-overlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);z-index:3000;justify-content:center;align-items:center;flex-direction:column;">
         <div style="text-align:center;color:white;">
             <div style="margin-bottom:30px;">
@@ -592,7 +2740,295 @@
             </div>
         </div>
     </div>
-    <div id="canvas-container"></div>
+
+
+    </div>
+
+
+
+
+        <!-- Three.js Scene Section -->
+        <div id="scene-container" class="scene-container">
+            <!-- Unified Shopify-style Ecommerce Layout -->
+            <div class="ecommerce-layout">
+                <!-- Product Gallery Section (3D Viewer + Carousel) -->
+                <div class="product-gallery-section">
+                                        <!-- Main Product Viewer (3D Canvas + Image Viewer) -->
+                    <div class="main-product-viewer">
+                        <!-- 3D Scene Container -->
+                        <div id="canvas-container" style="width: 100%; height: 100%; background: transparent; position: relative; display: block;">
+                            <!-- 3D Canvas will be moved here -->
+                            
+                            <!-- 3D Scene Title removed for cleaner view -->
+                            
+                            <!-- Styled Ruler Overlay -->
+                            <div id="ruler-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000;">
+                                <!-- Horizontal Ruler -->
+                                <div style="position: absolute; top: 10px; left: 30px; right: 30px; height: 25px; background: #2c3e50; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                    <!-- Ruler markings -->
+                                    <div style="position: relative; height: 100%; display: flex; align-items: center;">
+                                        <!-- Major ticks every 10mm -->
+                                        <div style="position: absolute; left: 0; width: 100%; height: 100%; display: flex; justify-content: space-between; align-items: flex-start; padding: 0 5px;">
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                        </div>
+                                        <!-- Numbers -->
+                                        <div style="position: absolute; left: 0; width: 100%; height: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 8px; color: #ecf0f1; font-size: 10px; font-weight: 600; font-family: 'Courier New', monospace;">
+                                            <span>0</span>
+                                            <span>10</span>
+                                            <span>20</span>
+                                            <span>30</span>
+                                            <span>40</span>
+                                            <span>50</span>
+                                            <span>60</span>
+                                            <span>70</span>
+                                            <span>80</span>
+                                            <span>90</span>
+                                            <span>100</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Vertical Ruler -->
+                                <div style="position: absolute; top: 30px; left: 10px; width: 25px; bottom: 30px; background: #2c3e50; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                    <!-- Ruler markings -->
+                                    <div style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center;">
+                                        <!-- Major ticks every 10mm -->
+                                        <div style="position: absolute; top: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; padding: 5px 0;">
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                        </div>
+                                        <!-- Numbers -->
+                                        <div style="position: absolute; top: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 8px 0; color: #ecf0f1; font-size: 10px; font-weight: 600; font-family: 'Courier New', monospace; writing-mode: vertical-rl; text-orientation: mixed;">
+                                            <span>100</span>
+                                            <span>90</span>
+                                            <span>80</span>
+                                            <span>70</span>
+                                            <span>60</span>
+                                            <span>50</span>
+                                            <span>40</span>
+                                            <span>30</span>
+                                            <span>20</span>
+                                            <span>10</span>
+                                            <span>0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Corner Connector -->
+                                <div style="position: absolute; top: 10px; left: 10px; width: 25px; height: 25px; background: #34495e; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+                                    <div style="width: 8px; height: 8px; background: #ecf0f1; border-radius: 50%;"></div>
+                                </div>
+                                
+                                <!-- Reference Circle (25mm) -->
+                                <svg width="200" height="200" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                    <circle cx="100" cy="100" r="47.24" stroke="#34495e" stroke-width="1.5" fill="none" stroke-dasharray="3,3" opacity="0.6"></circle>
+                                    <text x="100" y="85" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#34495e" opacity="0.8" font-weight="600">25mm</text>
+                                    <text x="100" y="115" text-anchor="middle" font-family="'Courier New', monospace" font-size="9" fill="#34495e" opacity="0.6">Reference</text>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Image Viewer Container -->
+                        <div id="image-viewer-container" style="width: 100%; height: 100%; background: transparent; position: relative; display: none;">
+                            <img id="main-image-viewer" src="" alt="Product View" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
+                        </div>
+                    </div>
+                    
+                    <!-- Product View Carousel -->
+                    <div class="product-carousel">
+                        <div class="carousel-thumbnail active" data-view="3d">
+                            <img src="/retrieverMetal.png" alt="3D Scene" class="carousel-image">
+                        </div>
+                        <div class="carousel-thumbnail" data-view="sample">
+                            <img src="/samplePendant.png" alt="Sample Pendant" class="carousel-image">
+                        </div>
+                        <div class="carousel-thumbnail" data-view="side">
+                            <img src="/instructions.png" alt="Instructions" class="carousel-image">
+                        </div>
+                        <div class="carousel-thumbnail" data-view="front">
+                            <img src="/retrieverModel.png" alt="Front View" class="carousel-image">
+                        </div>
+                        <div class="carousel-thumbnail" data-view="retriever-metal">
+                            <img src="/retrieverMetal.png" alt="Retriever Metal" class="carousel-image">
+                        </div>
+                        <div class="carousel-thumbnail" data-view="sailing">
+                            <img src="/sailingSceneProductPhoto.png" alt="Sailing Scene" class="carousel-image">
+                        </div>
+                        <div class="carousel-thumbnail" data-view="before">
+                            <img src="/before.png" alt="Before" class="carousel-image">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Details Section -->
+                <div class="product-details-section">
+                    <!-- Product Header -->
+                    <div class="product-header">
+                        <h1 class="product-title">Custom Photo Pendant</h1>
+                        <div class="product-price">$89.99</div>
+                        <p class="product-subtitle">Sterling Silver with 18" Chain</p>
+                    </div>
+                    
+                    <!-- Product Options -->
+                    <div class="product-options">
+                        <!-- Metal Type Selection -->
+                        <div class="option-group">
+                            <label class="option-label">Metal Type:</label>
+                            <div class="option-buttons">
+                                <button class="option-button active" data-metal="silver">
+                                    <span class="option-icon">🩶</span>
+                                    Sterling Silver
+                                </button>
+                                <button class="option-button" data-metal="gold">
+                                    <span class="option-icon">🥇</span>
+                                    14k Yellow Gold
+                                </button>
+                                <button class="option-button" data-metal="rose-gold">
+                                    <span class="option-icon">🌹</span>
+                                    14k Rose Gold
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Chain Length Selection -->
+                        <div class="option-group">
+                            <label class="option-label" for="chain-length">Chain Length:</label>
+                            <select class="option-select" id="chain-length">
+                                <option value="16">16" - Choker Length</option>
+                                <option value="18" selected>18" - Princess Length</option>
+                                <option value="20">20" - Matinee Length</option>
+                                <option value="24">24" - Opera Length</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Engraving Option -->
+                        <div class="option-group">
+                            <label class="option-checkbox">
+                                <input type="checkbox" id="engraving-checkbox">
+                                <span class="checkmark"></span>
+                                <span class="checkbox-label">Add Engraving</span>
+                                <span class="checkbox-price">+$49</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Action Buttons Container -->
+                        <div class="action-buttons-container">
+                            <!-- Add Photo Section -->
+                            <div class="add-photo-section">
+                                <button class="add-photo-button" id="add-photo-btn">
+                                    <span class="button-icon">📷</span>
+                                    <span class="button-text">Add a Photo</span>
+                                </button>
+                                <p class="photo-help-text">Precious Moments Made Eternal</p>
+                            </div>
+                            
+                            <!-- Imagine Section -->
+                            <div class="imagine-section">
+                                <button class="imagine-button" id="imagine-btn">
+                                    <span class="button-icon">🦄</span>
+                                    <span class="button-text">Imagine with AI</span>
+                                </button>
+                                <p class="imagine-help-text">Dream It, Wear It</p>
+                                
+                                <!-- AI Prompt Input (Hidden by default) -->
+                                <div class="ai-prompt-container" id="ai-prompt-container" style="display: none;">
+                                    <div class="prompt-input-group">
+                                        <textarea id="ai-prompt-input" placeholder="Describe what you want to create... (e.g., 'a majestic golden eagle in flight', 'abstract geometric patterns', 'a beautiful rose garden')" rows="3"></textarea>
+                                        <div class="prompt-buttons">
+                                            <button class="prompt-button primary" id="generate-ai-btn">
+                                                <span class="button-icon">🎨</span>
+                                                Generate
+                                            </button>
+                                            <button class="prompt-button secondary" id="cancel-ai-btn">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- UI Controls (Desktop Only) -->
+                    <div class="ui-controls-section desktop-only">
+                        <h3 class="controls-title">Advanced Controls</h3>
+                        <div id="ui-menu-container">
+                            <!-- UI menu will be moved here -->
+                            <div id="ui-menu">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                    <span style="font-size:1em;font-weight:bold;letter-spacing:1px;">Jewelry Designer +</span>
+                                    <div>
+                                        <button id="reset-view" title="Reset View" style="background:none;border:none;color:white;font-size:1.3em;cursor:pointer;">🔄</button>
+                                        <button id="screenshot" title="Download Screenshot" style="background:none;border:none;color:white;font-size:1.3em;cursor:pointer;">📸</button>
+                                        <button id="export-stl">Export STL</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="menu-section">
+                                    <div class="menu-header">
+                                        <h3>Object Type</h3>
+                                        <button class="toggle-button">▼</button>
+                                    </div>
+                                    <div class="menu-content">
+                                        <div class="control-group">
+                                            <select id="object-type">
+                                                <option value="circular-pendant">Circular Pendant</option>
+                                                <option value="rectangular-pendant">Rectangular Pendant</option>
+                                                <option value="circular-stud">Circular Stud Earrings</option>
+                                                <option value="bracelet">Bracelet</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="menu-section">
+                                    <div class="menu-header">
+                                        <h3>Metal Settings</h3>
+                                        <button class="toggle-button">▼</button>
+                                    </div>
+                                    <div class="menu-content">
+                                        <div class="control-group">
+                                            <label>Metal Type</label>
+                                            <select id="metal-type">
+                                                <option value="sterling-silver">Sterling Silver</option>
+                                                <option value="gold-14k">14K Yellow Gold</option>
+                                                <option value="rose-gold-14k">14K Rose Gold</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label>Metal Finish</label>
+                                            <select id="metal-finish">
+                                                <option value="polished">Polished</option>
+                                                <option value="brushed">Brushed</option>
+                                                <option value="antiqued">Antiqued</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Mobile Menu Toggle Button -->
     <button id="mobile-menu-toggle" aria-label="Toggle Menu">
@@ -600,8 +3036,8 @@
     </button>
 
     <!-- Replace Image Button - positioned at top of scene -->
-    <div id="replace-image-button" style="position:fixed;top:20px;left:20px;z-index:1000;">
-        <button id="replace-file" title="Replace Image" style="background:rgba(0,0,0,0.8);border:2px solid rgba(255,255,255,0.3);color:white;font-size:1em;cursor:pointer;padding:12px 20px;border-radius:8px;font-weight:bold;backdrop-filter:blur(10px);box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+    <div id="replace-image-button" style="position:fixed;top:20px;left:20px;z-index:1000;display:none;">
+        <button id="replace-file" title="Replace Image" style="background:rgba(255,255,255,0.9);border:3px solid rgba(0,0,0,0.8);color:#000000;font-size:1em;cursor:pointer;padding:12px 20px;border-radius:8px;font-weight:bold;backdrop-filter:blur(10px);box-shadow:0 4px 12px rgba(0,0,0,0.3);">
             📁 Replace Image
         </button>
     </div>
@@ -612,66 +3048,31 @@
         <button id="notification-close" style="background:none;border:none;color:white;float:right;font-size:18px;cursor:pointer;margin-left:10px;">&times;</button>
     </div>
 
-    <!-- UI Menu -->
-    <div id="ui-menu">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-            <span style="font-size:1em;font-weight:bold;letter-spacing:1px;">Jewelry Designer +</span>
-            <div>
-                <button id="reset-view" title="Reset View" style="background:none;border:none;color:white;font-size:1.3em;cursor:pointer;">🔄</button>
-                <button id="screenshot" title="Download Screenshot" style="background:none;border:none;color:white;font-size:1.3em;cursor:pointer;">📸</button>
-                <button id="export-stl">Export STL</button>
+    <!-- AI Prompt Modal -->
+    <div id="ai-prompt-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:5000;backdrop-filter:blur(5px);">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:15px;box-shadow:0 20px 40px rgba(0,0,0,0.3);max-width:500px;width:90%;">
+            <div style="text-align:center;margin-bottom:20px;">
+                <h2 style="margin:0;color:#333;font-size:24px;">✨ Imagine with AI</h2>
+                <p style="margin:10px 0 0 0;color:#666;font-size:16px;">Describe your dream pendant and we'll create it for you</p>
+            </div>
+            
+            <div style="margin-bottom:20px;">
+                <textarea id="ai-prompt-input-modal" placeholder="Describe what you want to create... (e.g., 'a majestic golden eagle in flight', 'abstract geometric patterns', 'a beautiful rose garden')" rows="4" style="width:100%;padding:15px;border:2px solid #e0e0e0;border-radius:8px;font-size:16px;resize:vertical;box-sizing:border-box;"></textarea>
+            </div>
+            
+            <div style="display:flex;gap:10px;justify-content:center;">
+                <button id="generate-ai-btn-modal" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;border:none;padding:12px 24px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;">
+                    <span style="margin-right:8px;">🎨</span>Generate
+                </button>
+                <button id="cancel-ai-btn-modal" style="background:#f5f5f5;color:#666;border:2px solid #e0e0e0;padding:12px 24px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;">
+                    Cancel
+                </button>
             </div>
         </div>
-        <div class="menu-section">
-            <div class="menu-header">
-                <h3>Object Type</h3>
-                <button class="toggle-button">▼</button>
-            </div>
-            <div class="menu-content">
-                <div class="control-group">
-                    <select id="object-type">
-                        <option value="circular-pendant">Circular Pendant</option>
-                        <option value="earrings">Earrings (Pair)</option>
-                    </select>
-                </div>
+    </div>
 
-            </div>
-        </div>
 
-        <div class="menu-section">
-            <div class="menu-header">
-                <h3>Metal Settings</h3>
-                <button class="toggle-button">▼</button>
-            </div>
-            <div class="menu-content">
-                <div class="control-group">
-                    <label>Metal Type</label>
-                    <select id="metal-type">
-                        <option value="sterling-silver">Sterling Silver</option>
-                        <option value="gold-14k">14K Yellow Gold</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>Metal Finish</label>
-                    <select id="metal-finish">
-                        <option value="polished">Polished</option>
-                        <option value="brushed">Brushed</option>
-                        <option value="matte">Matte</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>Measurement Ruler</label>
-                    <button id="ruler-toggle" class="toggle-button" data-active="false">
-                        <span class="toggle-text">Show Ruler</span>
-                    </button>
-                </div>
-                <div class="control-group">
-                    <label>Antiquing Amount</label>
-                    <input type="range" id="antiquing-amount" min="0" max="1" step="0.01" value="0.5">
-                    <span class="slider-value" id="antiquing-amount-value">0.5</span>
-                </div>
-            </div>
-        </div>
+
 
         <div class="menu-section" style="display: none;">
             <div class="menu-header">
@@ -681,15 +3082,15 @@
             <div class="menu-content">
                 <div class="control-group">
                     <label>Jumpring Size</label>
-                    <select id="jumpring-size">
+                    <select id="jumpring-size-duplicate">
                         <option value="small">Small (4mm)</option>
                         <option value="medium">Medium (6mm)</option>
                         <option value="large">Large (8mm)</option>
                     </select>
                 </div>
                 <div class="control-group">
-                    <label for="highlight-layer-color">Highlight Color</label>
-                    <input type="color" id="highlight-layer-color" value="#ffffff">
+                    <label for="highlight-layer-color-duplicate">Highlight Color</label>
+                    <input type="color" id="highlight-layer-color-duplicate" value="#ffffff">
                 </div>
             </div>
         </div>
@@ -702,14 +3103,14 @@
             <div class="menu-content">
                 <div class="control-group">
                     <label>Field of View</label>
-                    <input type="range" id="fov" min="30" max="120" value="75">
+                    <input type="range" id="fov-duplicate" min="30" max="120" value="75">
                 </div>
                 <div class="control-group">
                     <label>Camera Distance</label>
-                    <input type="range" id="camera-distance" min="10" max="200" value="50">
+                    <input type="range" id="camera-distance-duplicate" min="10" max="200" value="50">
                 </div>
                 <div class="control-group">
-                    <label><input type="checkbox" id="rotate-toggle"> Rotate Object</label>
+                    <label><input type="checkbox" id="rotate-toggle-duplicate"> Rotate Object</label>
                 </div>
             </div>
         </div>
@@ -722,15 +3123,15 @@
             <div class="menu-content">
                 <div class="control-group">
                     <label>Light Intensity</label>
-                    <input type="range" id="light-intensity" min="0" max="2" step="0.1" value="0.8">
+                    <input type="range" id="light-intensity-duplicate" min="0" max="2" step="0.1" value="0.8">
                 </div>
                 <div class="control-group">
                     <label>Material Color</label>
-                    <input type="color" id="material-color" value="#808080">
+                    <input type="color" id="material-color-duplicate" value="#808080">
                 </div>
                 <div class="control-group">
                     <label>Material Shine</label>
-                    <input type="range" id="material-shine" min="0" max="100" value="30">
+                    <input type="range" id="material-shine-duplicate" min="0" max="100" value="30">
                 </div>
             </div>
         </div>
@@ -777,26 +3178,7 @@
 
 
 
-        <div class="menu-section">
-            <div class="menu-header">
-                <h3>Text Boxes</h3>
-                <button class="toggle-button">▼</button>
-            </div>
-            <div class="menu-content active">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <button id="add-text-box" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
-                        ➕ Add Text Box
-                    </button>
-                    <span style="color: #aaa; font-size: 0.8em;">Each text box: +$35</span>
-                </div>
-                <div id="text-boxes-container">
-                    <!-- Text boxes will be dynamically added here -->
-                </div>
-                <div id="no-text-boxes" style="text-align: center; color: #666; padding: 20px; font-style: italic;">
-                    No text boxes added yet.<br>Click "Add Text Box" to start.
-                </div>
-            </div>
-        </div>
+
     </div>
 
     <!-- Cropper Modal -->
@@ -840,6 +3222,22 @@
                     <button id="cropper-confirm" style="padding:8px 24px;font-size:1.1em;">Crop & Continue</button>
                     <button id="cropper-cancel" style="padding:8px 24px;font-size:1.1em;">Cancel</button>
                 </div>
+                
+                <!-- 2D Laser Etch Controls (hidden by default) -->
+                <div id="laser-etch-controls" style="display: none; margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; color: white;">Laser Etch Optimization</h4>
+                    <div class="control-group">
+                        <label for="contrast-slider" style="color: white;">Contrast Adjustment:</label>
+                        <input type="range" id="contrast-slider" min="0" max="200" value="100" step="1" style="width: 200px;">
+                        <span class="slider-value" id="contrast-value" style="color: white;">100%</span>
+                    </div>
+                    <div class="control-group">
+                        <button id="auto-contrast-btn" class="auto-contrast-button" style="background: #48bb78; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Auto Optimize for Laser</button>
+                    </div>
+                    <div class="control-group">
+                        <label style="font-size: 12px; color: #ccc;">Optimize contrast for optimal laser engraving results</label>
+                    </div>
+                </div>
             </div>
             <!-- Live Preview -->
             <div id="cropper-preview-container" style="background:#111;padding:12px;border-radius:8px;min-width:260px;min-height:260px;display:flex;flex-direction:column;align-items:center;">
@@ -848,28 +3246,8 @@
                     <canvas id="cropper-preview" width="250" height="250" style="display:block;"></canvas>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Ruler Overlay -->
-    <div id="ruler-overlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:100;display:flex;justify-content:center;align-items:center;">
-        <!-- Reference Circle (25mm) - Fixed size -->
-        <div id="reference-circle" style="position:absolute;width:200px;height:200px;border:2px dashed rgba(255,255,255,0.6);border-radius:50%;background:transparent;">
-            <div style="position:absolute;top:-25px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.8);font-size:12px;font-weight:bold;text-shadow:1px 1px 2px rgba(0,0,0,0.8);">25mm</div>
-        </div>
-        
-        <!-- Horizontal Ruler -->
-        <div id="horizontal-ruler" style="position:absolute;width:400px;height:20px;top:50%;left:50%;transform:translate(-50%, calc(-50% + 220px));background:rgba(0,0,0,0.7);border-radius:2px;display:flex;align-items:center;justify-content:space-between;">
-            <!-- Ruler content will be generated by JavaScript -->
-        </div>
-        
-        <!-- Vertical Ruler -->
-        <div id="vertical-ruler" style="position:absolute;width:20px;height:400px;top:50%;left:50%;transform:translate(calc(-50% - 220px), -50%);background:rgba(0,0,0,0.7);border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;">
-            <!-- Ruler content will be generated by JavaScript -->
-        </div>
-        
-        <!-- Corner connector to make rulers meet perpendicularly -->
-        <div id="ruler-corner" style="position:absolute;width:20px;height:20px;top:50%;left:50%;transform:translate(calc(-50% - 220px), calc(-50% + 220px));background:rgba(0,0,0,0.7);border-radius:2px 0 0 0;"></div>
+                
+            </div>
     </div>
 
     <!-- Mobile Debug Panel -->
@@ -879,16 +3257,1454 @@
     </div>
 
     <!-- Deployment GUID Display -->
-    <div id="deployment-guid" style="position:fixed;bottom:12px;left:12px;background:rgba(0,0,0,0.7);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.95em;z-index:5000;pointer-events:none;user-select:text;">Loading version...</div>
+<div id="deployment-guid" style="display:none;position:fixed;bottom:12px;left:12px;background:rgba(0,0,0,0.7);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.95em;z-index:5000;pointer-events:none;user-select:text;">Loading version...</div>
 
     <script type="module" src="./src/main.js?v=4&t=1234567890"></script>
     <!-- Cropper.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <!-- dat.GUI Initialization Script -->
+    <script>
+        // Wait for the page to load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== DOMContentLoaded fired ===');
+            
+            // Test OpenAI functions availability
+            setTimeout(() => {
+                console.log('🧪 Testing OpenAI functions after 1 second...');
+                console.log('window.generateImageWithOpenAI:', typeof window.generateImageWithOpenAI);
+                console.log('window.uploadDalleImageToS3:', typeof window.uploadDalleImageToS3);
+                console.log('window.viewer:', !!window.viewer);
+                if (window.viewer) {
+                    console.log('window.viewer.generateImageWithOpenAI:', typeof window.viewer.generateImageWithOpenAI);
+                    console.log('window.viewer.uploadDalleImageToS3:', typeof window.viewer.uploadDalleImageToS3);
+                } else {
+                    console.log('❌ window.viewer is not available');
+                }
+                console.log('All window functions:', Object.keys(window).filter(key => key.includes('generate') || key.includes('upload') || key.includes('openai')));
+                
+                // Check if module script loaded
+                const moduleScript = document.querySelector('script[src*="main.js"]');
+                console.log('📦 Module script element:', moduleScript);
+                
+                // Try again after more time
+                setTimeout(() => {
+                    console.log('🧪 Testing again after 5 seconds total...');
+                    console.log('window.viewer:', !!window.viewer);
+                    if (!window.viewer) {
+                        console.log('❌ Viewer still not available after 5 seconds - module may have failed to load');
+                    }
+                }, 4000);
+            }, 1000);
+            
+            // Mobile Shopify-style interactions
+            initializeMobileInteractions();
+            
+            // Initialize product header with default values
+            setTimeout(() => {
+                updateProductHeader();
+            }, 200);
+            
+            // Force initial layout visibility
+            setTimeout(() => {
+                forceLayoutVisibility();
+            }, 100);
+            
+            // Monitor for image processing completion
+            monitorImageProcessing();
+            
+            // Handle mobile orientation changes
+            handleOrientationChange();
+            
+            // Initialize dat.GUI
+            const gui = new dat.GUI({ autoPlace: false });
+            
+            // Move dat.GUI to our container
+            const container = document.getElementById('dat-gui-container');
+            if (container) {
+                container.appendChild(gui.domElement);
+            }
+            
+            // Create control object to mirror the existing controls
+            const controls = {
+                // Object Type Controls
+                designMethod: '3d-design',
+                objectType: 'circular-pendant',
+                
+                // Metal Settings
+                metalType: 'sterling-silver',
+                metalFinish: 'polished',
+                antiquingAmount: 0.5,
+                
+                // Text Box Controls
+                addTextBox: function() {
+                    // Trigger the add text box button
+                    const addButton = document.getElementById('add-text-box');
+                    if (addButton) addButton.click();
+                },
+                
+                // Camera Controls
+                resetView: function() {
+                    const resetButton = document.getElementById('reset-view');
+                    if (resetButton) resetButton.click();
+                },
+                
+                screenshot: function() {
+                    const screenshotButton = document.getElementById('screenshot');
+                    if (screenshotButton) screenshotButton.click();
+                },
+                
+                submitOrder: function() {
+                    const submitButton = document.getElementById('export-stl');
+                    if (submitButton) submitButton.click();
+                }
+            };
+            
+            // Create folders for organization
+            const objectFolder = gui.addFolder('Object Type');
+            objectFolder.add(controls, 'designMethod', ['3d-design', '2d-laser-etch']).name('Design Method').onChange(function(value) {
+                const select = document.getElementById('design-method');
+                if (select) {
+                    select.value = value;
+                    select.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            objectFolder.add(controls, 'objectType', ['circular-pendant', 'earrings']).name('Object Type').onChange(function(value) {
+                const select = document.getElementById('object-type');
+                if (select) {
+                    select.value = value;
+                    select.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            const metalFolder = gui.addFolder('Metal Settings');
+            metalFolder.add(controls, 'metalType', ['sterling-silver', 'gold-14k']).name('Metal Type').onChange(function(value) {
+                const select = document.getElementById('metal-type');
+                if (select) {
+                    select.value = value;
+                    select.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            metalFolder.add(controls, 'metalFinish', ['polished', 'brushed', 'matte']).name('Metal Finish').onChange(function(value) {
+                const select = document.getElementById('metal-finish');
+                if (select) {
+                    select.value = value;
+                    select.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            metalFolder.add(controls, 'antiquingAmount', 0, 1, 0.01).name('Antiquing Amount').onChange(function(value) {
+                const slider = document.getElementById('antiquing-amount');
+                if (slider) {
+                    slider.value = value;
+                    slider.dispatchEvent(new Event('input'));
+                }
+            });
+            
+            const textFolder = gui.addFolder('Text Boxes');
+            textFolder.add(controls, 'addTextBox').name('Add Text Box');
+            
+            const actionsFolder = gui.addFolder('Actions');
+            actionsFolder.add(controls, 'resetView').name('Reset View');
+            actionsFolder.add(controls, 'screenshot').name('Screenshot');
+            actionsFolder.add(controls, 'submitOrder').name('Submit Order');
+            
+            // Open all folders by default
+            objectFolder.open();
+            metalFolder.open();
+            textFolder.open();
+            actionsFolder.open();
+            
+            // Sync dat.GUI with existing controls
+            function syncWithExistingControls() {
+                // Sync design method
+                const designMethodSelect = document.getElementById('design-method');
+                if (designMethodSelect) {
+                    controls.designMethod = designMethodSelect.value;
+                }
+                
+                // Sync object type
+                const objectTypeSelect = document.getElementById('object-type');
+                if (objectTypeSelect) {
+                    controls.objectType = objectTypeSelect.value;
+                }
+                
+                // Sync metal type
+                const metalTypeSelect = document.getElementById('metal-type');
+                if (metalTypeSelect) {
+                    controls.metalType = metalTypeSelect.value;
+                }
+                
+                // Sync metal finish
+                const metalFinishSelect = document.getElementById('metal-finish');
+                if (metalFinishSelect) {
+                    controls.metalFinish = metalFinishSelect.value;
+                }
+                
+                // Sync antiquing amount
+                const antiquingSlider = document.getElementById('antiquing-amount');
+                if (antiquingSlider) {
+                    controls.antiquingAmount = parseFloat(antiquingSlider.value);
+                }
+            }
+            
+            // Sync on page load
+            setTimeout(syncWithExistingControls, 1000);
+            
+            // Listen for changes in the existing controls
+            document.addEventListener('change', function(e) {
+                if (e.target.id === 'design-method') {
+                    controls.designMethod = e.target.value;
+                } else if (e.target.id === 'object-type') {
+                    controls.objectType = e.target.value;
+                } else if (e.target.id === 'metal-type') {
+                    controls.metalType = e.target.value;
+                } else if (e.target.id === 'metal-finish') {
+                    controls.metalFinish = e.target.value;
+                }
+            });
+            
+            document.addEventListener('input', function(e) {
+                if (e.target.id === 'antiquing-amount') {
+                    controls.antiquingAmount = parseFloat(e.target.value);
+                }
+            });
+        });
+        
+        // Mobile Shopify-style interactions
+        function initializeMobileInteractions() {
+            console.log('=== initializeMobileInteractions called ===');
+            
+            // Initialize responsive layout handling
+            handleResponsiveLayout();
+            
+            // Handle window resize for responsive layout
+            window.addEventListener('resize', function() {
+                console.log('Window resized to:', window.innerWidth, 'x', window.innerHeight);
+                handleResponsiveLayout();
+                
+                // Update renderer size for new layout
+                setTimeout(() => {
+                    updateRendererForCurrentLayout();
+                }, 100);
+            });
+            
+            // Handle orientation change
+            window.addEventListener('orientationchange', function() {
+                setTimeout(() => {
+                    handleResponsiveLayout();
+                    updateRendererForCurrentLayout();
+                }, 300);
+            });
+            
+            // Initialize UI interactions
+            console.log('About to initialize UI interactions...');
+            initializeCarouselInteractions();
+            initializeOptionInteractions();
+            initializePhotoButton();
+            initializeImagineButton();
+            
+            // Sync desktop metal select with ecommerce buttons
+            setTimeout(() => {
+                const metalSelect = document.getElementById('metal-type');
+                if (metalSelect) {
+                    metalSelect.addEventListener('change', function() {
+                        console.log('Desktop metal select changed to:', this.value);
+                        // Map material type back to UI button type
+                        let buttonType;
+                        switch(this.value) {
+                            case 'sterling-silver': buttonType = 'silver'; break;
+                            case 'gold-14k': buttonType = 'gold'; break;
+                            case 'rose-gold-14k': buttonType = 'rose-gold'; break;
+                            default: buttonType = 'silver';
+                        }
+                        
+                        // Update button states
+                        const metalButtons = document.querySelectorAll('.option-button[data-metal]');
+                        metalButtons.forEach(btn => {
+                            btn.classList.toggle('active', btn.getAttribute('data-metal') === buttonType);
+                        });
+                        
+                        updateProductHeader();
+                    });
+                }
+            }, 1000);
+            
+            // Check for canvas and Three.js setup
+            const checkForCanvas = setInterval(function() {
+                const canvas = document.querySelector('canvas');
+                if (canvas && window.viewer) {
+                    clearInterval(checkForCanvas);
+                    console.log('Canvas and viewer found, initializing layout');
+                    updateRendererForCurrentLayout();
+                }
+            }, 100);
+        }
+        
+        // Handle view changes in carousel
+        function handleViewChange(viewType) {
+            console.log('Switching to view:', viewType);
+            // Here you can implement different view logic
+            // For now, we'll just log the change
+            switch(viewType) {
+                case '3d':
+                    // Show 3D viewer
+                    break;
+                case 'front':
+                    // Show front view image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/retrieverModel.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'side':
+                    // Show side view image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/instructions.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'retriever-metal':
+                    // Show retriever metal image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/retrieverMetal.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'sailing':
+                    // Show sailing scene image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/sailingSceneProductPhoto.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'before':
+                    // Show before image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/before.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'jewelry':
+                    // Show jewelry image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/foreverAndEverJewelry.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+            }
+        }
+        
+        // Update metal type
+        function updateMetalType(metalType) {
+            console.log('Updating metal type to:', metalType);
+            // Update the 3D model material
+            // This would integrate with your existing 3D rendering logic
+        }
+        
+        // Update chain length
+        function updateChainLength(length) {
+            console.log('Updating chain length to:', length);
+            // Add chain length update logic here
+            updateProductHeader();
+        }
+        
+        // Update engraving option
+        function updateEngraving(enabled) {
+            console.log('Engraving enabled:', enabled);
+            // Add engraving update logic here
+            updateProductHeader();
+        }
+        
+        // Move 3D canvas between desktop and mobile containers
+        function moveCanvasToMobileContainer() {
+            const canvas = document.querySelector('canvas');
+            const mobileContainer = document.getElementById('mobile-canvas-container');
+            const desktopContainer = document.getElementById('canvas-container');
+            
+            if (!canvas || !mobileContainer || !desktopContainer) {
+                console.log('Canvas or containers not found, waiting for 3D scene to load...');
+                return;
+            }
+            
+            // Check if we're on mobile (width <= 768px)
+            const isMobile = window.innerWidth <= 768;
+            console.log('Window width:', window.innerWidth, 'Is mobile:', isMobile);
+            console.log('Exact boundary check - width === 768:', window.innerWidth === 768);
+            console.log('Exact boundary check - width === 767:', window.innerWidth === 767);
+            
+            // Force mobile layout visibility if on mobile
+            if (isMobile) {
+                const mobileLayout = document.querySelector('.mobile-shopify-layout');
+                const desktopLayout = document.querySelector('.desktop-layout');
+                
+                if (mobileLayout) {
+                    mobileLayout.style.display = 'flex !important';
+                    mobileLayout.style.visibility = 'visible !important';
+                    mobileLayout.style.opacity = '1 !important';
+                    mobileLayout.style.position = 'relative !important';
+                    mobileLayout.style.zIndex = '1000 !important';
+                    console.log('Forced mobile layout to display: flex');
+                }
+                
+                if (desktopLayout) {
+                    desktopLayout.style.display = 'none !important';
+                    desktopLayout.style.visibility = 'hidden !important';
+                    desktopLayout.style.opacity = '0 !important';
+                    desktopLayout.style.position = 'absolute !important';
+                    desktopLayout.style.zIndex = '-1 !important';
+                    console.log('Forced desktop layout to display: none');
+                }
+                
+                // Also hide all conflicting elements
+                const conflictingElements = [
+                    '#ui-menu',
+                    '#drop-zone',
+                    '#reference-image-container',
+                    '.ui-menu-panel',
+                    '#dat-gui-container'
+                ];
+                
+                conflictingElements.forEach(selector => {
+                    const element = document.querySelector(selector);
+                    if (element) {
+                        element.style.display = 'none !important';
+                        element.style.visibility = 'hidden !important';
+                        element.style.opacity = '0 !important';
+                        console.log('Hidden conflicting element:', selector);
+                    }
+                });
+            }
+            
+            if (isMobile) {
+                // Move canvas to mobile container
+                if (canvas.parentElement !== mobileContainer) {
+                    console.log('Moving canvas to mobile container');
+                    mobileContainer.appendChild(canvas);
+                    // Ensure canvas fills the mobile container
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    canvas.style.display = 'block';
+                    
+                    // Update renderer size for mobile container
+                    setTimeout(() => {
+                        updateRendererSize(mobileContainer);
+                    }, 100);
+                }
+            } else {
+                // Move canvas back to desktop container
+                if (canvas.parentElement !== desktopContainer) {
+                    console.log('Moving canvas to desktop container');
+                    desktopContainer.appendChild(canvas);
+                    // Reset canvas styling for desktop
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    canvas.style.display = 'block';
+                    
+                    // Update renderer size for desktop container
+                    setTimeout(() => {
+                        updateRendererSize(desktopContainer);
+                    }, 100);
+                }
+            }
+        }
+        
+        // Debug canvas state
+        function debugCanvasState() {
+            const canvas = document.querySelector('canvas');
+            const mobileContainer = document.getElementById('mobile-canvas-container');
+            const desktopContainer = document.getElementById('canvas-container');
+            
+            console.log('=== Canvas Debug Info ===');
+            console.log('Canvas exists:', !!canvas);
+            if (canvas) {
+                console.log('Canvas parent:', canvas.parentElement.id);
+                console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+                console.log('Canvas style dimensions:', canvas.style.width, 'x', canvas.style.height);
+                console.log('Canvas display:', canvas.style.display);
+            }
+            console.log('Mobile container exists:', !!mobileContainer);
+            if (mobileContainer) {
+                console.log('Mobile container dimensions:', mobileContainer.clientWidth, 'x', mobileContainer.clientHeight);
+            }
+            console.log('Desktop container exists:', !!desktopContainer);
+            if (desktopContainer) {
+                console.log('Desktop container dimensions:', desktopContainer.clientWidth, 'x', desktopContainer.clientHeight);
+            }
+            console.log('Window viewer exists:', !!window.viewer);
+            if (window.viewer) {
+                console.log('Viewer renderer exists:', !!window.viewer.renderer);
+                console.log('Viewer camera exists:', !!window.viewer.camera);
+            }
+            console.log('Is mobile:', window.innerWidth <= 768);
+            
+            // Check mobile layout visibility
+            const mobileLayout = document.querySelector('.mobile-shopify-layout');
+            const desktopLayout = document.querySelector('.desktop-layout');
+            console.log('Mobile layout display:', mobileLayout ? getComputedStyle(mobileLayout).display : 'not found');
+            console.log('Desktop layout display:', desktopLayout ? getComputedStyle(desktopLayout).display : 'not found');
+            
+            console.log('========================');
+        }
+        
+        // EMERGENCY DEBUG FUNCTION - Call this from console
+        window.debugCanvasIssue = function() {
+            console.log('🔍 DEBUGGING CANVAS COVERAGE ISSUE');
+            console.log('=====================================');
+            
+            const canvas = document.querySelector('canvas');
+            if (!canvas) {
+                console.log('❌ NO CANVAS FOUND!');
+                return;
+            }
+            
+            const rect = canvas.getBoundingClientRect();
+            const style = getComputedStyle(canvas);
+            
+            console.log('📊 CANVAS INFO:');
+            console.log('- Element:', canvas);
+            console.log('- Parent:', canvas.parentElement);
+            console.log('- Width (attr):', canvas.width);
+            console.log('- Height (attr):', canvas.height);
+            console.log('- Width (style):', style.width);
+            console.log('- Height (style):', style.height);
+            console.log('- Width (computed):', rect.width);
+            console.log('- Height (computed):', rect.height);
+            console.log('- Display:', style.display);
+            console.log('- Visibility:', style.visibility);
+            console.log('- Opacity:', style.opacity);
+            console.log('- Z-Index:', style.zIndex);
+            console.log('- Position:', rect.left, rect.top);
+            console.log('- IS VISIBLE:', rect.width > 0 && rect.height > 0);
+            
+            console.log('\n📦 PARENT CHAIN:');
+            let parent = canvas.parentElement;
+            let level = 1;
+            while (parent && level <= 3) {
+                const pRect = parent.getBoundingClientRect();
+                const pStyle = getComputedStyle(parent);
+                console.log(`Level ${level}: ${parent.tagName}${parent.id ? '#' + parent.id : ''}`);
+                console.log('  - Size:', pRect.width + 'x' + pRect.height);
+                console.log('  - Display:', pStyle.display);
+                console.log('  - Background:', pStyle.backgroundColor);
+                parent = parent.parentElement;
+                level++;
+            }
+            
+            console.log('\n🚫 COVERING ELEMENTS:');
+            const allElements = document.querySelectorAll('*');
+            const covering = [];
+            
+            allElements.forEach(el => {
+                if (el === canvas) return;
+                const eRect = el.getBoundingClientRect();
+                const eStyle = getComputedStyle(el);
+                const zIndex = parseInt(eStyle.zIndex) || 0;
+                
+                if (eRect.width > 0 && eRect.height > 0 && 
+                    eStyle.display !== 'none' && 
+                    eStyle.visibility !== 'hidden') {
+                    
+                    const overlaps = !(eRect.right < rect.left || 
+                                     eRect.left > rect.right || 
+                                     eRect.bottom < rect.top || 
+                                     eRect.top > rect.bottom);
+                    
+                    if (overlaps) {
+                        covering.push({
+                            element: el,
+                            tag: el.tagName + (el.id ? '#' + el.id : '') + (el.className ? '.' + el.className.split(' ')[0] : ''),
+                            zIndex: zIndex,
+                            isHigher: zIndex > parseInt(style.zIndex || 0)
+                        });
+                    }
+                }
+            });
+            
+            covering.sort((a, b) => b.zIndex - a.zIndex);
+            covering.slice(0, 10).forEach((item, i) => {
+                console.log(`${i + 1}. ${item.tag} (z-index: ${item.zIndex}) ${item.isHigher ? '⚠️ HIGHER' : ''}`);
+                if (i < 3) console.log('   Element:', item.element);
+            });
+            
+            console.log('\n💡 TO FIX: If canvas has 0x0 dimensions, that\'s the problem!');
+            console.log('💡 TO FIX: If elements have higher z-index, that\'s the problem!');
+            console.log('=====================================');
+            
+            // Try to fix common issues
+            if (rect.width === 0 || rect.height === 0) {
+                console.log('🔧 ATTEMPTING AUTO-FIX: Canvas has zero dimensions');
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+                if (window.viewer && window.viewer.renderer) {
+                    const container = canvas.parentElement;
+                    const w = Math.max(container.clientWidth, 300);
+                    const h = Math.max(container.clientHeight, 300);
+                    window.viewer.renderer.setSize(w, h);
+                    console.log('🔧 Renderer resized to:', w, 'x', h);
+                }
+            }
+        };
+        
+        // Monitor for image processing completion and ensure canvas visibility
+        function monitorImageProcessing() {
+            // Check every 500ms for changes that might affect canvas visibility
+            setInterval(() => {
+                const isMobile = window.innerWidth <= 768;
+                if (isMobile) {
+                    // Debug: Check what's covering the canvas
+                    debugCanvasCoverage();
+                    
+                    // Force canvas visibility on mobile
+                    const canvas = document.querySelector('canvas');
+                    if (canvas) {
+                        canvas.style.display = 'block !important';
+                        canvas.style.visibility = 'visible !important';
+                        canvas.style.opacity = '1 !important';
+                        canvas.style.zIndex = '1 !important';
+                    }
+                    
+                    // Ensure mobile layout is visible
+                    const mobileLayout = document.querySelector('.mobile-shopify-layout');
+                    if (mobileLayout) {
+                        mobileLayout.style.display = 'flex !important';
+                        mobileLayout.style.visibility = 'visible !important';
+                        mobileLayout.style.opacity = '1 !important';
+                        mobileLayout.style.zIndex = '1000 !important';
+                    }
+                    
+                    // Keep desktop layout hidden
+                    const desktopLayout = document.querySelector('.desktop-layout');
+                    if (desktopLayout) {
+                        desktopLayout.style.display = 'none !important';
+                        desktopLayout.style.visibility = 'hidden !important';
+                        desktopLayout.style.opacity = '0 !important';
+                        desktopLayout.style.zIndex = '-1 !important';
+                    }
+                    
+                    // Keep UI menu available but positioned appropriately
+                    const uiMenu = document.getElementById('ui-menu');
+                    if (uiMenu) {
+                        // Don't hide completely - just position it properly
+                        uiMenu.style.display = 'block';
+                        uiMenu.style.visibility = 'visible';
+                        uiMenu.style.opacity = '1';
+                        uiMenu.style.zIndex = '1000';
+                    }
+                }
+            }, 500);
+        }
+        
+        // Handle mobile resize events to keep Three.js renderer properly sized
+        function handleMobileResize() {
+            const isMobile = window.innerWidth <= 768;
+            console.log('Handling resize - isMobile:', isMobile);
+            
+            if (isMobile) {
+                const canvas = document.querySelector('canvas');
+                const mobileContainer = document.getElementById('mobile-canvas-container');
+                
+                if (canvas && mobileContainer && window.viewer && window.viewer.renderer) {
+                    // Get current container dimensions
+                    const containerWidth = mobileContainer.clientWidth;
+                    const containerHeight = mobileContainer.clientHeight;
+                    
+                    console.log('Mobile container dimensions after resize:', containerWidth, 'x', containerHeight);
+                    
+                    // Ensure minimum dimensions
+                    const finalWidth = Math.max(containerWidth, 300);
+                    const finalHeight = Math.max(containerHeight, 300);
+                    
+                    // Update renderer size
+                    window.viewer.renderer.setSize(finalWidth, finalHeight);
+                    
+                    // Update camera aspect ratio
+                    window.viewer.camera.aspect = finalWidth / finalHeight;
+                    window.viewer.camera.updateProjectionMatrix();
+                    
+                    // Force canvas styling
+                    canvas.style.width = '100%';
+                    canvas.style.height = '100%';
+                    canvas.style.display = 'block';
+                    canvas.style.visibility = 'visible';
+                    canvas.style.opacity = '1';
+                    
+                    // Force a render
+                    window.viewer.renderer.render(window.viewer.scene, window.viewer.camera);
+                    
+                    console.log('Mobile renderer resized to:', finalWidth, 'x', finalHeight);
+                    console.log('Canvas after resize:', {
+                        width: canvas.width,
+                        height: canvas.height,
+                        styleWidth: canvas.style.width,
+                        styleHeight: canvas.style.height
+                    });
+                } else {
+                    console.warn('Missing elements for mobile resize:', {
+                        canvas: !!canvas,
+                        mobileContainer: !!mobileContainer,
+                        viewer: !!window.viewer,
+                        renderer: !!(window.viewer && window.viewer.renderer)
+                    });
+                }
+            }
+        }
+        
+        // Handle mobile orientation changes
+        function handleOrientationChange() {
+            // Listen for orientation change events
+            window.addEventListener('orientationchange', function() {
+                console.log('Orientation changed');
+                setTimeout(() => {
+                    handleMobileResize();
+                    // Run debug to check state after orientation change
+                    if (window.debugCanvasIssue) {
+                        console.log('Running post-orientation debug...');
+                        window.debugCanvasIssue();
+                    }
+                }, 500); // Wait for orientation change to complete
+            });
+            
+            // Also listen for screen orientation API if available
+            if (screen && screen.orientation) {
+                screen.orientation.addEventListener('change', function() {
+                    console.log('Screen orientation changed to:', screen.orientation.angle);
+                    setTimeout(() => {
+                        handleMobileResize();
+                    }, 300);
+                });
+            }
+        }
+        
+        // Continuous canvas monitoring to ensure it stays in mobile container
+        function startCanvasMonitoring() {
+            setInterval(() => {
+                const isMobile = window.innerWidth <= 768;
+                if (isMobile) {
+                    const canvas = document.querySelector('canvas');
+                    const mobileContainer = document.getElementById('mobile-canvas-container');
+                    const desktopContainer = document.getElementById('canvas-container');
+                    
+                    if (canvas && mobileContainer && desktopContainer) {
+                        // Check if canvas is in the wrong container
+                        if (canvas.parentElement === desktopContainer) {
+                            console.log('Canvas moved to desktop container, moving back to mobile');
+                            moveCanvasToMobileContainer();
+                        }
+                        
+                        // Ensure canvas is properly sized and visible
+                        canvas.style.width = '100% !important';
+                        canvas.style.height = '100% !important';
+                        canvas.style.display = 'block !important';
+                        canvas.style.visibility = 'visible !important';
+                        canvas.style.opacity = '1 !important';
+                        canvas.style.zIndex = '1 !important';
+                    }
+                }
+            }, 1000);
+        }
+        
+        // Debug function to check what's covering the canvas
+        function debugCanvasCoverage() {
+            const canvas = document.querySelector('canvas');
+            if (!canvas) {
+                console.log('No canvas found');
+                return;
+            }
+            
+            const rect = canvas.getBoundingClientRect();
+            console.log('Canvas position:', rect);
+            console.log('Canvas visible:', rect.width > 0 && rect.height > 0);
+            
+            // Check all elements that might be covering the canvas
+            const coveringElements = [];
+            
+            // Check for loading overlay
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                const overlayRect = loadingOverlay.getBoundingClientRect();
+                const overlayStyle = getComputedStyle(loadingOverlay);
+                console.log('Loading overlay:', {
+                    display: overlayStyle.display,
+                    visibility: overlayStyle.visibility,
+                    opacity: overlayStyle.opacity,
+                    zIndex: overlayStyle.zIndex,
+                    rect: overlayRect
+                });
+                if (overlayStyle.display !== 'none') {
+                    coveringElements.push('loading-overlay');
+                }
+            }
+            
+            // Check for any elements with high z-index that might be covering
+            const allElements = document.querySelectorAll('*');
+            allElements.forEach(element => {
+                const style = getComputedStyle(element);
+                const zIndex = parseInt(style.zIndex);
+                if (zIndex > 0 && style.display !== 'none' && style.visibility !== 'hidden') {
+                    const elementRect = element.getBoundingClientRect();
+                    if (elementRect.width > 0 && elementRect.height > 0) {
+                        // Check if this element overlaps with the canvas
+                        if (elementRect.left < rect.right && elementRect.right > rect.left &&
+                            elementRect.top < rect.bottom && elementRect.bottom > rect.top) {
+                            coveringElements.push({
+                                element: element.tagName + (element.id ? '#' + element.id : ''),
+                                zIndex: zIndex,
+                                rect: elementRect
+                            });
+                        }
+                    }
+                }
+            });
+            
+            if (coveringElements.length > 0) {
+                console.log('Elements that might be covering the canvas:', coveringElements);
+            } else {
+                console.log('No obvious covering elements found');
+            }
+        }
+        
+        // Force correct layout visibility based on screen size
+        function forceLayoutVisibility() {
+            const isMobile = window.innerWidth <= 768;
+            const mobileLayout = document.querySelector('.mobile-shopify-layout');
+            const desktopLayout = document.querySelector('.desktop-layout');
+            
+            console.log('Force layout visibility - Is mobile:', isMobile);
+            
+            if (isMobile) {
+                // Show mobile layout
+                if (mobileLayout) {
+                    mobileLayout.style.display = 'flex !important';
+                    mobileLayout.style.visibility = 'visible !important';
+                    console.log('Mobile layout forced to visible');
+                }
+                
+                // Hide desktop layout
+                if (desktopLayout) {
+                    desktopLayout.style.display = 'none !important';
+                    desktopLayout.style.visibility = 'hidden !important';
+                    console.log('Desktop layout forced to hidden');
+                }
+            } else {
+                // Show desktop layout
+                if (desktopLayout) {
+                    desktopLayout.style.display = 'flex !important';
+                    desktopLayout.style.visibility = 'visible !important';
+                    console.log('Desktop layout forced to visible');
+                }
+                
+                // Hide mobile layout
+                if (mobileLayout) {
+                    mobileLayout.style.display = 'none !important';
+                    mobileLayout.style.visibility = 'hidden !important';
+                    console.log('Mobile layout forced to hidden');
+                }
+            }
+        }
+        
+        // Force canvas to be visible and properly sized
+        function forceCanvasVisibility() {
+            const canvas = document.querySelector('canvas');
+            if (!canvas) {
+                console.error('No canvas found for forceCanvasVisibility');
+                return;
+            }
+            
+            console.log('Forcing canvas visibility...');
+            
+            // Force canvas to be visible
+            canvas.style.display = 'block !important';
+            canvas.style.visibility = 'visible !important';
+            canvas.style.opacity = '1 !important';
+            canvas.style.position = 'relative !important';
+            canvas.style.zIndex = '1 !important';
+            
+            // Force canvas dimensions
+            canvas.style.width = '100% !important';
+            canvas.style.height = '100% !important';
+            canvas.style.minWidth = '300px !important';
+            canvas.style.minHeight = '300px !important';
+            
+            // Remove any transforms that might be hiding it
+            canvas.style.transform = 'none !important';
+            canvas.style.transformOrigin = 'initial !important';
+            
+            // Ensure parent container is visible and transparent
+            const parent = canvas.parentElement;
+            if (parent) {
+                parent.style.display = 'block !important';
+                parent.style.visibility = 'visible !important';
+                parent.style.overflow = 'visible !important';
+                parent.style.position = 'relative !important';
+                parent.style.background = 'transparent !important';
+                parent.style.backgroundColor = 'transparent !important';
+            }
+            
+            // Also ensure all ancestor containers are transparent
+            let ancestor = parent;
+            while (ancestor && ancestor !== document.body) {
+                if (ancestor.classList.contains('main-product-viewer') || 
+                    ancestor.classList.contains('product-carousel-section') ||
+                    ancestor.classList.contains('mobile-shopify-layout')) {
+                    ancestor.style.background = 'transparent !important';
+                    ancestor.style.backgroundColor = 'transparent !important';
+                }
+                ancestor = ancestor.parentElement;
+            }
+            
+            console.log('Canvas forced visibility complete');
+            
+            // Check if canvas is actually visible
+            const rect = canvas.getBoundingClientRect();
+            console.log('Canvas bounding rect:', rect);
+            console.log('Canvas is visible:', rect.width > 0 && rect.height > 0);
+            
+            // Check computed styles
+            const computedStyle = getComputedStyle(canvas);
+            console.log('Canvas computed display:', computedStyle.display);
+            console.log('Canvas computed visibility:', computedStyle.visibility);
+            console.log('Canvas computed opacity:', computedStyle.opacity);
+        }
+        
+        // Update renderer size when canvas is moved
+        function updateRendererSize(container) {
+            // Try to find the global viewer instance
+            if (window.viewer && window.viewer.renderer) {
+                const newWidth = container.clientWidth;
+                const newHeight = container.clientHeight;
+                console.log('Updating renderer size to:', newWidth, 'x', newHeight);
+                console.log('Container computed style:', getComputedStyle(container).height);
+                console.log('Container offset dimensions:', container.offsetWidth, 'x', container.offsetHeight);
+                
+                // Force a minimum size if container is too small
+                const finalWidth = Math.max(newWidth, 300);
+                const finalHeight = Math.max(newHeight, 300);
+                
+                window.viewer.renderer.setSize(finalWidth, finalHeight);
+                
+                // Update camera aspect ratio
+                if (window.viewer.camera) {
+                    window.viewer.camera.aspect = finalWidth / finalHeight;
+                    window.viewer.camera.updateProjectionMatrix();
+                }
+                
+                // Update controls if they exist
+                if (window.viewer.controls) {
+                    window.viewer.controls.update();
+                }
+                
+                // Force a render
+                if (window.viewer.renderer && window.viewer.scene && window.viewer.camera) {
+                    window.viewer.renderer.render(window.viewer.scene, window.viewer.camera);
+                }
+            } else {
+                console.error('Viewer or renderer not found!');
+            }
+        }
+        
+        // Handle responsive layout switching
+        function handleResponsiveLayout() {
+            const isMobile = window.innerWidth <= 767;
+            const ecommerceLayout = document.querySelector('.ecommerce-layout');
+            
+            if (ecommerceLayout) {
+                // Update layout classes based on screen size
+                if (isMobile) {
+                    ecommerceLayout.classList.add('mobile-layout');
+                    ecommerceLayout.classList.remove('desktop-layout');
+                } else {
+                    ecommerceLayout.classList.add('desktop-layout');
+                    ecommerceLayout.classList.remove('mobile-layout');
+                }
+            }
+            
+            // Move UI menu to appropriate location
+            moveUIMenuToLocation(isMobile);
+        }
+        
+        // Move UI menu to desktop controls section or hide on mobile
+        function moveUIMenuToLocation(isMobile) {
+            const uiMenu = document.getElementById('ui-menu');
+            const uiMenuContainer = document.getElementById('ui-menu-container');
+            
+            if (!uiMenu) return;
+            
+            if (isMobile) {
+                // Hide UI menu on mobile
+                uiMenu.style.display = 'none';
+            } else {
+                // Show UI menu and move to desktop controls section
+                uiMenu.style.display = 'block';
+                if (uiMenuContainer && uiMenu.parentElement !== uiMenuContainer) {
+                    uiMenuContainer.appendChild(uiMenu);
+                }
+            }
+        }
+        
+        // Update Three.js renderer for current layout
+        function updateRendererForCurrentLayout() {
+            if (!window.viewer || !window.viewer.renderer) return;
+            
+            const canvasContainer = document.getElementById('canvas-container');
+            if (!canvasContainer) return;
+            
+            const containerRect = canvasContainer.getBoundingClientRect();
+            const width = Math.max(containerRect.width, 300);
+            const height = Math.max(containerRect.height, 300);
+            
+            console.log('Updating renderer size:', width, 'x', height);
+            
+            // Update renderer size
+            window.viewer.renderer.setSize(width, height);
+            
+            // Update camera aspect ratio
+            if (window.viewer.camera) {
+                window.viewer.camera.aspect = width / height;
+                window.viewer.camera.updateProjectionMatrix();
+            }
+            
+            // Force render
+            if (window.viewer.renderer.render && window.viewer.scene && window.viewer.camera) {
+                window.viewer.renderer.render(window.viewer.scene, window.viewer.camera);
+            }
+        }
+        
+        // Initialize carousel thumbnail interactions
+        function initializeCarouselInteractions() {
+            const thumbnails = document.querySelectorAll('.carousel-thumbnail');
+            thumbnails.forEach(thumbnail => {
+                thumbnail.addEventListener('click', function() {
+                    // Remove active class from all thumbnails
+                    thumbnails.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked thumbnail
+                    this.classList.add('active');
+                    
+                    // Handle different view types
+                    const viewType = this.getAttribute('data-view');
+                    handleViewChange(viewType);
+                });
+            });
+        }
+        
+        // Initialize product option interactions
+        function initializeOptionInteractions() {
+            console.log('Initializing option interactions...');
+            
+            // Metal type button interactions
+            const metalButtons = document.querySelectorAll('.option-button[data-metal]');
+            console.log('Found metal buttons:', metalButtons.length);
+            
+            if (metalButtons.length === 0) {
+                console.warn('No metal buttons found! Retrying in 500ms...');
+                setTimeout(initializeOptionInteractions, 500);
+                return;
+            }
+            
+            metalButtons.forEach(button => {
+                console.log('Adding click listener to button:', button.getAttribute('data-metal'));
+                button.addEventListener('click', function() {
+                    console.log('Metal button clicked:', this.getAttribute('data-metal'));
+                    
+                    // Remove active class from all metal buttons
+                    metalButtons.forEach(b => b.classList.remove('active'));
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Update metal type
+                    const metalType = this.getAttribute('data-metal');
+                    console.log('Calling updateMetalType with:', metalType);
+                    updateMetalType(metalType);
+                });
+            });
+            
+            // Chain length selection
+            const chainLengthSelect = document.getElementById('chain-length');
+            if (chainLengthSelect) {
+                chainLengthSelect.addEventListener('change', function() {
+                    updateChainLength(this.value);
+                });
+            }
+            
+            // Engraving checkbox
+            const engravingCheckbox = document.getElementById('engraving-checkbox');
+            if (engravingCheckbox) {
+                engravingCheckbox.addEventListener('change', function() {
+                    updateEngraving(this.checked);
+                });
+            }
+        }
+        
+        // Initialize add photo button
+        function initializePhotoButton() {
+            const addPhotoButton = document.getElementById('add-photo-btn');
+            if (addPhotoButton) {
+                addPhotoButton.addEventListener('click', function() {
+                    // Trigger file input
+                    const fileInput = document.getElementById('file-input');
+                    if (fileInput) {
+                        fileInput.click();
+                    }
+                });
+            }
+        }
+        
+        // Handle view changes from carousel
+        function handleViewChange(viewType) {
+            console.log('Changing view to:', viewType);
+            
+            const canvasContainer = document.getElementById('canvas-container');
+            const imageViewerContainer = document.getElementById('image-viewer-container');
+            const mainImageViewer = document.getElementById('main-image-viewer');
+            
+            // Hide both containers initially
+            if (canvasContainer) canvasContainer.style.display = 'none';
+            if (imageViewerContainer) imageViewerContainer.style.display = 'none';
+            
+            switch(viewType) {
+                case '3d':
+                    // Show 3D scene
+                    if (canvasContainer) {
+                        canvasContainer.style.display = 'block';
+                    }
+                    break;
+                case 'sample':
+                    // Show sample pendant image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/samplePendant.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'front':
+                    // Show front view image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/retrieverModel.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'side':
+                    // Show side view image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/instructions.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'retriever-metal':
+                    // Show retriever metal image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/retrieverMetal.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'before':
+                    // Show before image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/before.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'jewelry':
+                    // Show jewelry image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/foreverAndEverJewelry.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'sailing':
+                    // Show sailing scene image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/sailingSceneProductPhoto.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+            }
+        }
+        
+        // Update metal type
+        function updateMetalType(metalType) {
+            console.log('=== updateMetalType called ===');
+            console.log('Metal type requested:', metalType);
+            console.log('Window.viewer exists:', !!window.viewer);
+            console.log('Window.viewer.updateMetalMaterial exists:', !!(window.viewer && window.viewer.updateMetalMaterial));
+            
+            // Map ecommerce UI metal types to material types
+            let materialType;
+            switch(metalType) {
+                case 'silver':
+                    materialType = 'sterling-silver';
+                    break;
+                case 'gold':
+                    materialType = 'gold-14k';
+                    break;
+                case 'rose-gold':
+                    materialType = 'rose-gold-14k';
+                    break;
+                default:
+                    materialType = 'sterling-silver';
+            }
+            
+            console.log('Mapped to material type:', materialType);
+            
+            // Update the 3D material if viewer exists
+            if (window.viewer && window.viewer.updateMetalMaterial) {
+                console.log('Calling viewer.updateMetalMaterial...');
+                window.viewer.updateMetalMaterial(materialType);
+            } else {
+                console.warn('Viewer not ready yet. Retrying in 500ms...');
+                setTimeout(() => {
+                    if (window.viewer && window.viewer.updateMetalMaterial) {
+                        console.log('Retrying viewer.updateMetalMaterial...');
+                        window.viewer.updateMetalMaterial(materialType);
+                    } else {
+                        console.error('Viewer still not available after retry');
+                        console.log('Available viewer methods:', window.viewer ? Object.getOwnPropertyNames(Object.getPrototypeOf(window.viewer)) : 'No viewer');
+                    }
+                }, 500);
+            }
+            
+            // Update the original metal type select if it exists
+            const metalSelect = document.getElementById('metal-type');
+            if (metalSelect) {
+                console.log('Updating metal-type select to:', materialType);
+                metalSelect.value = materialType;
+                // Trigger change event to sync other UI
+                metalSelect.dispatchEvent(new Event('change'));
+            } else {
+                console.log('metal-type select not found');
+            }
+            
+            // Update price based on metal type (optional)
+            updateProductHeader();
+        }
+        
+        // Update chain length
+        function updateChainLength(length) {
+            console.log('Updating chain length to:', length);
+            // Add chain length update logic here
+        }
+        
+        // Update engraving
+        function updateEngraving(enabled) {
+            console.log('Engraving enabled:', enabled);
+            // Add engraving update logic here
+        }
+        
+        // Update price based on metal type
+        function updateProductHeader() {
+            const priceElement = document.querySelector('.product-price');
+            const subtitleElement = document.querySelector('.product-subtitle');
+            const chainSelect = document.getElementById('chain-length');
+            const engravingCheckbox = document.getElementById('engraving-checkbox');
+            
+            if (!priceElement || !subtitleElement) return;
+            
+            // Get current selections
+            const activeMetalButton = document.querySelector('.option-button.active');
+            const metalType = activeMetalButton ? activeMetalButton.getAttribute('data-metal') : 'silver';
+            const chainLength = chainSelect ? chainSelect.value : '18';
+            const engravingEnabled = engravingCheckbox ? engravingCheckbox.checked : false;
+            
+            // Calculate price
+            let basePrice = 89.99;
+            let price = basePrice;
+            
+            switch(metalType) {
+                case 'silver':
+                    price = basePrice; // Sterling silver base price
+                    break;
+                case 'gold':
+                    price = basePrice + 150; // Gold upcharge
+                    break;
+                case 'rose-gold':
+                    price = basePrice + 120; // Rose gold upcharge
+                    break;
+            }
+            
+            // Add engraving cost
+            if (engravingEnabled) {
+                price += 49;
+            }
+            
+            // Update price
+            priceElement.textContent = `$${price.toFixed(2)}`;
+            
+            // Update subtitle
+            let metalName = 'Sterling Silver';
+            switch(metalType) {
+                case 'silver':
+                    metalName = 'Sterling Silver';
+                    break;
+                case 'gold':
+                    metalName = '14k Yellow Gold';
+                    break;
+                case 'rose-gold':
+                    metalName = '14k Rose Gold';
+                    break;
+            }
+            
+            let chainName = '18" Princess Length';
+            switch(chainLength) {
+                case '16':
+                    chainName = '16" Choker Length';
+                    break;
+                case '18':
+                    chainName = '18" Princess Length';
+                    break;
+                case '20':
+                    chainName = '20" Matinee Length';
+                    break;
+                case '24':
+                    chainName = '24" Opera Length';
+                    break;
+            }
+            
+            let subtitle = `${metalName} with ${chainName}`;
+            if (engravingEnabled) {
+                subtitle += ' + Engraving';
+            }
+            
+            subtitleElement.textContent = subtitle;
+        }
+        
+        // Initialize Imagine button functionality
+        function initializeImagineButton() {
+            console.log('🎨 Initializing Imagine button...');
+            
+            // Wait a bit for the viewer to be ready
+            setTimeout(() => {
+                console.log('🎨 Delayed Imagine button initialization...');
+                
+                const imagineButton = document.querySelector('.imagine-button');
+                const aiPromptModal = document.getElementById('ai-prompt-modal');
+                const aiPromptInput = document.getElementById('ai-prompt-input-modal');
+                const generateBtn = document.getElementById('generate-ai-btn-modal');
+                const cancelBtn = document.getElementById('cancel-ai-btn-modal');
+                
+                if (!imagineButton || !aiPromptModal || !aiPromptInput || !generateBtn || !cancelBtn) {
+                    console.error('❌ Missing elements for Imagine button:', {
+                        imagineButton: !!imagineButton,
+                        aiPromptModal: !!aiPromptModal,
+                        aiPromptInput: !!aiPromptInput,
+                        generateBtn: !!generateBtn,
+                        cancelBtn: !!cancelBtn
+                    });
+                    return;
+                }
+                
+                console.log('✅ All Imagine button elements found');
+                
+                // Show modal when Imagine button is clicked
+                imagineButton.addEventListener('click', () => {
+                    console.log('🎨 Imagine button clicked, showing modal...');
+                    aiPromptModal.style.display = 'block';
+                    aiPromptInput.focus();
+                    document.body.style.overflow = 'hidden'; // Prevent background scroll
+                });
+                
+                // Hide modal when clicking outside
+                aiPromptModal.addEventListener('click', (e) => {
+                    if (e.target === aiPromptModal) {
+                        aiPromptModal.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                });
+                
+                // Hide modal on Escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && aiPromptModal.style.display === 'block') {
+                        aiPromptModal.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                });
+                
+                // Cancel button
+                cancelBtn.addEventListener('click', () => {
+                    aiPromptModal.style.display = 'none';
+                    document.body.style.overflow = '';
+                    aiPromptInput.value = '';
+                });
+                
+                // Generate button - use the viewer's existing AI generation capability
+                generateBtn.addEventListener('click', async () => {
+                    const prompt = aiPromptInput.value.trim();
+                    
+                    if (!prompt) {
+                        alert('Please enter a prompt to generate an image');
+                        return;
+                    }
+                    
+                    console.log('🎨 Generate button clicked with prompt:', prompt);
+                    
+                    try {
+                        // Find the original prompt elements immediately (don't wait for viewer)
+                        const promptInput = document.getElementById('prompt-input');
+                        const promptSubmitBtn = document.getElementById('prompt-submit');
+                        
+                        console.log('🔍 Looking for original UI elements:', {
+                            promptInput: !!promptInput,
+                            promptSubmitBtn: !!promptSubmitBtn
+                        });
+                        
+                        if (promptInput && promptSubmitBtn) {
+                            console.log('✅ Found original AI generation elements');
+                            
+                            // Set the prompt in the original input
+                            promptInput.value = prompt;
+                            console.log('📝 Set prompt in original input:', prompt);
+                            
+                            // Close modal first
+                            aiPromptModal.style.display = 'none';
+                            document.body.style.overflow = '';
+                            aiPromptInput.value = '';
+                            
+                            // Trigger the original AI generation
+                            console.log('🎨 Triggering original AI generation button click...');
+                            promptSubmitBtn.click();
+                            
+                            console.log('✅ AI generation triggered successfully');
+                            
+                        } else {
+                            // If we can't find the elements, wait a bit and try again
+                            console.log('⏳ Original elements not found, waiting 2 seconds...');
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                            
+                            const retryPromptInput = document.getElementById('prompt-input');
+                            const retryPromptSubmitBtn = document.getElementById('prompt-submit');
+                            
+                            if (retryPromptInput && retryPromptSubmitBtn) {
+                                console.log('✅ Found elements on retry');
+                                retryPromptInput.value = prompt;
+                                
+                                // Close modal
+                                aiPromptModal.style.display = 'none';
+                                document.body.style.overflow = '';
+                                aiPromptInput.value = '';
+                                
+                                retryPromptSubmitBtn.click();
+                            } else {
+                                throw new Error('Could not find original AI generation elements (prompt-input, prompt-submit)');
+                            }
+                        }
+                        
+                    } catch (error) {
+                        console.error('❌ Error generating image:', error);
+                        alert(`Failed to generate image: ${error.message}`);
+                    }
+                });
+                
+                console.log('✅ Imagine button initialized successfully');
+            }, 1000); // Reduced delay since we're waiting for functions directly
+        }
+    </script>
+    
     <!-- Add this in the <head> or before the closing </body> tag -->
     <script id="threejs-font-json" type="application/json">
     // The font will be loaded via JS from the official Three.js CDN
     </script>
     <!-- Optionally, add FontLoader via module import in main.js -->
+
 </body>
 </html>
 <!-- Cache refresh: 2025-06-01 01:02 - S3 backend working --> 
