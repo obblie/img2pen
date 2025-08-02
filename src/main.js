@@ -656,6 +656,41 @@ class HeightfieldViewer {
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.2;
         canvasContainer.appendChild(this.renderer.domElement);
+        
+        // Add controls message after renderer is appended
+        const controlsMessage = document.createElement('div');
+        controlsMessage.id = 'canvas-controls-message';
+        controlsMessage.style.cssText = `
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(44, 62, 80, 0.9);
+            color: #ecf0f1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            max-width: 280px;
+            z-index: 1001;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid rgba(236, 240, 241, 0.2);
+        `;
+        controlsMessage.innerHTML = `
+            <div style="margin-bottom: 6px; font-weight: 600; color: #ffffff;">
+                🎮 3D Controls
+            </div>
+            <div style="line-height: 1.4; opacity: 0.9;">
+                <div style="margin-bottom: 4px;">• <strong>Scroll</strong> to zoom in/out</div>
+                <div style="margin-bottom: 4px;">• <strong>Drag</strong> to rotate view</div>
+                <div style="margin-bottom: 4px;">• <strong>Right-click + drag</strong> to pan</div>
+                <div style="font-size: 11px; opacity: 0.8; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(236, 240, 241, 0.3);">
+                    💡 <strong>Tip:</strong> Click outside canvas to scroll the page
+                </div>
+            </div>
+        `;
+        canvasContainer.appendChild(controlsMessage);
 
         // Setup camera - angled view to show pendant standing upright on platform
         this.camera.position.set(33, 20, 47);
