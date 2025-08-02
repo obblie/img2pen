@@ -3654,7 +3654,18 @@ class HeightfieldViewer {
 }
 
 // Initialize the viewer
-window.viewer = new HeightfieldViewer(); 
+console.log('🔧 About to create HeightfieldViewer...');
+try {
+    window.viewer = new HeightfieldViewer(); 
+    console.log('✅ HeightfieldViewer created successfully:', window.viewer);
+} catch (error) {
+    console.error('❌ Failed to create HeightfieldViewer:', error);
+    throw error;
+}
+
+// Add OpenAI functions to viewer object for modal access
+window.viewer.generateImageWithOpenAI = generateImageWithOpenAI;
+window.viewer.uploadDalleImageToS3 = uploadDalleImageToS3;
 
 // Show deployment GUID in lower left
 fetch('./version.json')
@@ -3694,6 +3705,7 @@ function showMobileDebug(info, isError = false) {
 
 // Function to generate image using backend OpenAI proxy
 async function generateImageWithOpenAI(prompt) {
+    console.log('🚀 generateImageWithOpenAI called with prompt:', prompt);
     try {
         const deviceInfo = {
             userAgent: navigator.userAgent,
@@ -3708,6 +3720,7 @@ async function generateImageWithOpenAI(prompt) {
         
         // Test connectivity to backend first
         console.log('🔗 Testing backend connectivity...');
+        console.log('🔗 Backend URL:', OPENAI_BACKEND_URL);
         try {
             const healthCheck = await fetch(`${OPENAI_BACKEND_URL}/health`, {
                 method: 'GET',
@@ -3730,6 +3743,7 @@ async function generateImageWithOpenAI(prompt) {
         
         // Check network connectivity
         if (!navigator.onLine) {
+            console.error('❌ No internet connection');
             throw new Error('No internet connection detected');
         }
         
@@ -3744,6 +3758,8 @@ async function generateImageWithOpenAI(prompt) {
         }, timeoutDuration);
         
         console.log('📤 Sending request to OpenAI backend...');
+        console.log('📤 Request body:', JSON.stringify({ prompt: prompt }));
+        
         const response = await fetch(`${OPENAI_BACKEND_URL}/api/generate-image`, {
             method: 'POST',
             headers: {
@@ -3792,52 +3808,28 @@ async function generateImageWithOpenAI(prompt) {
         
         document.getElementById('loading-status').textContent = 'Processing generated image...';
         
-        hideLoadingOverlay();
-        
-        // Return the base64 data URL directly
-        return data.imageData;
-    } catch (error) {
-        hideLoadingOverlay();
-        
-        // Enhanced mobile-specific error handling
-        const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
-        
-        if (error.name === 'AbortError') {
-            console.error(`⏰ Request timed out (mobile: ${isMobile})`);
-            const timeoutMessage = isMobile 
-                ? 'Request timed out on mobile. Try connecting to WiFi or try again later.'
-                : 'Request timed out. The server may be overloaded. Please try again.';
-            showNotification(timeoutMessage, 'error');
-        } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            console.error('🌐 Network error:', error);
-            const networkMessage = isMobile
-                ? 'Network error on mobile. Check your internet connection and try again.'
-                : 'Network error. Please check your internet connection.';
-            showNotification(networkMessage, 'error');
-        } else if (error.message.includes('No internet connection')) {
-            console.error('📡 No internet connection');
-            showNotification('No internet connection. Please check your network and try again.', 'error');
-        } else {
-            console.error('💥 Error generating image:', error);
-            console.error('💥 Error stack:', error.stack);
-            console.error('💥 Device info:', {
-                isMobile,
-                userAgent: navigator.userAgent,
-                onLine: navigator.onLine,
-                networkType: navigator.connection?.effectiveType || 'unknown'
-            });
-            
-            const friendlyMessage = isMobile
-                ? `Mobile generation error: ${error.message}. Try refreshing the page.`
-                : `Error: ${error.message}`;
-            showNotification(friendlyMessage, 'error');
-            
-            // Show debug info on mobile
-            showMobileDebug(`AI Generation Error:\n${error.message}\n\nStack:\n${error.stack}`, true);
+        if (!data.imageData) {
+            console.error('❌ No image data in response');
+            throw new Error('No image data received from AI generation');
         }
-        return null;
+
+        // Convert base64 to data URL
+        const dataUrl = `data:image/png;base64,${data.imageData}`;
+        console.log('✅ Converted to data URL, length:', dataUrl.length);
+        
+        hideLoadingOverlay();
+        console.log('✅ generateImageWithOpenAI completed successfully');
+        return dataUrl;
+        
+    } catch (error) {
+        console.error('❌ Error in generateImageWithOpenAI:', error);
+        console.error('❌ Error stack:', error.stack);
+        hideLoadingOverlay();
+        throw error;
     }
 }
+
+// Functions will be made globally available at the end of the file
 
 // Function to upload DALL-E generated image to S3
 async function uploadDalleImageToS3(imageBlob, prompt) {
@@ -4241,4 +4233,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Control panel is fixed in position - no drag functionality
     console.log('Control panel is fixed in position');
 });
+
+// Make functions globally available at the end of the file
+// This ensures all functions are defined before being assigned to window
+if (typeof generateImageWithOpenAI === 'function') {
+    window.generateImageWithOpenAI = generateImageWithOpenAI;
+    console.log('✅ generateImageWithOpenAI assigned to window');
+} else {
+    console.error('❌ generateImageWithOpenAI not defined');
+}
+
+if (typeof uploadDalleImageToS3 === 'function') {
+    window.uploadDalleImageToS3 = uploadDalleImageToS3;
+    console.log('✅ uploadDalleImageToS3 assigned to window');
+} else {
+    console.error('❌ uploadDalleImageToS3 not defined');
+}
 

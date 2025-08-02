@@ -3261,6 +3261,34 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('=== DOMContentLoaded fired ===');
             
+            // Test OpenAI functions availability
+            setTimeout(() => {
+                console.log('🧪 Testing OpenAI functions after 1 second...');
+                console.log('window.generateImageWithOpenAI:', typeof window.generateImageWithOpenAI);
+                console.log('window.uploadDalleImageToS3:', typeof window.uploadDalleImageToS3);
+                console.log('window.viewer:', !!window.viewer);
+                if (window.viewer) {
+                    console.log('window.viewer.generateImageWithOpenAI:', typeof window.viewer.generateImageWithOpenAI);
+                    console.log('window.viewer.uploadDalleImageToS3:', typeof window.viewer.uploadDalleImageToS3);
+                } else {
+                    console.log('❌ window.viewer is not available');
+                }
+                console.log('All window functions:', Object.keys(window).filter(key => key.includes('generate') || key.includes('upload') || key.includes('openai')));
+                
+                // Check if module script loaded
+                const moduleScript = document.querySelector('script[src*="main.js"]');
+                console.log('📦 Module script element:', moduleScript);
+                
+                // Try again after more time
+                setTimeout(() => {
+                    console.log('🧪 Testing again after 5 seconds total...');
+                    console.log('window.viewer:', !!window.viewer);
+                    if (!window.viewer) {
+                        console.log('❌ Viewer still not available after 5 seconds - module may have failed to load');
+                    }
+                }, 4000);
+            }, 1000);
+            
             // Mobile Shopify-style interactions
             initializeMobileInteractions();
             
@@ -3848,13 +3876,14 @@
                         desktopLayout.style.zIndex = '-1 !important';
                     }
                     
-                    // Keep UI menu hidden on mobile
+                    // Keep UI menu available but positioned appropriately
                     const uiMenu = document.getElementById('ui-menu');
                     if (uiMenu) {
-                        uiMenu.style.display = 'none !important';
-                        uiMenu.style.visibility = 'hidden !important';
-                        uiMenu.style.opacity = '0 !important';
-                        uiMenu.style.zIndex = '-1 !important';
+                        // Don't hide completely - just position it properly
+                        uiMenu.style.display = 'block';
+                        uiMenu.style.visibility = 'visible';
+                        uiMenu.style.opacity = '1';
+                        uiMenu.style.zIndex = '1000';
                     }
                 }
             }, 500);
@@ -4533,79 +4562,132 @@
         
         // Initialize Imagine button functionality
         function initializeImagineButton() {
-            console.log('Initializing Imagine button...');
+            console.log('🎨 Initializing Imagine button...');
             
-            const imagineBtn = document.getElementById('imagine-btn');
-            const promptModal = document.getElementById('ai-prompt-modal');
-            const promptInput = document.getElementById('ai-prompt-input-modal');
-            const generateBtn = document.getElementById('generate-ai-btn-modal');
-            const cancelBtn = document.getElementById('cancel-ai-btn-modal');
-            
-            if (!imagineBtn) {
-                console.warn('Imagine button not found');
-                return;
-            }
-            
-            // Show modal when Imagine button is clicked
-            imagineBtn.addEventListener('click', function() {
-                console.log('Imagine button clicked');
-                promptModal.style.display = 'block';
-                promptInput.focus();
-                // Prevent body scroll when modal is open
-                document.body.style.overflow = 'hidden';
-            });
-            
-            // Cancel button - hide modal
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', function() {
-                    console.log('Cancel AI prompt');
-                    promptModal.style.display = 'none';
-                    promptInput.value = '';
-                    // Restore body scroll
-                    document.body.style.overflow = 'auto';
+            // Wait a bit for the viewer to be ready
+            setTimeout(() => {
+                console.log('🎨 Delayed Imagine button initialization...');
+                
+                const imagineButton = document.querySelector('.imagine-button');
+                const aiPromptModal = document.getElementById('ai-prompt-modal');
+                const aiPromptInput = document.getElementById('ai-prompt-input-modal');
+                const generateBtn = document.getElementById('generate-ai-btn-modal');
+                const cancelBtn = document.getElementById('cancel-ai-btn-modal');
+                
+                if (!imagineButton || !aiPromptModal || !aiPromptInput || !generateBtn || !cancelBtn) {
+                    console.error('❌ Missing elements for Imagine button:', {
+                        imagineButton: !!imagineButton,
+                        aiPromptModal: !!aiPromptModal,
+                        aiPromptInput: !!aiPromptInput,
+                        generateBtn: !!generateBtn,
+                        cancelBtn: !!cancelBtn
+                    });
+                    return;
+                }
+                
+                console.log('✅ All Imagine button elements found');
+                
+                // Show modal when Imagine button is clicked
+                imagineButton.addEventListener('click', () => {
+                    console.log('🎨 Imagine button clicked, showing modal...');
+                    aiPromptModal.style.display = 'block';
+                    aiPromptInput.focus();
+                    document.body.style.overflow = 'hidden'; // Prevent background scroll
                 });
-            }
-            
-            // Generate button
-            if (generateBtn) {
-                generateBtn.addEventListener('click', function() {
-                    const prompt = promptInput.value.trim();
-                    console.log('Generate AI image with prompt:', prompt);
+                
+                // Hide modal when clicking outside
+                aiPromptModal.addEventListener('click', (e) => {
+                    if (e.target === aiPromptModal) {
+                        aiPromptModal.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                });
+                
+                // Hide modal on Escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && aiPromptModal.style.display === 'block') {
+                        aiPromptModal.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                });
+                
+                // Cancel button
+                cancelBtn.addEventListener('click', () => {
+                    aiPromptModal.style.display = 'none';
+                    document.body.style.overflow = '';
+                    aiPromptInput.value = '';
+                });
+                
+                // Generate button - use the viewer's existing AI generation capability
+                generateBtn.addEventListener('click', async () => {
+                    const prompt = aiPromptInput.value.trim();
                     
                     if (!prompt) {
-                        alert('Please enter a description for your AI-generated image.');
+                        alert('Please enter a prompt to generate an image');
                         return;
                     }
                     
-                    // TODO: Integrate with AI image generation service
-                    // For now, show a placeholder message
-                    alert(`AI Generation Coming Soon!\n\nYour prompt: "${prompt}"\n\nThis feature will generate a custom image based on your description and automatically create a pendant from it.`);
+                    console.log('🎨 Generate button clicked with prompt:', prompt);
                     
-                    // Hide the modal
-                    promptModal.style.display = 'none';
-                    promptInput.value = '';
-                    // Restore body scroll
-                    document.body.style.overflow = 'auto';
+                    try {
+                        // Find the original prompt elements immediately (don't wait for viewer)
+                        const promptInput = document.getElementById('prompt-input');
+                        const promptSubmitBtn = document.getElementById('prompt-submit');
+                        
+                        console.log('🔍 Looking for original UI elements:', {
+                            promptInput: !!promptInput,
+                            promptSubmitBtn: !!promptSubmitBtn
+                        });
+                        
+                        if (promptInput && promptSubmitBtn) {
+                            console.log('✅ Found original AI generation elements');
+                            
+                            // Set the prompt in the original input
+                            promptInput.value = prompt;
+                            console.log('📝 Set prompt in original input:', prompt);
+                            
+                            // Close modal first
+                            aiPromptModal.style.display = 'none';
+                            document.body.style.overflow = '';
+                            aiPromptInput.value = '';
+                            
+                            // Trigger the original AI generation
+                            console.log('🎨 Triggering original AI generation button click...');
+                            promptSubmitBtn.click();
+                            
+                            console.log('✅ AI generation triggered successfully');
+                            
+                        } else {
+                            // If we can't find the elements, wait a bit and try again
+                            console.log('⏳ Original elements not found, waiting 2 seconds...');
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                            
+                            const retryPromptInput = document.getElementById('prompt-input');
+                            const retryPromptSubmitBtn = document.getElementById('prompt-submit');
+                            
+                            if (retryPromptInput && retryPromptSubmitBtn) {
+                                console.log('✅ Found elements on retry');
+                                retryPromptInput.value = prompt;
+                                
+                                // Close modal
+                                aiPromptModal.style.display = 'none';
+                                document.body.style.overflow = '';
+                                aiPromptInput.value = '';
+                                
+                                retryPromptSubmitBtn.click();
+                            } else {
+                                throw new Error('Could not find original AI generation elements (prompt-input, prompt-submit)');
+                            }
+                        }
+                        
+                    } catch (error) {
+                        console.error('❌ Error generating image:', error);
+                        alert(`Failed to generate image: ${error.message}`);
+                    }
                 });
-            }
-            
-            // Close modal when clicking outside of it
-            promptModal.addEventListener('click', function(e) {
-                if (e.target === promptModal) {
-                    promptModal.style.display = 'none';
-                    promptInput.value = '';
-                    document.body.style.overflow = 'auto';
-                }
-            });
-            
-            // Close modal with Escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && promptModal.style.display === 'block') {
-                    promptModal.style.display = 'none';
-                    promptInput.value = '';
-                    document.body.style.overflow = 'auto';
-                }
-            });
+                
+                console.log('✅ Imagine button initialized successfully');
+            }, 1000); // Reduced delay since we're waiting for functions directly
         }
     </script>
     
