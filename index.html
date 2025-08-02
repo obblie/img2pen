@@ -296,22 +296,9 @@
             height: 100% !important;
         }
 
-        /* Move UI menu to bottom for better mobile UX */
+        /* Hide the floating UI menu - now using integrated version */
         #ui-menu {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            top: auto;
-            height: auto;
-            max-height: 60vh;
-            overflow-y: auto;
-            border-radius: 20px 20px 0 0;
-            border: none;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            display: none !important;
         }
 
             /* Adjust mobile menu toggle position */
@@ -1027,33 +1014,56 @@
             
             /* Add Photo Button */
             .add-photo-section {
-                margin-top: 20px !important;
-                padding: 16px !important;
-                background: #f8f9fa !important;
-                border-radius: 8px !important;
-                border: 2px dashed #cbd5e0 !important;
+                margin-top: 0 !important;
+                padding: 12px !important;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                border-radius: 16px !important;
+                border: none !important;
+                text-align: center !important;
             }
             
             .add-photo-button {
                 width: 100% !important;
-                padding: 16px !important;
-                background: #667eea !important;
-                color: #ffffff !important;
+                height: 50px !important;
+                padding: 12px 16px !important;
+                background: rgba(255, 255, 255, 0.9) !important;
+                color: #4a5568 !important;
                 border: none !important;
-                border-radius: 8px !important;
-                font-size: 1em !important;
+                border-radius: 12px !important;
+                font-size: 0.9em !important;
                 font-weight: 600 !important;
                 cursor: pointer !important;
-                transition: background 0.2s ease !important;
+                transition: all 0.3s ease !important;
                 min-height: 44px !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
                 gap: 8px !important;
+                backdrop-filter: blur(10px) !important;
             }
             
             .add-photo-button:hover {
-                background: #5a67d8 !important;
+                background: rgba(255, 255, 255, 1) !important;
+                transform: translateY(-2px) !important;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+            }
+            
+            .photo-help-text {
+                color: rgba(255, 255, 255, 0.9) !important;
+                margin: 8px 0 0 0 !important;
+                font-size: 0.8em !important;
+                line-height: 1.4 !important;
+            }
+            
+            .action-buttons-container {
+                flex-direction: row !important;
+                gap: 8px !important;
+            }
+            
+            .action-buttons-container .add-photo-section,
+            .action-buttons-container .imagine-section {
+                width: 50% !important;
+                min-width: 0 !important;
             }
             
             /* Mobile Hero Section - Fix grid layout */
@@ -1835,6 +1845,709 @@
                 min-height: 300px !important;
             }
         }
+
+        /* ======================================
+           UNIFIED ECOMMERCE LAYOUT STYLES
+           ====================================== */
+        
+        /* Main Ecommerce Layout Container */
+        .ecommerce-layout {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Desktop Layout (768px+) */
+        @media (min-width: 768px) {
+            .ecommerce-layout {
+                flex-direction: row;
+            }
+            
+            .product-gallery-section {
+                flex: 1;
+                min-width: 60%;
+                height: 100vh;
+            }
+            
+            .product-details-section {
+                flex: 0 0 400px;
+                height: 100vh;
+                overflow-y: auto;
+                background: #ffffff;
+                border-left: 1px solid #e2e8f0;
+            }
+            
+            .desktop-only {
+                display: block !important;
+            }
+            
+            .mobile-only {
+                display: none !important;
+            }
+        }
+        
+        /* Mobile Layout (< 768px) */
+        @media (max-width: 767px) {
+            .ecommerce-layout {
+                flex-direction: column;
+            }
+            
+            .product-gallery-section {
+                flex: 0 0 60vh;
+                height: 60vh;
+            }
+            
+            .product-details-section {
+                flex: 1;
+                overflow-y: auto;
+                background: #ffffff;
+                border-top: 1px solid #e2e8f0;
+            }
+            
+            .desktop-only {
+                display: none !important;
+            }
+            
+            .mobile-only {
+                display: block !important;
+            }
+        }
+        
+        /* ======================================
+           PRODUCT GALLERY SECTION
+           ====================================== */
+        
+        .product-gallery-section {
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+            position: relative;
+        }
+        
+        .main-product-viewer {
+            flex: 1;
+            position: relative;
+            background: transparent;
+            overflow: hidden;
+        }
+        
+        #canvas-container {
+            width: 100% !important;
+            height: 100% !important;
+            background: transparent !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        
+        #canvas-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block !important;
+        }
+        
+        /* Scene Title (Desktop Only) */
+        .scene-title-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1003;
+            background: rgba(255,255,255,0.95);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+        }
+        
+        .scene-title-container h2 {
+            color: #2d3748;
+            font-weight: 800;
+            font-size: 1.8em;
+            margin: 0;
+        }
+        
+        .scene-title-container p {
+            color: #718096;
+            font-size: 0.9em;
+            margin: 5px 0 0 0;
+        }
+        
+        /* ======================================
+           PRODUCT CAROUSEL
+           ====================================== */
+        
+        .product-carousel {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        .product-carousel::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .carousel-thumbnail {
+            flex-shrink: 0;
+            min-width: 80px;
+            height: 80px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: 4px;
+        }
+        
+        .carousel-thumbnail:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        
+        .carousel-thumbnail.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .carousel-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .carousel-thumbnail.active .carousel-image {
+            filter: brightness(1.1) contrast(1.1);
+        }
+        
+        .carousel-3d-icon {
+            font-size: 1.8em;
+            line-height: 1;
+            color: #667eea;
+        }
+        
+        .carousel-thumbnail.active .carousel-3d-icon {
+            color: white;
+        }
+        
+        .carousel-icon {
+            font-size: 1.5em;
+            line-height: 1;
+        }
+        
+        .carousel-label {
+            font-size: 0.7em;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1;
+            margin-top: 4px;
+        }
+        
+        @media (max-width: 767px) {
+            .product-carousel {
+                gap: 8px;
+                padding: 12px;
+            }
+            
+            .carousel-thumbnail {
+                min-width: 60px;
+                height: 60px;
+            }
+            
+            .carousel-image {
+                border-radius: 6px;
+            }
+            
+            .carousel-icon {
+                font-size: 1.2em;
+            }
+            
+            .carousel-label {
+                font-size: 0.6em;
+            }
+        }
+        
+        /* ======================================
+           PRODUCT DETAILS SECTION
+           ====================================== */
+        
+        .product-details-section {
+            padding: 24px;
+            color: #2d3748;
+        }
+        
+        @media (max-width: 767px) {
+            .product-details-section {
+                padding: 20px;
+            }
+        }
+        
+        /* Product Header */
+        .product-header {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .product-title {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0 0 12px 0;
+            line-height: 1.2;
+        }
+        
+        .product-price {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #667eea;
+            margin: 0 0 8px 0;
+        }
+        
+        .product-subtitle {
+            font-size: 1em;
+            color: #718096;
+            margin: 0;
+            font-weight: 400;
+        }
+        
+        @media (max-width: 767px) {
+            .product-header {
+                margin-bottom: 24px;
+                padding-bottom: 20px;
+            }
+            
+            .product-title {
+                font-size: 1.8em;
+            }
+            
+            .product-price {
+                font-size: 1.5em;
+            }
+        }
+        
+        /* ======================================
+           PRODUCT OPTIONS
+           ====================================== */
+        
+        .product-options {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .option-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .option-label {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 0.95em;
+            margin: 0;
+        }
+        
+        /* Option Buttons */
+        .option-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .option-button {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #2d3748;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .option-button:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .option-button.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .option-icon {
+            font-size: 1.1em;
+        }
+        
+        @media (max-width: 767px) {
+            .option-button {
+                min-width: 100px;
+                padding: 10px 14px;
+                font-size: 0.9em;
+            }
+        }
+        
+        /* Option Select */
+        .option-select {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #2d3748;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        
+        .option-select:hover,
+        .option-select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        
+        /* Option Checkbox */
+        .option-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 12px 0;
+        }
+        
+        .option-checkbox input[type="checkbox"] {
+            display: none;
+        }
+        
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 4px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .option-checkbox input[type="checkbox"]:checked + .checkmark {
+            background: #667eea;
+            border-color: #667eea;
+        }
+        
+        .option-checkbox input[type="checkbox"]:checked + .checkmark::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .checkbox-label {
+            font-weight: 500;
+            color: #2d3748;
+        }
+        
+        .checkbox-price {
+            color: #667eea;
+            font-weight: 600;
+            margin-left: auto;
+        }
+        
+        /* ======================================
+           ACTION BUTTONS CONTAINER
+           ====================================== */
+        
+        .action-buttons-container {
+            display: flex;
+            gap: 16px;
+            margin-top: 24px;
+        }
+        
+        .action-buttons-container .add-photo-section,
+        .action-buttons-container .imagine-section {
+            flex: 1;
+            margin-top: 0;
+            width: 50%;
+            min-width: 0;
+        }
+        
+        /* ======================================
+           ADD PHOTO SECTION
+           ====================================== */
+        
+        .add-photo-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            text-align: center;
+        }
+        
+        .add-photo-button {
+            width: 100%;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #4a5568;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 24px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .add-photo-button:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .add-photo-button:active {
+            transform: translateY(0);
+        }
+        
+        .button-icon {
+            font-size: 1.3em;
+        }
+        
+        .button-arrow {
+            font-size: 1.2em;
+            margin-left: auto;
+        }
+        
+        .photo-help-text {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 12px 0 0 0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        @media (max-width: 767px) {
+            .add-photo-section {
+                margin-top: 20px;
+                padding: 16px;
+            }
+            
+            .add-photo-button {
+                padding: 14px 20px;
+                font-size: 1em;
+            }
+        }
+        
+        /* ======================================
+           IMAGINE SECTION STYLES
+           ====================================== */
+        
+        .imagine-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            text-align: center;
+        }
+        
+        .imagine-button {
+            width: 100%;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #4a5568;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 24px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .imagine-button:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .imagine-help-text {
+            color: rgba(255, 255, 255, 0.9);
+            margin: 12px 0 0 0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        .ai-prompt-container {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+        }
+        
+        .prompt-input-group textarea {
+            width: 100%;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.95em;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+        
+        .prompt-input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .prompt-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            justify-content: flex-end;
+        }
+        
+        .prompt-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .prompt-button.primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .prompt-button.primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        
+        .prompt-button.secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .prompt-button.secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        @media (max-width: 767px) {
+            .action-buttons-container {
+                flex-direction: row;
+                gap: 8px;
+            }
+            
+            .action-buttons-container .add-photo-section,
+            .action-buttons-container .imagine-section {
+                width: 50%;
+                min-width: 0;
+            }
+            
+            .add-photo-section {
+                margin-top: 0;
+                padding: 12px;
+            }
+            
+            .add-photo-button {
+                height: 50px;
+                padding: 12px 16px;
+                font-size: 0.9em;
+            }
+            
+            .photo-help-text {
+                font-size: 0.8em;
+                margin: 8px 0 0 0;
+            }
+            
+            .imagine-section {
+                margin-top: 0;
+                padding: 12px;
+            }
+            
+            .imagine-button {
+                height: 50px;
+                padding: 12px 16px;
+                font-size: 0.9em;
+            }
+            
+            .imagine-help-text {
+                font-size: 0.8em;
+                margin: 8px 0 0 0;
+            }
+            
+            .prompt-buttons {
+                flex-direction: column;
+            }
+            
+            .prompt-button {
+                justify-content: center;
+            }
+        }
+        
+        /* ======================================
+           UI CONTROLS SECTION (Desktop Only)
+           ====================================== */
+        
+        .ui-controls-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .controls-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0 0 16px 0;
+        }
+        
+        #ui-menu-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
     </style>
     <!-- Cropper.js CSS -->
     <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
@@ -2028,233 +2741,279 @@
 
         <!-- Three.js Scene Section -->
         <div id="scene-container" class="scene-container">
-            <!-- Mobile Shopify-style Layout (hidden on desktop) -->
-            <div class="mobile-shopify-layout" style="display: none;">
-                <!-- Product Carousel Section -->
-                <div class="product-carousel-section">
-                    <!-- Main Product Viewer (3D Canvas) -->
+            <!-- Unified Shopify-style Ecommerce Layout -->
+            <div class="ecommerce-layout">
+                <!-- Product Gallery Section (3D Viewer + Carousel) -->
+                <div class="product-gallery-section">
+                                        <!-- Main Product Viewer (3D Canvas + Image Viewer) -->
                     <div class="main-product-viewer">
-                        <div id="mobile-canvas-container" style="width: 100%; height: 100%; background: transparent; position: relative;">
-                            <!-- 3D Canvas will be moved here on mobile -->
+                        <!-- 3D Scene Container -->
+                        <div id="canvas-container" style="width: 100%; height: 100%; background: transparent; position: relative; display: block;">
+                            <!-- 3D Canvas will be moved here -->
+                            
+                            <!-- 3D Scene Title removed for cleaner view -->
+                            
+                            <!-- Styled Ruler Overlay -->
+                            <div id="ruler-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000;">
+                                <!-- Horizontal Ruler -->
+                                <div style="position: absolute; top: 10px; left: 30px; right: 30px; height: 25px; background: #2c3e50; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                    <!-- Ruler markings -->
+                                    <div style="position: relative; height: 100%; display: flex; align-items: center;">
+                                        <!-- Major ticks every 10mm -->
+                                        <div style="position: absolute; left: 0; width: 100%; height: 100%; display: flex; justify-content: space-between; align-items: flex-start; padding: 0 5px;">
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
+                                        </div>
+                                        <!-- Numbers -->
+                                        <div style="position: absolute; left: 0; width: 100%; height: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 8px; color: #ecf0f1; font-size: 10px; font-weight: 600; font-family: 'Courier New', monospace;">
+                                            <span>0</span>
+                                            <span>10</span>
+                                            <span>20</span>
+                                            <span>30</span>
+                                            <span>40</span>
+                                            <span>50</span>
+                                            <span>60</span>
+                                            <span>70</span>
+                                            <span>80</span>
+                                            <span>90</span>
+                                            <span>100</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Vertical Ruler -->
+                                <div style="position: absolute; top: 30px; left: 10px; width: 25px; bottom: 30px; background: #2c3e50; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                    <!-- Ruler markings -->
+                                    <div style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center;">
+                                        <!-- Major ticks every 10mm -->
+                                        <div style="position: absolute; top: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; padding: 5px 0;">
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
+                                        </div>
+                                        <!-- Numbers -->
+                                        <div style="position: absolute; top: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 8px 0; color: #ecf0f1; font-size: 10px; font-weight: 600; font-family: 'Courier New', monospace; writing-mode: vertical-rl; text-orientation: mixed;">
+                                            <span>100</span>
+                                            <span>90</span>
+                                            <span>80</span>
+                                            <span>70</span>
+                                            <span>60</span>
+                                            <span>50</span>
+                                            <span>40</span>
+                                            <span>30</span>
+                                            <span>20</span>
+                                            <span>10</span>
+                                            <span>0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Corner Connector -->
+                                <div style="position: absolute; top: 10px; left: 10px; width: 25px; height: 25px; background: #34495e; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+                                    <div style="width: 8px; height: 8px; background: #ecf0f1; border-radius: 50%;"></div>
+                                </div>
+                                
+                                <!-- Reference Circle (25mm) -->
+                                <svg width="200" height="200" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                                    <circle cx="100" cy="100" r="47.24" stroke="#34495e" stroke-width="1.5" fill="none" stroke-dasharray="3,3" opacity="0.6"></circle>
+                                    <text x="100" y="85" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#34495e" opacity="0.8" font-weight="600">25mm</text>
+                                    <text x="100" y="115" text-anchor="middle" font-family="'Courier New', monospace" font-size="9" fill="#34495e" opacity="0.6">Reference</text>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <!-- Image Viewer Container -->
+                        <div id="image-viewer-container" style="width: 100%; height: 100%; background: transparent; position: relative; display: none;">
+                            <img id="main-image-viewer" src="" alt="Product View" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
                         </div>
                     </div>
                     
-                    <!-- Carousel Thumbnails -->
-                    <div class="carousel-thumbnails">
+                    <!-- Product View Carousel -->
+                    <div class="product-carousel">
                         <div class="carousel-thumbnail active" data-view="3d">
-                            <span style="font-size: 1.2em;">🎨</span>
+                            <img src="/retrieverMetal.png" alt="3D Scene" class="carousel-image">
                         </div>
-                        <div class="carousel-thumbnail" data-view="front">
-                            <span style="font-size: 1.2em;">📷</span>
+                        <div class="carousel-thumbnail" data-view="sample">
+                            <img src="/samplePendant.png" alt="Sample Pendant" class="carousel-image">
                         </div>
                         <div class="carousel-thumbnail" data-view="side">
-                            <span style="font-size: 1.2em;">📐</span>
+                            <img src="/instructions.png" alt="Instructions" class="carousel-image">
                         </div>
-                        <div class="carousel-thumbnail" data-view="video">
-                            <span style="font-size: 1.2em;">🎥</span>
+                        <div class="carousel-thumbnail" data-view="front">
+                            <img src="/retrieverModel.png" alt="Front View" class="carousel-image">
+                        </div>
+                        <div class="carousel-thumbnail" data-view="retriever-metal">
+                            <img src="/retrieverMetal.png" alt="Retriever Metal" class="carousel-image">
+                        </div>
+                        <div class="carousel-thumbnail" data-view="sailing">
+                            <img src="/sailingSceneProductPhoto.png" alt="Sailing Scene" class="carousel-image">
+                        </div>
+                        <div class="carousel-thumbnail" data-view="before">
+                            <img src="/before.png" alt="Before" class="carousel-image">
                         </div>
                     </div>
                 </div>
                 
                 <!-- Product Details Section -->
                 <div class="product-details-section">
-                    <!-- Product Title and Price -->
-                    <div class="product-title">Custom Photo Pendant</div>
-                    <div class="product-price">$89.99</div>
-                    <div class="product-subtitle">Sterling Silver, 18" Chain</div>
+                    <!-- Product Header -->
+                    <div class="product-header">
+                        <h1 class="product-title">Custom Photo Pendant</h1>
+                        <div class="product-price">$89.99</div>
+                        <p class="product-subtitle">Sterling Silver with 18" Chain</p>
+                    </div>
                     
-                    <!-- Customization Options -->
-                    <div class="customization-options">
+                    <!-- Product Options -->
+                    <div class="product-options">
                         <!-- Metal Type Selection -->
                         <div class="option-group">
-                            <div class="option-label">Metal Type:</div>
+                            <label class="option-label">Metal Type:</label>
                             <div class="option-buttons">
-                                <button class="option-button active" data-metal="silver">Silver</button>
-                                <button class="option-button" data-metal="gold">Gold</button>
-                                <button class="option-button" data-metal="rose-gold">Rose Gold</button>
+                                <button class="option-button active" data-metal="silver">
+                                    <span class="option-icon">🩶</span>
+                                    Sterling Silver
+                                </button>
+                                <button class="option-button" data-metal="gold">
+                                    <span class="option-icon">🥇</span>
+                                    14k Yellow Gold
+                                </button>
+                                <button class="option-button" data-metal="rose-gold">
+                                    <span class="option-icon">🌹</span>
+                                    14k Rose Gold
+                                </button>
                             </div>
                         </div>
                         
                         <!-- Chain Length Selection -->
                         <div class="option-group">
-                            <div class="option-label">Chain Length:</div>
-                            <select class="option-select" id="mobile-chain-length">
-                                <option value="16">16"</option>
-                                <option value="18" selected>18"</option>
-                                <option value="20">20"</option>
-                                <option value="24">24"</option>
+                            <label class="option-label" for="chain-length">Chain Length:</label>
+                            <select class="option-select" id="chain-length">
+                                <option value="16">16" - Choker Length</option>
+                                <option value="18" selected>18" - Princess Length</option>
+                                <option value="20">20" - Matinee Length</option>
+                                <option value="24">24" - Opera Length</option>
                             </select>
                         </div>
                         
-                        <!-- Add Engraving Option -->
+                        <!-- Engraving Option -->
                         <div class="option-group">
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                <input type="checkbox" id="mobile-engraving" style="width: 18px; height: 18px;">
-                                <span style="font-size: 0.9em; color: #2d3748;">Add Engraving (+$49)</span>
+                            <label class="option-checkbox">
+                                <input type="checkbox" id="engraving-checkbox">
+                                <span class="checkmark"></span>
+                                <span class="checkbox-label">Add Engraving</span>
+                                <span class="checkbox-price">+$49</span>
                             </label>
                         </div>
                         
-                        <!-- Add Photo Button -->
-                        <div class="add-photo-section">
-                            <button class="add-photo-button" id="mobile-add-photo">
-                                <span style="font-size: 1.2em;">📷</span>
-                                Add Your Photo
-                            </button>
+                        <!-- Action Buttons Container -->
+                        <div class="action-buttons-container">
+                            <!-- Add Photo Section -->
+                            <div class="add-photo-section">
+                                <button class="add-photo-button" id="add-photo-btn">
+                                    <span class="button-icon">📷</span>
+                                    <span class="button-text">Add a Photo</span>
+                                </button>
+                                <p class="photo-help-text">Precious Moments Made Eternal</p>
+                            </div>
+                            
+                            <!-- Imagine Section -->
+                            <div class="imagine-section">
+                                <button class="imagine-button" id="imagine-btn">
+                                    <span class="button-icon">🦄</span>
+                                    <span class="button-text">Imagine with AI</span>
+                                </button>
+                                <p class="imagine-help-text">Dream It, Wear It</p>
+                                
+                                <!-- AI Prompt Input (Hidden by default) -->
+                                <div class="ai-prompt-container" id="ai-prompt-container" style="display: none;">
+                                    <div class="prompt-input-group">
+                                        <textarea id="ai-prompt-input" placeholder="Describe what you want to create... (e.g., 'a majestic golden eagle in flight', 'abstract geometric patterns', 'a beautiful rose garden')" rows="3"></textarea>
+                                        <div class="prompt-buttons">
+                                            <button class="prompt-button primary" id="generate-ai-btn">
+                                                <span class="button-icon">🎨</span>
+                                                Generate
+                                            </button>
+                                            <button class="prompt-button secondary" id="cancel-ai-btn">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Desktop Layout (hidden on mobile) -->
-            <div class="desktop-layout" style="display: flex; flex-direction: row; height: 100%; width: 100%; position: relative;">
-                <!-- Three.js Canvas Area -->
-                <div id="canvas-container" style="width: 100%; height: 100%; background: #f0f0f0; position: relative; border: 2px solid #ddd;">
-                    <!-- Section Title -->
-                    <div style="position: absolute; top: 20px; left: 20px; z-index: 1003; background: rgba(255,255,255,0.9); padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);" class="scene-title-container">
-                        <h2 style="color: #2d3748; font-weight: 800; font-size: 1.8em; margin: 0;">3D Preview</h2>
-                        <p style="color: #718096; font-size: 0.9em; margin: 5px 0 0 0;">Customize your pendant design</p>
                     </div>
                     
-                    <!-- Ruler Overlay -->
-                    <div id="ruler-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000;display:flex;justify-content:center;align-items:center;transform:translate(0, 0);">
-                        <!-- Reference Circle (25mm) - Fixed size -->
-                        <div id="reference-circle" style="position:absolute;width:200px;height:200px;border:2px dashed rgba(255,255,255,0.6);border-radius:50%;background:transparent;">
-                            <div style="position:absolute;top:-25px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.8);font-size:12px;font-weight:bold;text-shadow:1px 1px 2px rgba(0,0,0,0.8);">25mm</div>
-                        </div>
-                        
-                        <!-- Horizontal Ruler -->
-                        <div id="horizontal-ruler" style="position:absolute;width:400px;height:20px;top:50%;left:50%;transform:translate(-50%, calc(-50% + 180px));background:rgba(0,0,0,0.7);border-radius:2px;display:flex;align-items:center;justify-content:space-between;">
-                            <!-- Ruler content will be generated by JavaScript -->
-                        </div>
-                        
-                        <!-- Vertical Ruler -->
-                        <div id="vertical-ruler" style="position:absolute;width:20px;height:400px;top:50%;left:50%;transform:translate(calc(-50% - 220px), -50%);background:rgba(0,0,0,0.7);border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;">
-                            <!-- Ruler content will be generated by JavaScript -->
-                        </div>
-                        
-                        <!-- Corner connector to make rulers meet perpendicularly -->
-                        <div id="ruler-corner" style="position:absolute;width:20px;height:20px;top:50%;left:50%;transform:translate(calc(-50% - 220px), -50%);background:rgba(0,0,0,0.7);border-radius:2px 0 0 0;"></div>
-                    </div>
-                </div>
+                    <!-- UI Controls (Desktop Only) -->
+                    <div class="ui-controls-section desktop-only">
+                        <h3 class="controls-title">Advanced Controls</h3>
+                        <div id="ui-menu-container">
+                            <!-- UI menu will be moved here -->
+                            <div id="ui-menu">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                    <span style="font-size:1em;font-weight:bold;letter-spacing:1px;">Jewelry Designer +</span>
+                                    <div>
+                                        <button id="reset-view" title="Reset View" style="background:none;border:none;color:white;font-size:1.3em;cursor:pointer;">🔄</button>
+                                        <button id="screenshot" title="Download Screenshot" style="background:none;border:none;color:white;font-size:1.3em;cursor:pointer;">📸</button>
+                                        <button id="export-stl">Export STL</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="menu-section">
+                                    <div class="menu-header">
+                                        <h3>Object Type</h3>
+                                        <button class="toggle-button">▼</button>
+                                    </div>
+                                    <div class="menu-content">
+                                        <div class="control-group">
+                                            <select id="object-type">
+                                                <option value="circular-pendant">Circular Pendant</option>
+                                                <option value="rectangular-pendant">Rectangular Pendant</option>
+                                                <option value="circular-stud">Circular Stud Earrings</option>
+                                                <option value="bracelet">Bracelet</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
 
-                <!-- dat.GUI Menu Container -->
-                <div id="dat-gui-container" style="
-                    position: absolute !important;
-                    top: 80px !important;
-                    left: 80px !important;
-                    right: auto !important;
-                    z-index: 1000 !important;
-                    display: block !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                ">
-                    <!-- dat.GUI will be initialized here -->
-                </div>
-
-                <!-- Fixed Controls Panel - positioned on the right side -->
-                <div id="ui-menu" class="ui-menu-panel" style="
-                    position: absolute !important;
-                    top: 80px !important;
-                    right: 80px !important;
-                    left: auto !important;
-                    width: 350px !important;
-                    height: 80vh !important;
-                    z-index: 1000 !important;
-                    display: block !important;
-                    background: rgba(255,255,255,0.95) !important;
-                    padding: 20px !important;
-                    overflow-y: auto !important;
-                    cursor: move !important;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
-                    border-radius: 12px !important;
-                    visibility: visible !important;
-                    opacity: 1 !important;
-                ">
-        
-
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;" id="drag-handle">
-                        <span style="font-size:1em;font-weight:bold;letter-spacing:1px;color:#333;">Jewelry Designer +</span>
-            <div>
-                            <button id="reset-view" title="Reset View" style="background:none;border:none;color:#333;font-size:1.3em;cursor:pointer;">🔄</button>
-                            <button id="screenshot" title="Download Screenshot" style="background:none;border:none;color:#333;font-size:1.3em;cursor:pointer;">📸</button>
-                <button id="export-stl">Submit Order</button>
-            </div>
-        </div>
-        <div class="menu-section">
-            <div class="menu-header">
-                <h3>Object Type</h3>
-                <button class="toggle-button">▶</button>
-            </div>
-            <div class="menu-content">
-                <div class="control-group">
-                                <label>Design Method</label>
-                                <select id="design-method">
-                                    <option value="3d-design">3D Design</option>
-                                    <option value="2d-laser-etch">2D Laser Etch</option>
-                                </select>
-                            </div>
-                            <div class="control-group" id="3d-object-type-group">
-                                <label>3D Object Type</label>
-                    <select id="object-type">
-                        <option value="circular-pendant">Circular Pendant</option>
-                        <option value="earrings">Earrings (Pair)</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div class="menu-section">
-            <div class="menu-header">
-                <h3>Metal Settings</h3>
-                <button class="toggle-button">▶</button>
-            </div>
-            <div class="menu-content">
-                <div class="control-group">
-                    <label>Metal Type</label>
-                    <select id="metal-type">
-                        <option value="sterling-silver">Sterling Silver</option>
-                                    <option value="gold-14k">14K Yellow Gold</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>Metal Finish</label>
-                    <select id="metal-finish">
-                        <option value="polished">Polished</option>
-                        <option value="brushed">Brushed</option>
-                        <option value="matte">Matte</option>
-                    </select>
-                </div>
-                            <div class="control-group">
-                                <label>Measurement Ruler</label>
-                                <button id="ruler-toggle" class="toggle-button" data-active="false">
-                                    <span class="toggle-text">Show Ruler</span>
-                                </button>
-                </div>
-                <div class="control-group">
-                    <label>Antiquing Amount</label>
-                    <input type="range" id="antiquing-amount" min="0" max="1" step="0.01" value="0.5">
-                    <span class="slider-value" id="antiquing-amount-value">0.5</span>
-                </div>
-            </div>
-        </div>
-
-                    <div class="menu-section">
-                        <div class="menu-header">
-                            <h3>Text Boxes</h3>
-                            <button class="toggle-button">▼</button>
-                        </div>
-                        <div class="menu-content active">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <button id="add-text-box" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
-                                    ➕ Add Text Box
-                                </button>
-                                <span style="color: #aaa; font-size: 0.8em;">Each text box: +$35</span>
-                            </div>
-                            <div id="text-boxes-container">
-                                <!-- Text boxes will be dynamically added here -->
-                            </div>
-                            <div id="no-text-boxes" style="text-align: center; color: rgb(102, 102, 102); padding: 20px; font-style: italic; display: block;">
-                                No text boxes added yet.<br>Click "Add Text Box" to start.
+                                <div class="menu-section">
+                                    <div class="menu-header">
+                                        <h3>Metal Settings</h3>
+                                        <button class="toggle-button">▼</button>
+                                    </div>
+                                    <div class="menu-content">
+                                        <div class="control-group">
+                                            <label>Metal Type</label>
+                                            <select id="metal-type">
+                                                <option value="sterling-silver">Sterling Silver</option>
+                                                <option value="gold-14k">14K Yellow Gold</option>
+                                                <option value="rose-gold-14k">14K Rose Gold</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label>Metal Finish</label>
+                                            <select id="metal-finish">
+                                                <option value="polished">Polished</option>
+                                                <option value="brushed">Brushed</option>
+                                                <option value="antiqued">Antiqued</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2477,6 +3236,8 @@
     <script>
         // Wait for the page to load
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== DOMContentLoaded fired ===');
+            
             // Mobile Shopify-style interactions
             initializeMobileInteractions();
             
@@ -2650,96 +3411,72 @@
         
         // Mobile Shopify-style interactions
         function initializeMobileInteractions() {
-            // Move 3D canvas to mobile container on mobile devices
-            moveCanvasToMobileContainer();
+            console.log('=== initializeMobileInteractions called ===');
             
-            // Handle window resize to move canvas appropriately
+            // Initialize responsive layout handling
+            handleResponsiveLayout();
+            
+            // Handle window resize for responsive layout
             window.addEventListener('resize', function() {
                 console.log('Window resized to:', window.innerWidth, 'x', window.innerHeight);
-                moveCanvasToMobileContainer();
+                handleResponsiveLayout();
                 
-                // Force layout visibility check on resize
+                // Update renderer size for new layout
                 setTimeout(() => {
-                    forceLayoutVisibility();
-                    handleMobileResize();
+                    updateRendererForCurrentLayout();
                 }, 100);
             });
             
-            // Check for canvas periodically until it's created
+            // Handle orientation change
+            window.addEventListener('orientationchange', function() {
+                setTimeout(() => {
+                    handleResponsiveLayout();
+                    updateRendererForCurrentLayout();
+                }, 300);
+            });
+            
+            // Initialize UI interactions
+            console.log('About to initialize UI interactions...');
+            initializeCarouselInteractions();
+            initializeOptionInteractions();
+            initializePhotoButton();
+            initializeImagineButton();
+            
+            // Sync desktop metal select with ecommerce buttons
+            setTimeout(() => {
+                const metalSelect = document.getElementById('metal-type');
+                if (metalSelect) {
+                    metalSelect.addEventListener('change', function() {
+                        console.log('Desktop metal select changed to:', this.value);
+                        // Map material type back to UI button type
+                        let buttonType;
+                        switch(this.value) {
+                            case 'sterling-silver': buttonType = 'silver'; break;
+                            case 'gold-14k': buttonType = 'gold'; break;
+                            case 'rose-gold-14k': buttonType = 'rose-gold'; break;
+                            default: buttonType = 'silver';
+                        }
+                        
+                        // Update button states
+                        const metalButtons = document.querySelectorAll('.option-button[data-metal]');
+                        metalButtons.forEach(btn => {
+                            btn.classList.toggle('active', btn.getAttribute('data-metal') === buttonType);
+                        });
+                        
+                        updatePriceForMetal(buttonType);
+                    });
+                }
+            }, 1000);
+            
+            // Check for canvas and Three.js setup
             const checkForCanvas = setInterval(function() {
                 const canvas = document.querySelector('canvas');
-                if (canvas) {
+                if (canvas && window.viewer) {
                     clearInterval(checkForCanvas);
-                    console.log('Canvas found, moving to appropriate container');
-                    moveCanvasToMobileContainer();
-                    
-                    // Debug: Check canvas state after moving
-                    setTimeout(() => {
-                        debugCanvasState();
-                        forceCanvasVisibility();
-                    }, 200);
-                    
-                    // Start continuous canvas monitoring
-                    startCanvasMonitoring();
+                    console.log('Canvas and viewer found, initializing layout');
+                    updateRendererForCurrentLayout();
                 }
             }, 100);
-            // Carousel thumbnail interactions
-            const thumbnails = document.querySelectorAll('.carousel-thumbnail');
-            thumbnails.forEach(thumbnail => {
-                thumbnail.addEventListener('click', function() {
-                    // Remove active class from all thumbnails
-                    thumbnails.forEach(t => t.classList.remove('active'));
-                    // Add active class to clicked thumbnail
-                    this.classList.add('active');
-                    
-                    // Handle different view types
-                    const viewType = this.getAttribute('data-view');
-                    handleViewChange(viewType);
-                });
-            });
-            
-            // Metal type button interactions
-            const metalButtons = document.querySelectorAll('.option-button[data-metal]');
-            metalButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    // Remove active class from all metal buttons
-                    metalButtons.forEach(b => b.classList.remove('active'));
-                    // Add active class to clicked button
-                    this.classList.add('active');
-                    
-                    // Update metal type
-                    const metalType = this.getAttribute('data-metal');
-                    updateMetalType(metalType);
-                });
-            });
-            
-            // Add photo button interaction
-            const addPhotoButton = document.getElementById('mobile-add-photo');
-            if (addPhotoButton) {
-                addPhotoButton.addEventListener('click', function() {
-                    // Trigger file input
-                    const fileInput = document.getElementById('file-input');
-                    if (fileInput) {
-                        fileInput.click();
-                    }
-                });
-            }
-            
-            // Chain length selection
-            const chainLengthSelect = document.getElementById('mobile-chain-length');
-            if (chainLengthSelect) {
-                chainLengthSelect.addEventListener('change', function() {
-                    updateChainLength(this.value);
-                });
-            }
-            
-            // Engraving checkbox
-            const engravingCheckbox = document.getElementById('mobile-engraving');
-            if (engravingCheckbox) {
-                engravingCheckbox.addEventListener('change', function() {
-                    updateEngraving(this.checked);
-                });
-            }
         }
         
         // Handle view changes in carousel
@@ -2753,12 +3490,45 @@
                     break;
                 case 'front':
                     // Show front view image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/retrieverModel.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
                     break;
                 case 'side':
                     // Show side view image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/instructions.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
                     break;
-                case 'video':
-                    // Show video
+                case 'retriever-metal':
+                    // Show retriever metal image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/retrieverMetal.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'sailing':
+                    // Show sailing scene image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/sailingSceneProductPhoto.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'before':
+                    // Show before image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/before.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'jewelry':
+                    // Show jewelry image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/foreverAndEverJewelry.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
                     break;
             }
         }
@@ -3365,6 +4135,372 @@
                 }
             } else {
                 console.error('Viewer or renderer not found!');
+            }
+        }
+        
+        // Handle responsive layout switching
+        function handleResponsiveLayout() {
+            const isMobile = window.innerWidth <= 767;
+            const ecommerceLayout = document.querySelector('.ecommerce-layout');
+            
+            if (ecommerceLayout) {
+                // Update layout classes based on screen size
+                if (isMobile) {
+                    ecommerceLayout.classList.add('mobile-layout');
+                    ecommerceLayout.classList.remove('desktop-layout');
+                } else {
+                    ecommerceLayout.classList.add('desktop-layout');
+                    ecommerceLayout.classList.remove('mobile-layout');
+                }
+            }
+            
+            // Move UI menu to appropriate location
+            moveUIMenuToLocation(isMobile);
+        }
+        
+        // Move UI menu to desktop controls section or hide on mobile
+        function moveUIMenuToLocation(isMobile) {
+            const uiMenu = document.getElementById('ui-menu');
+            const uiMenuContainer = document.getElementById('ui-menu-container');
+            
+            if (!uiMenu) return;
+            
+            if (isMobile) {
+                // Hide UI menu on mobile
+                uiMenu.style.display = 'none';
+            } else {
+                // Show UI menu and move to desktop controls section
+                uiMenu.style.display = 'block';
+                if (uiMenuContainer && uiMenu.parentElement !== uiMenuContainer) {
+                    uiMenuContainer.appendChild(uiMenu);
+                }
+            }
+        }
+        
+        // Update Three.js renderer for current layout
+        function updateRendererForCurrentLayout() {
+            if (!window.viewer || !window.viewer.renderer) return;
+            
+            const canvasContainer = document.getElementById('canvas-container');
+            if (!canvasContainer) return;
+            
+            const containerRect = canvasContainer.getBoundingClientRect();
+            const width = Math.max(containerRect.width, 300);
+            const height = Math.max(containerRect.height, 300);
+            
+            console.log('Updating renderer size:', width, 'x', height);
+            
+            // Update renderer size
+            window.viewer.renderer.setSize(width, height);
+            
+            // Update camera aspect ratio
+            if (window.viewer.camera) {
+                window.viewer.camera.aspect = width / height;
+                window.viewer.camera.updateProjectionMatrix();
+            }
+            
+            // Force render
+            if (window.viewer.renderer.render && window.viewer.scene && window.viewer.camera) {
+                window.viewer.renderer.render(window.viewer.scene, window.viewer.camera);
+            }
+        }
+        
+        // Initialize carousel thumbnail interactions
+        function initializeCarouselInteractions() {
+            const thumbnails = document.querySelectorAll('.carousel-thumbnail');
+            thumbnails.forEach(thumbnail => {
+                thumbnail.addEventListener('click', function() {
+                    // Remove active class from all thumbnails
+                    thumbnails.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked thumbnail
+                    this.classList.add('active');
+                    
+                    // Handle different view types
+                    const viewType = this.getAttribute('data-view');
+                    handleViewChange(viewType);
+                });
+            });
+        }
+        
+        // Initialize product option interactions
+        function initializeOptionInteractions() {
+            console.log('Initializing option interactions...');
+            
+            // Metal type button interactions
+            const metalButtons = document.querySelectorAll('.option-button[data-metal]');
+            console.log('Found metal buttons:', metalButtons.length);
+            
+            if (metalButtons.length === 0) {
+                console.warn('No metal buttons found! Retrying in 500ms...');
+                setTimeout(initializeOptionInteractions, 500);
+                return;
+            }
+            
+            metalButtons.forEach(button => {
+                console.log('Adding click listener to button:', button.getAttribute('data-metal'));
+                button.addEventListener('click', function() {
+                    console.log('Metal button clicked:', this.getAttribute('data-metal'));
+                    
+                    // Remove active class from all metal buttons
+                    metalButtons.forEach(b => b.classList.remove('active'));
+                    // Add active class to clicked button
+                    this.classList.add('active');
+                    
+                    // Update metal type
+                    const metalType = this.getAttribute('data-metal');
+                    console.log('Calling updateMetalType with:', metalType);
+                    updateMetalType(metalType);
+                });
+            });
+            
+            // Chain length selection
+            const chainLengthSelect = document.getElementById('chain-length');
+            if (chainLengthSelect) {
+                chainLengthSelect.addEventListener('change', function() {
+                    updateChainLength(this.value);
+                });
+            }
+            
+            // Engraving checkbox
+            const engravingCheckbox = document.getElementById('engraving-checkbox');
+            if (engravingCheckbox) {
+                engravingCheckbox.addEventListener('change', function() {
+                    updateEngraving(this.checked);
+                });
+            }
+        }
+        
+        // Initialize add photo button
+        function initializePhotoButton() {
+            const addPhotoButton = document.getElementById('add-photo-btn');
+            if (addPhotoButton) {
+                addPhotoButton.addEventListener('click', function() {
+                    // Trigger file input
+                    const fileInput = document.getElementById('file-input');
+                    if (fileInput) {
+                        fileInput.click();
+                    }
+                });
+            }
+        }
+        
+        // Handle view changes from carousel
+        function handleViewChange(viewType) {
+            console.log('Changing view to:', viewType);
+            
+            const canvasContainer = document.getElementById('canvas-container');
+            const imageViewerContainer = document.getElementById('image-viewer-container');
+            const mainImageViewer = document.getElementById('main-image-viewer');
+            
+            // Hide both containers initially
+            if (canvasContainer) canvasContainer.style.display = 'none';
+            if (imageViewerContainer) imageViewerContainer.style.display = 'none';
+            
+            switch(viewType) {
+                case '3d':
+                    // Show 3D scene
+                    if (canvasContainer) {
+                        canvasContainer.style.display = 'block';
+                    }
+                    break;
+                case 'sample':
+                    // Show sample pendant image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/samplePendant.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'front':
+                    // Show front view image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/retrieverModel.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'side':
+                    // Show side view image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/instructions.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'retriever-metal':
+                    // Show retriever metal image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/retrieverMetal.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'before':
+                    // Show before image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/before.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'jewelry':
+                    // Show jewelry image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/foreverAndEverJewelry.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+                case 'sailing':
+                    // Show sailing scene image
+                    if (imageViewerContainer && mainImageViewer) {
+                        mainImageViewer.src = '/sailingSceneProductPhoto.png';
+                        imageViewerContainer.style.display = 'block';
+                    }
+                    break;
+            }
+        }
+        
+        // Update metal type
+        function updateMetalType(metalType) {
+            console.log('=== updateMetalType called ===');
+            console.log('Metal type requested:', metalType);
+            console.log('Window.viewer exists:', !!window.viewer);
+            console.log('Window.viewer.updateMetalMaterial exists:', !!(window.viewer && window.viewer.updateMetalMaterial));
+            
+            // Map ecommerce UI metal types to material types
+            let materialType;
+            switch(metalType) {
+                case 'silver':
+                    materialType = 'sterling-silver';
+                    break;
+                case 'gold':
+                    materialType = 'gold-14k';
+                    break;
+                case 'rose-gold':
+                    materialType = 'rose-gold-14k';
+                    break;
+                default:
+                    materialType = 'sterling-silver';
+            }
+            
+            console.log('Mapped to material type:', materialType);
+            
+            // Update the 3D material if viewer exists
+            if (window.viewer && window.viewer.updateMetalMaterial) {
+                console.log('Calling viewer.updateMetalMaterial...');
+                window.viewer.updateMetalMaterial(materialType);
+            } else {
+                console.warn('Viewer not ready yet. Retrying in 500ms...');
+                setTimeout(() => {
+                    if (window.viewer && window.viewer.updateMetalMaterial) {
+                        console.log('Retrying viewer.updateMetalMaterial...');
+                        window.viewer.updateMetalMaterial(materialType);
+                    } else {
+                        console.error('Viewer still not available after retry');
+                        console.log('Available viewer methods:', window.viewer ? Object.getOwnPropertyNames(Object.getPrototypeOf(window.viewer)) : 'No viewer');
+                    }
+                }, 500);
+            }
+            
+            // Update the original metal type select if it exists
+            const metalSelect = document.getElementById('metal-type');
+            if (metalSelect) {
+                console.log('Updating metal-type select to:', materialType);
+                metalSelect.value = materialType;
+                // Trigger change event to sync other UI
+                metalSelect.dispatchEvent(new Event('change'));
+            } else {
+                console.log('metal-type select not found');
+            }
+            
+            // Update price based on metal type (optional)
+            updatePriceForMetal(metalType);
+        }
+        
+        // Update chain length
+        function updateChainLength(length) {
+            console.log('Updating chain length to:', length);
+            // Add chain length update logic here
+        }
+        
+        // Update engraving
+        function updateEngraving(enabled) {
+            console.log('Engraving enabled:', enabled);
+            // Add engraving update logic here
+        }
+        
+        // Update price based on metal type
+        function updatePriceForMetal(metalType) {
+            const priceElement = document.querySelector('.product-price');
+            if (!priceElement) return;
+            
+            let basePrice = 89.99;
+            let price = basePrice;
+            
+            switch(metalType) {
+                case 'silver':
+                    price = basePrice; // Sterling silver base price
+                    break;
+                case 'gold':
+                    price = basePrice + 150; // Gold upcharge
+                    break;
+                case 'rose-gold':
+                    price = basePrice + 120; // Rose gold upcharge
+                    break;
+            }
+            
+            priceElement.textContent = `$${price.toFixed(2)}`;
+        }
+        
+        // Initialize Imagine button functionality
+        function initializeImagineButton() {
+            console.log('Initializing Imagine button...');
+            
+            const imagineBtn = document.getElementById('imagine-btn');
+            const promptContainer = document.getElementById('ai-prompt-container');
+            const promptInput = document.getElementById('ai-prompt-input');
+            const generateBtn = document.getElementById('generate-ai-btn');
+            const cancelBtn = document.getElementById('cancel-ai-btn');
+            
+            if (!imagineBtn) {
+                console.warn('Imagine button not found');
+                return;
+            }
+            
+            // Show/hide prompt container
+            imagineBtn.addEventListener('click', function() {
+                console.log('Imagine button clicked');
+                if (promptContainer.style.display === 'none') {
+                    promptContainer.style.display = 'block';
+                    promptInput.focus();
+                } else {
+                    promptContainer.style.display = 'none';
+                }
+            });
+            
+            // Cancel button
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function() {
+                    console.log('Cancel AI prompt');
+                    promptContainer.style.display = 'none';
+                    promptInput.value = '';
+                });
+            }
+            
+            // Generate button
+            if (generateBtn) {
+                generateBtn.addEventListener('click', function() {
+                    const prompt = promptInput.value.trim();
+                    console.log('Generate AI image with prompt:', prompt);
+                    
+                    if (!prompt) {
+                        alert('Please enter a description for your AI-generated image.');
+                        return;
+                    }
+                    
+                    // TODO: Integrate with AI image generation service
+                    // For now, show a placeholder message
+                    alert(`AI Generation Coming Soon!\n\nYour prompt: "${prompt}"\n\nThis feature will generate a custom image based on your description and automatically create a pendant from it.`);
+                    
+                    // Hide the prompt container
+                    promptContainer.style.display = 'none';
+                    promptInput.value = '';
+                });
             }
         }
     </script>

@@ -24,7 +24,13 @@ const METAL_MATERIALS = {
         envMapIntensity: 1.0
     },
     'gold-14k': {
-        color: 0xDAA520,
+        color: 0xE7C76E,
+        metalness: 1.0,
+        roughness: 0.1,
+        envMapIntensity: 1.0
+    },
+    'rose-gold-14k': {
+        color: 0xE8B4A0,
         metalness: 1.0,
         roughness: 0.1,
         envMapIntensity: 1.0
@@ -559,15 +565,22 @@ function showLoadingOverlay() {
     bar.style.width = '0%';
     let steps = [
         { t: 0, text: 'Analyzing image...', pct: 10 },
-        { t: 1200, text: 'Detecting features...', pct: 30 },
-        { t: 2500, text: 'Processing image...', pct: 55 },
-        { t: 4000, text: 'Generating 3D Geometries...', pct: 80 },
-        { t: 6000, text: 'Finalizing model...', pct: 100 }
+        { t: 800, text: 'Detecting features...', pct: 30 },
+        { t: 1600, text: 'Processing image...', pct: 55 },
+        { t: 2400, text: 'Generating 3D Geometries...', pct: 80 },
+        { t: 3200, text: 'Finalizing model...', pct: 100 }
     ];
     steps.forEach(step => {
         setTimeout(() => {
             status.textContent = step.text;
             bar.style.width = step.pct + '%';
+            
+            // Hide overlay when finalizing is complete
+            if (step.pct === 100) {
+                setTimeout(() => {
+                    hideLoadingOverlay();
+                }, 800); // Brief delay after showing 100%
+            }
         }, step.t);
     });
 }
@@ -1364,8 +1377,7 @@ class HeightfieldViewer {
             }
             // Scroll to the scene container
             document.getElementById('scene-container').scrollIntoView({ behavior: 'smooth' });
-            hideLoadingOverlay();
-        }, 7000);
+        }, 100); // Process immediately since loading overlay is handled separately
     }
 
     loadImage(fileOrBlob) {
