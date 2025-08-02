@@ -1314,12 +1314,40 @@ class HeightfieldViewer {
         }
     }
 
-    async processImage(file) {
-        showLoadingOverlay();
+    async processImage(file, autoCrop = false, showLoading = true) {
+        if (showLoading) {
+            showLoadingOverlay();
+        }
         setTimeout(async () => {
             const image = await this.loadImage(file);
-            const heightfieldData = this.generateHeightfieldData(image);
-            this.createHeightfieldMesh(heightfieldData);
+            
+            // If auto-crop is enabled, crop the top portion of the image
+            if (autoCrop) {
+                console.log('🖼️ Auto-cropping top portion of image');
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set canvas size to half the image height (top portion)
+                canvas.width = image.width;
+                canvas.height = Math.floor(image.height / 2);
+                
+                // Draw only the top half of the image
+                ctx.drawImage(image, 0, 0, image.width, canvas.height, 0, 0, canvas.width, canvas.height);
+                
+                // Convert back to image
+                const croppedImage = new Image();
+                croppedImage.src = canvas.toDataURL();
+                await new Promise(resolve => {
+                    croppedImage.onload = resolve;
+                });
+                
+                console.log('✅ Image auto-cropped to top portion');
+                const heightfieldData = this.generateHeightfieldData(croppedImage);
+                this.createHeightfieldMesh(heightfieldData);
+            } else {
+                const heightfieldData = this.generateHeightfieldData(image);
+                this.createHeightfieldMesh(heightfieldData);
+            }
             // Show the canvas container when image is processed
             const canvasContainer = document.getElementById('canvas-container');
             
@@ -3729,6 +3757,29 @@ try {
 // Add OpenAI functions to viewer object for modal access
 window.viewer.generateImageWithOpenAI = generateImageWithOpenAI;
 window.viewer.uploadDalleImageToS3 = uploadDalleImageToS3;
+
+// Load default image (instructions.png) on page load
+setTimeout(() => {
+    if (window.viewer) {
+        console.log('🖼️ Loading default image: instructions.png');
+        
+        // Fetch the instructions.png image
+        fetch('/instructions.png')
+            .then(response => response.blob())
+            .then(blob => {
+                // Create a file object from the blob
+                const file = new File([blob], 'instructions.png', { type: 'image/png' });
+                
+                // Process the image with auto-crop (top portion) and no loading screen
+                window.viewer.processImage(file, true, false); // true for auto-crop, false for no loading screen
+                
+                console.log('✅ Default image loaded successfully');
+            })
+            .catch(error => {
+                console.error('❌ Failed to load default image:', error);
+            });
+    }
+}, 1000); // Wait 1 second for viewer to be fully initialized
 
 // Show deployment GUID in lower left
 fetch('./version.json')
