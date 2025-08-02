@@ -41,6 +41,28 @@
             box-sizing: border-box;
         }
         
+        .hero-title {
+            font-weight: 800;
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            line-height: 1.1;
+            color: white;
+            max-width: 400px;
+            word-wrap: break-word;
+            text-align: center !important;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.4em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            line-height: 1.6;
+            color: white;
+            max-width: 350px;
+            word-wrap: break-word;
+            text-align: center !important;
+        }
+        
         .upload-container {
             background: #f8f9fa;
             display: block;
@@ -1336,7 +1358,44 @@
         @media (max-width: 480px) {
             /* Small Mobile Container Layout */
             .hero-container {
-                padding: 15px;
+                padding: 60px 20px 40px 20px;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
+                min-height: 100vh;
+                box-sizing: border-box;
+            }
+            
+            /* Force hero text centering with maximum specificity */
+            .hero-container h1,
+            .hero-container .hero-title,
+            .hero-container p,
+            .hero-container .hero-subtitle {
+                text-align: center !important;
+            }
+            
+            /* Mobile hero container improvements */
+            .hero-container > div {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 20px 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 40px !important;
+            }
+            
+            .hero-container > div > div {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 15px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
             }
             
             .upload-container {
@@ -1348,14 +1407,49 @@
             }
             
             /* Small Mobile Hero Section */
-            .hero-container h1 {
-                font-size: 2em;
-                margin-bottom: 15px;
+            .hero-title {
+                font-size: 2.2em !important;
+                margin-bottom: 20px !important;
+                max-width: 100% !important;
+                text-align: center !important;
+                line-height: 1.1 !important;
+                font-weight: 800 !important;
+                color: white !important;
             }
             
-            .hero-container p {
-                font-size: 1em;
-                margin-bottom: 25px;
+            .hero-subtitle {
+                font-size: 1.1em !important;
+                margin-bottom: 30px !important;
+                max-width: 100% !important;
+                text-align: center !important;
+                line-height: 1.5 !important;
+                color: white !important;
+                opacity: 0.9 !important;
+            }
+            
+            /* Mobile feature badges */
+            .hero-container .hero-subtitle + div {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 12px !important;
+                align-items: center !important;
+                justify-content: center !important;
+                margin-top: 20px !important;
+            }
+            
+            .hero-container .hero-subtitle + div > div {
+                width: auto !important;
+                min-width: 200px !important;
+                padding: 12px 20px !important;
+                font-size: 0.9em !important;
+            }
+            
+            /* Mobile sample image */
+            .hero-container img {
+                width: 250px !important;
+                height: 250px !important;
+                margin-top: 40px !important;
+                margin-bottom: 20px !important;
             }
             
             /* Small Mobile Upload Section */
@@ -2577,18 +2671,29 @@
         <div id="hero-container" class="hero-container">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; height: 100%; padding: 40px;">
                 <!-- Left: Text Content -->
-                <div style="text-align: left;">
-                    <h1 style="font-weight: 800; font-size: 3.5em; margin-bottom: 20px; line-height: 1.1; color: white;">Custom Photo Pendant</h1>
-                    <p style="font-size: 1.4em; margin-bottom: 30px; opacity: 0.9; line-height: 1.6; color: white;">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you wherever you go, furever 🐶❤️</p>
+                <div style="text-align: center;">
+                    <h1 class="hero-title">Custom Photo Pendant</h1>
+                    <p class="hero-subtitle">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you wherever you go, furever 🐶❤️</p>
                     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                        <div style="background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 50px; backdrop-filter: blur(10px);">
-                            <span style="font-weight: 600; color: white;">✨ High Quality</span>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 50px; backdrop-filter: blur(10px);">
-                            <span style="font-weight: 600; color: white;">🚀 Fast Delivery</span>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 50px; backdrop-filter: blur(10px);">
-                            <span style="font-weight: 600; color: white;">🥹 Precious Results</span>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; justify-content: center; max-width: 400px;">
+                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
+                                <span style="font-weight: 600; color: white; font-size: 0.9em;">✨ High Quality</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
+                                <span style="font-weight: 600; color: white; font-size: 0.9em;">🚀 Fast Delivery</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
+                                <span style="font-weight: 600; color: white; font-size: 0.9em;">🥹 Precious Results</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
+                                <span style="font-weight: 600; color: white; font-size: 0.9em;">🎨 Custom Design</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
+                                <span style="font-weight: 600; color: white; font-size: 0.9em;">🔒 Secure Payment</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
+                                <span style="font-weight: 600; color: white; font-size: 0.9em;">🌟 5-Star Reviews</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2597,73 +2702,11 @@
                 <div style="text-align: center;">
                     <div style="position: relative; display: inline-block;">
                         <img src="/samplePendant.png" alt="Sample Pendant" style="width: 300px; height: 300px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3);">
-                        <div style="position: absolute; top: -10px; right: -10px; background: #ff6b6b; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">Sample</div>
+                        <div style="position: absolute; top: 10px; right: 10px; background: #ff6b6b; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">Sample</div>
                     </div>
-
-                    <div class="menu-section" style="display: none;">
-                        <div class="menu-header">
-                            <h3>Jumpring Settings</h3>
-                            <button class="toggle-button">▼</button>
-                        </div>
-                        <div class="menu-content">
-                            <div class="control-group">
-                                <label>Jumpring Size</label>
-                                <select id="jumpring-size">
-                                    <option value="small">Small (4mm)</option>
-                                    <option value="medium">Medium (6mm)</option>
-                                    <option value="large">Large (8mm)</option>
-                                </select>
-                            </div>
-                            <div class="control-group">
-                                <label for="highlight-layer-color">Highlight Color</label>
-                                <input type="color" id="highlight-layer-color" value="#ffffff">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="menu-section" style="display: none;">
-                        <div class="menu-header">
-                            <h3>Camera Controls</h3>
-                            <button class="toggle-button">▼</button>
-                        </div>
-                        <div class="menu-content">
-                            <div class="control-group">
-                                <label>Field of View</label>
-                                <input type="range" id="fov" min="30" max="120" value="75">
-                            </div>
-                            <div class="control-group">
-                                <label>Camera Distance</label>
-                                <input type="range" id="camera-distance" min="10" max="200" value="50">
-                            </div>
-                            <div class="control-group">
-                                <label><input type="checkbox" id="rotate-toggle"> Rotate Object</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="menu-section" style="display: none;">
-                        <div class="menu-header">
-                            <h3>Scene Settings</h3>
-                            <button class="toggle-button">▼</button>
-                        </div>
-                        <div class="menu-content">
-                            <div class="control-group">
-                                <label>Light Intensity</label>
-                                <input type="range" id="light-intensity" min="0" max="2" step="0.1" value="0.8">
-                            </div>
-                            <div class="control-group">
-                                <label>Material Color</label>
-                                <input type="color" id="material-color" value="#808080">
-                            </div>
-                            <div class="control-group">
-                                <label>Material Shine</label>
-                                <input type="range" id="material-shine" min="0" max="100" value="30">
-                            </div>
-                        </div>
-                    </div>
-
-
                 </div>
+                
+
             </div>
         </div>
 
@@ -2758,12 +2801,7 @@
                                     <div style="width: 8px; height: 8px; background: #ecf0f1; border-radius: 50%;"></div>
                                 </div>
                                 
-                                <!-- Reference Circle (25mm) -->
-                                <svg width="200" height="200" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                                    <circle cx="100" cy="100" r="47.24" stroke="#34495e" stroke-width="1.5" fill="none" stroke-dasharray="3,3" opacity="0.6"></circle>
-                                    <text x="100" y="85" text-anchor="middle" font-family="'Courier New', monospace" font-size="11" fill="#34495e" opacity="0.8" font-weight="600">25mm</text>
-                                    <text x="100" y="115" text-anchor="middle" font-family="'Courier New', monospace" font-size="9" fill="#34495e" opacity="0.6">Reference</text>
-                                </svg>
+
                             </div>
                             
                             <!-- Canvas Controls Message -->
@@ -2780,6 +2818,61 @@
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Demo Message -->
+                            <div id="demo-message" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: rgba(220, 53, 69, 0.9); color: #ffffff; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1001; pointer-events: none; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.3); text-align: center; max-width: 400px; display: none;">
+                                <div style="margin-bottom: 4px;">🎯 <strong>Best Practices</strong></div>
+                                <div style="font-size: 12px; opacity: 0.9; line-height: 1.3;">
+                                    This showcases good/bad practices and results.<br>
+                                    Original image available in carousel below with some pointers.
+                                </div>
+                            </div>
+                            
+                            <style>
+                                @media (max-width: 768px) {
+                                    #canvas-controls-message {
+                                        top: 8px !important;
+                                        right: 8px !important;
+                                        padding: 6px 8px !important;
+                                        border-radius: 4px !important;
+                                        font-size: 8px !important;
+                                        max-width: 140px !important;
+                                        line-height: 1.2 !important;
+                                    }
+                                    
+                                    #canvas-controls-message > div:first-child {
+                                        margin-bottom: 3px !important;
+                                        font-size: 9px !important;
+                                    }
+                                    
+                                    #canvas-controls-message > div:last-child > div {
+                                        margin-bottom: 2px !important;
+                                        font-size: 7px !important;
+                                    }
+                                    
+                                    #canvas-controls-message > div:last-child > div:last-child {
+                                        font-size: 6px !important;
+                                        margin-top: 3px !important;
+                                        padding-top: 3px !important;
+                                    }
+                                    
+                                    #demo-message {
+                                        bottom: 40px !important;
+                                        padding: 8px 12px !important;
+                                        font-size: 11px !important;
+                                        max-width: 280px !important;
+                                    }
+                                    
+                                    #demo-message > div:first-child {
+                                        font-size: 12px !important;
+                                        margin-bottom: 3px !important;
+                                    }
+                                    
+                                    #demo-message > div:last-child {
+                                        font-size: 9px !important;
+                                    }
+                                }
+                            </style>
                         </div>
                         
                         <!-- Image Viewer Container -->

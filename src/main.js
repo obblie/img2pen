@@ -703,6 +703,11 @@ class HeightfieldViewer {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
+        
+        // Lock the pendant in place - disable panning but allow rotation
+        this.controls.enablePan = false;      // Disable panning (two-finger drag)
+        this.controls.enableRotate = true;    // Enable rotation (single-finger drag)
+        this.controls.enableZoom = true;      // Keep zoom enabled for viewing details
 
         // Use Poly Haven HDRI for environment map
         const rgbeLoader = new RGBELoader();
@@ -1347,6 +1352,14 @@ class HeightfieldViewer {
             } else {
                 const heightfieldData = this.generateHeightfieldData(image);
                 this.createHeightfieldMesh(heightfieldData);
+                
+                // Hide demo message when user uploads their own image (not for initial load)
+                if (!autoCrop) {
+                    const demoMessage = document.getElementById('demo-message');
+                    if (demoMessage) {
+                        demoMessage.style.display = 'none';
+                    }
+                }
             }
             // Show the canvas container when image is processed
             const canvasContainer = document.getElementById('canvas-container');
@@ -3548,6 +3561,12 @@ class HeightfieldViewer {
             scale: 1,
             rotation: 0
         };
+        
+        // Hide demo message when scene is reset
+        const demoMessage = document.getElementById('demo-message');
+        if (demoMessage) {
+            demoMessage.style.display = 'none';
+        }
     }
     
     // Cleanup method for proper disposal
@@ -3602,12 +3621,6 @@ class HeightfieldViewer {
     // Ruler overlay system
     initializeRulerOverlay() {
         this.createRulerMarkings();
-        this.updateReferenceCircle();
-        
-        // Update ruler on window resize only (reference circle stays fixed)
-        window.addEventListener('resize', () => {
-            this.updateReferenceCircle();
-        });
     }
     
     setupRulerToggle() {
@@ -3730,18 +3743,7 @@ class HeightfieldViewer {
         }
     }
     
-    updateReferenceCircle() {
-        const referenceCircle = document.getElementById('reference-circle');
-        if (!referenceCircle) return;
-        
-        // Keep the reference circle at a fixed size representing 25mm
-        // This should NOT scale with the 3D scene - it's a fixed reference
-        const fixedSize = 200; // pixels - represents 25mm at a standard viewing distance
-        
-        // Update circle size to fixed size
-        referenceCircle.style.width = `${fixedSize}px`;
-        referenceCircle.style.height = `${fixedSize}px`;
-    }
+
 }
 
 // Initialize the viewer
@@ -3772,6 +3774,12 @@ setTimeout(() => {
                 
                 // Process the image with auto-crop (top portion) and no loading screen
                 window.viewer.processImage(file, true, false); // true for auto-crop, false for no loading screen
+                
+                // Show demo message for initial load
+                const demoMessage = document.getElementById('demo-message');
+                if (demoMessage) {
+                    demoMessage.style.display = 'block';
+                }
                 
                 console.log('✅ Default image loaded successfully');
             })
