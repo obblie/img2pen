@@ -3040,6 +3040,29 @@
         <button id="notification-close" style="background:none;border:none;color:white;float:right;font-size:18px;cursor:pointer;margin-left:10px;">&times;</button>
     </div>
 
+    <!-- AI Prompt Modal -->
+    <div id="ai-prompt-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:5000;backdrop-filter:blur(5px);">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:15px;box-shadow:0 20px 40px rgba(0,0,0,0.3);max-width:500px;width:90%;">
+            <div style="text-align:center;margin-bottom:20px;">
+                <h2 style="margin:0;color:#333;font-size:24px;">✨ Imagine with AI</h2>
+                <p style="margin:10px 0 0 0;color:#666;font-size:16px;">Describe your dream pendant and we'll create it for you</p>
+            </div>
+            
+            <div style="margin-bottom:20px;">
+                <textarea id="ai-prompt-input-modal" placeholder="Describe what you want to create... (e.g., 'a majestic golden eagle in flight', 'abstract geometric patterns', 'a beautiful rose garden')" rows="4" style="width:100%;padding:15px;border:2px solid #e0e0e0;border-radius:8px;font-size:16px;resize:vertical;box-sizing:border-box;"></textarea>
+            </div>
+            
+            <div style="display:flex;gap:10px;justify-content:center;">
+                <button id="generate-ai-btn-modal" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;border:none;padding:12px 24px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;">
+                    <span style="margin-right:8px;">🎨</span>Generate
+                </button>
+                <button id="cancel-ai-btn-modal" style="background:#f5f5f5;color:#666;border:2px solid #e0e0e0;padding:12px 24px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
 
 
 
@@ -3240,6 +3263,11 @@
             
             // Mobile Shopify-style interactions
             initializeMobileInteractions();
+            
+            // Initialize product header with default values
+            setTimeout(() => {
+                updateProductHeader();
+            }, 200);
             
             // Force initial layout visibility
             setTimeout(() => {
@@ -3463,7 +3491,7 @@
                             btn.classList.toggle('active', btn.getAttribute('data-metal') === buttonType);
                         });
                         
-                        updatePriceForMetal(buttonType);
+                        updateProductHeader();
                     });
                 }
             }, 1000);
@@ -3543,13 +3571,15 @@
         // Update chain length
         function updateChainLength(length) {
             console.log('Updating chain length to:', length);
-            // Update the chain length in the 3D model
+            // Add chain length update logic here
+            updateProductHeader();
         }
         
         // Update engraving option
         function updateEngraving(enabled) {
             console.log('Engraving enabled:', enabled);
-            // Show/hide engraving options
+            // Add engraving update logic here
+            updateProductHeader();
         }
         
         // Move 3D canvas between desktop and mobile containers
@@ -4409,7 +4439,7 @@
             }
             
             // Update price based on metal type (optional)
-            updatePriceForMetal(metalType);
+            updateProductHeader();
         }
         
         // Update chain length
@@ -4425,10 +4455,21 @@
         }
         
         // Update price based on metal type
-        function updatePriceForMetal(metalType) {
+        function updateProductHeader() {
             const priceElement = document.querySelector('.product-price');
-            if (!priceElement) return;
+            const subtitleElement = document.querySelector('.product-subtitle');
+            const chainSelect = document.getElementById('chain-length');
+            const engravingCheckbox = document.getElementById('engraving-checkbox');
             
+            if (!priceElement || !subtitleElement) return;
+            
+            // Get current selections
+            const activeMetalButton = document.querySelector('.option-button.active');
+            const metalType = activeMetalButton ? activeMetalButton.getAttribute('data-metal') : 'silver';
+            const chainLength = chainSelect ? chainSelect.value : '18';
+            const engravingEnabled = engravingCheckbox ? engravingCheckbox.checked : false;
+            
+            // Calculate price
             let basePrice = 89.99;
             let price = basePrice;
             
@@ -4444,7 +4485,50 @@
                     break;
             }
             
+            // Add engraving cost
+            if (engravingEnabled) {
+                price += 49;
+            }
+            
+            // Update price
             priceElement.textContent = `$${price.toFixed(2)}`;
+            
+            // Update subtitle
+            let metalName = 'Sterling Silver';
+            switch(metalType) {
+                case 'silver':
+                    metalName = 'Sterling Silver';
+                    break;
+                case 'gold':
+                    metalName = '14k Yellow Gold';
+                    break;
+                case 'rose-gold':
+                    metalName = '14k Rose Gold';
+                    break;
+            }
+            
+            let chainName = '18" Princess Length';
+            switch(chainLength) {
+                case '16':
+                    chainName = '16" Choker Length';
+                    break;
+                case '18':
+                    chainName = '18" Princess Length';
+                    break;
+                case '20':
+                    chainName = '20" Matinee Length';
+                    break;
+                case '24':
+                    chainName = '24" Opera Length';
+                    break;
+            }
+            
+            let subtitle = `${metalName} with ${chainName}`;
+            if (engravingEnabled) {
+                subtitle += ' + Engraving';
+            }
+            
+            subtitleElement.textContent = subtitle;
         }
         
         // Initialize Imagine button functionality
@@ -4452,33 +4536,33 @@
             console.log('Initializing Imagine button...');
             
             const imagineBtn = document.getElementById('imagine-btn');
-            const promptContainer = document.getElementById('ai-prompt-container');
-            const promptInput = document.getElementById('ai-prompt-input');
-            const generateBtn = document.getElementById('generate-ai-btn');
-            const cancelBtn = document.getElementById('cancel-ai-btn');
+            const promptModal = document.getElementById('ai-prompt-modal');
+            const promptInput = document.getElementById('ai-prompt-input-modal');
+            const generateBtn = document.getElementById('generate-ai-btn-modal');
+            const cancelBtn = document.getElementById('cancel-ai-btn-modal');
             
             if (!imagineBtn) {
                 console.warn('Imagine button not found');
                 return;
             }
             
-            // Show/hide prompt container
+            // Show modal when Imagine button is clicked
             imagineBtn.addEventListener('click', function() {
                 console.log('Imagine button clicked');
-                if (promptContainer.style.display === 'none') {
-                    promptContainer.style.display = 'block';
-                    promptInput.focus();
-                } else {
-                    promptContainer.style.display = 'none';
-                }
+                promptModal.style.display = 'block';
+                promptInput.focus();
+                // Prevent body scroll when modal is open
+                document.body.style.overflow = 'hidden';
             });
             
-            // Cancel button
+            // Cancel button - hide modal
             if (cancelBtn) {
                 cancelBtn.addEventListener('click', function() {
                     console.log('Cancel AI prompt');
-                    promptContainer.style.display = 'none';
+                    promptModal.style.display = 'none';
                     promptInput.value = '';
+                    // Restore body scroll
+                    document.body.style.overflow = 'auto';
                 });
             }
             
@@ -4497,11 +4581,31 @@
                     // For now, show a placeholder message
                     alert(`AI Generation Coming Soon!\n\nYour prompt: "${prompt}"\n\nThis feature will generate a custom image based on your description and automatically create a pendant from it.`);
                     
-                    // Hide the prompt container
-                    promptContainer.style.display = 'none';
+                    // Hide the modal
+                    promptModal.style.display = 'none';
                     promptInput.value = '';
+                    // Restore body scroll
+                    document.body.style.overflow = 'auto';
                 });
             }
+            
+            // Close modal when clicking outside of it
+            promptModal.addEventListener('click', function(e) {
+                if (e.target === promptModal) {
+                    promptModal.style.display = 'none';
+                    promptInput.value = '';
+                    document.body.style.overflow = 'auto';
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && promptModal.style.display === 'block') {
+                    promptModal.style.display = 'none';
+                    promptInput.value = '';
+                    document.body.style.overflow = 'auto';
+                }
+            });
         }
     </script>
     
