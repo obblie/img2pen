@@ -2555,6 +2555,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
 </head>
 <body>
+
+    
+    <!-- Mobile Debug Panel -->
+    <div id="mobile-debug" style="display:none;position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.9);color:white;padding:15px;border-radius:8px;z-index:9999;max-width:300px;font-family:monospace;font-size:12px;">
+        <div id="debug-content"></div>
+        <button onclick="this.parentElement.style.display='none'" style="float:right;background:red;color:white;border:none;padding:2px 6px;margin-top:5px;">X</button>
+    </div>
+    
     <!-- Main Site Container -->
     <div id="main-site-container" style="width: 100vw; min-height: 100vh; position: relative; margin: 0; padding: 0; overflow-x: hidden;">
         
@@ -3074,15 +3082,15 @@
             <div class="menu-content">
                 <div class="control-group">
                     <label>Jumpring Size</label>
-                    <select id="jumpring-size">
+                    <select id="jumpring-size-duplicate">
                         <option value="small">Small (4mm)</option>
                         <option value="medium">Medium (6mm)</option>
                         <option value="large">Large (8mm)</option>
                     </select>
                 </div>
                 <div class="control-group">
-                    <label for="highlight-layer-color">Highlight Color</label>
-                    <input type="color" id="highlight-layer-color" value="#ffffff">
+                    <label for="highlight-layer-color-duplicate">Highlight Color</label>
+                    <input type="color" id="highlight-layer-color-duplicate" value="#ffffff">
                 </div>
             </div>
         </div>
@@ -3095,14 +3103,14 @@
             <div class="menu-content">
                 <div class="control-group">
                     <label>Field of View</label>
-                    <input type="range" id="fov" min="30" max="120" value="75">
+                    <input type="range" id="fov-duplicate" min="30" max="120" value="75">
                 </div>
                 <div class="control-group">
                     <label>Camera Distance</label>
-                    <input type="range" id="camera-distance" min="10" max="200" value="50">
+                    <input type="range" id="camera-distance-duplicate" min="10" max="200" value="50">
                 </div>
                 <div class="control-group">
-                    <label><input type="checkbox" id="rotate-toggle"> Rotate Object</label>
+                    <label><input type="checkbox" id="rotate-toggle-duplicate"> Rotate Object</label>
                 </div>
             </div>
         </div>
@@ -3115,15 +3123,15 @@
             <div class="menu-content">
                 <div class="control-group">
                     <label>Light Intensity</label>
-                    <input type="range" id="light-intensity" min="0" max="2" step="0.1" value="0.8">
+                    <input type="range" id="light-intensity-duplicate" min="0" max="2" step="0.1" value="0.8">
                 </div>
                 <div class="control-group">
                     <label>Material Color</label>
-                    <input type="color" id="material-color" value="#808080">
+                    <input type="color" id="material-color-duplicate" value="#808080">
                 </div>
                 <div class="control-group">
                     <label>Material Shine</label>
-                    <input type="range" id="material-shine" min="0" max="100" value="30">
+                    <input type="range" id="material-shine-duplicate" min="0" max="100" value="30">
                 </div>
             </div>
         </div>

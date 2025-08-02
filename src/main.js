@@ -98,13 +98,17 @@ function showNotification(message, type = 'success') {
 }
 
 // Configuration
-const BACKEND_URL = 'https://img2pen-s3-backend.onrender.com'; // S3 backend for file uploads
 // Use local proxy for mobile devices to avoid CORS/network issues
 const isMobileDevice = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
 const isLocalDevelopment = window.location.hostname === 'localhost' || window.location.hostname.includes('192.168.');
-const OPENAI_BACKEND_URL = (isMobileDevice && isLocalDevelopment) 
-    ? window.location.origin  // Use local proxy
-    : 'https://img2pen-openai-backend.onrender.com'; // Use direct URL for desktop
+
+const BACKEND_URL = isLocalDevelopment
+    ? window.location.origin  // Use local proxy for all local development
+    : 'https://img2pen-s3-backend.onrender.com'; // Use direct URL for production
+
+const OPENAI_BACKEND_URL = isLocalDevelopment
+    ? window.location.origin  // Use local proxy for all local development
+    : 'https://img2pen-openai-backend.onrender.com'; // Use direct URL for production
 
 console.log('🔧 Backend URL configured:', {
     isMobile: isMobileDevice,
@@ -845,7 +849,15 @@ class HeightfieldViewer {
         // Handle prompt submit for AI image generation
         const promptSubmitBtn = document.getElementById('prompt-submit');
         const promptInput = document.getElementById('prompt-input');
+        console.log('🔧 Looking for AI generation elements:', {
+            promptSubmitBtn: !!promptSubmitBtn,
+            promptInput: !!promptInput,
+            promptSubmitBtnElement: promptSubmitBtn,
+            promptInputElement: promptInput
+        });
+        
         if (promptSubmitBtn && promptInput) {
+            console.log('✅ Found AI generation elements, setting up event listeners');
             // Add mobile debugging info
             const isMobile = /Mobile|Android|iPhone|iPad/.test(navigator.userAgent);
             console.log('🔧 AI Generation Setup:', {
@@ -857,16 +869,19 @@ class HeightfieldViewer {
             });
             
             promptSubmitBtn.addEventListener('click', async () => {
+                console.log('🔴 PROMPT SUBMIT BUTTON CLICKED!');
                 const prompt = promptInput.value.trim();
                 console.log('🎯 Generate button clicked:', { prompt, length: prompt.length });
                 
                 if (!prompt) {
+                    console.log('❌ No prompt provided, showing notification');
                     showNotification('Please enter a prompt to generate an image', 'error');
                     return;
                 }
 
                 try {
                     console.log('🎨 Starting image generation with prompt:', prompt);
+                    console.log('🎨 About to call generateImageWithOpenAI...');
                     const imageDataUrl = await generateImageWithOpenAI(prompt);
                     console.log('✅ Image generated, data URL length:', imageDataUrl ? imageDataUrl.length : 'null');
                     
@@ -907,6 +922,13 @@ class HeightfieldViewer {
                     e.preventDefault();
                     promptSubmitBtn.click();
                 }
+            });
+        } else {
+            console.error('❌ AI generation elements not found:', {
+                promptSubmitBtn: !!promptSubmitBtn,
+                promptInput: !!promptInput,
+                allElementsWithPrompt: document.querySelectorAll('[id*="prompt"]'),
+                allButtons: document.querySelectorAll('button')
             });
         }
     }
@@ -3555,6 +3577,12 @@ class HeightfieldViewer {
         const horizontalRuler = document.getElementById('horizontal-ruler');
         const verticalRuler = document.getElementById('vertical-ruler');
         
+        // Check if ruler elements exist before proceeding
+        if (!horizontalRuler || !verticalRuler) {
+            console.log('⚠️ Ruler elements not found, skipping ruler initialization');
+            return;
+        }
+        
         // Clear existing markings
         horizontalRuler.innerHTML = '';
         verticalRuler.innerHTML = '';
@@ -3808,14 +3836,72 @@ async function generateImageWithOpenAI(prompt) {
         
         document.getElementById('loading-status').textContent = 'Processing generated image...';
         
+        // Enhanced image data validation
         if (!data.imageData) {
             console.error('❌ No image data in response');
             throw new Error('No image data received from AI generation');
         }
+        
+        if (typeof data.imageData !== 'string') {
+            console.error('❌ Image data is not a string:', typeof data.imageData);
+            throw new Error('Invalid image data format received');
+        }
+        
+        if (data.imageData.length === 0) {
+            console.error('❌ Image data is empty string');
+            throw new Error('Empty image data received');
+        }
+        
+        if (data.imageData.length < 100) {
+            console.error('❌ Image data too short:', data.imageData.length, 'content:', data.imageData);
+            throw new Error('Image data appears to be invalid (too short)');
+        }
+        
+        console.log('✅ Image data validation passed:', {
+            type: typeof data.imageData,
+            length: data.imageData.length,
+            firstChars: data.imageData.substring(0, 50),
+            lastChars: data.imageData.substring(data.imageData.length - 50)
+        });
 
-        // Convert base64 to data URL
-        const dataUrl = `data:image/png;base64,${data.imageData}`;
-        console.log('✅ Converted to data URL, length:', dataUrl.length);
+        // Check if imageData is already a data URL or needs conversion
+        let dataUrl;
+        if (data.imageData.startsWith('data:')) {
+            // Already a data URL
+            dataUrl = data.imageData;
+            console.log('✅ Image data is already a data URL, length:', dataUrl.length);
+        } else {
+            // Convert base64 to data URL
+            dataUrl = `data:image/png;base64,${data.imageData}`;
+            console.log('✅ Converted base64 to data URL, length:', dataUrl.length);
+        }
+        console.log('✅ Data URL preview:', dataUrl.substring(0, 100) + '...');
+        
+        // Test if the data URL is valid by creating an image
+        const testImage = new Image();
+        const imageLoadPromise = new Promise((resolve, reject) => {
+            testImage.onload = () => {
+                console.log('✅ Data URL is valid image:', testImage.width, 'x', testImage.height);
+                resolve(true);
+            };
+            testImage.onerror = (error) => {
+                console.error('❌ Data URL is invalid image:', error);
+                reject(new Error('Generated image data is corrupted or invalid'));
+            };
+        });
+        
+        testImage.src = dataUrl;
+        
+        // Wait for image validation (with timeout)
+        try {
+            await Promise.race([
+                imageLoadPromise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Image validation timeout')), 5000))
+            ]);
+        } catch (validationError) {
+            console.error('❌ Image validation failed:', validationError);
+            throw validationError;
+        }
         
         hideLoadingOverlay();
         console.log('✅ generateImageWithOpenAI completed successfully');
