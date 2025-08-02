@@ -2912,11 +2912,11 @@
                     <!-- Product Header -->
                     <div class="product-header">
                         <h1 class="product-title">Custom Photo Pendant</h1>
-                        <div class="product-price">$89.99</div>
-                        <p class="product-subtitle">Sterling Silver with 18" Chain</p>
+                        <div class="product-price">$169.99</div>
+                        <p class="product-subtitle">Sterling Silver with 18" Princess Length</p>
                     </div>
                     
-                    <!-- Product Options -->
+                    <!-- Product Options -->        
                     <div class="product-options">
                         <!-- Metal Type Selection -->
                         <div class="option-group">
@@ -2960,6 +2960,46 @@
                                 <span class="checkbox-label">Add Engraving</span>
                                 <span class="checkbox-price">+$49</span>
                             </label>
+                            <div id="engraving-textbox-container" style="display: none; margin-top: 10px;">
+                                <input type="text" id="engraving-textbox" placeholder="Enter engraving text (max 30 characters)" maxlength="30" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                                <div id="engraving-char-count" style="font-size: 12px; color: #666; margin-top: 4px; text-align: right;">0/30</div>
+                            </div>
+                            
+                            <script>
+                                // Add event listener for engraving checkbox
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const engravingCheckbox = document.getElementById('engraving-checkbox');
+                                    const textboxContainer = document.getElementById('engraving-textbox-container');
+                                    const textbox = document.getElementById('engraving-textbox');
+                                    const charCount = document.getElementById('engraving-char-count');
+                                    
+                                    if (engravingCheckbox) {
+                                        engravingCheckbox.addEventListener('change', function() {
+                                            console.log('Engraving checkbox changed:', this.checked);
+                                            
+                                            if (this.checked) {
+                                                textboxContainer.style.display = 'block';
+                                                textbox.focus();
+                                            } else {
+                                                textboxContainer.style.display = 'none';
+                                                // Don't clear the textbox value - retain the content
+                                                // Only update character count if textbox has content
+                                                if (textbox.value.length > 0) {
+                                                    charCount.textContent = `${textbox.value.length}/30`;
+                                                }
+                                            }
+                                        });
+                                    }
+                                    
+                                    // Add character count functionality
+                                    if (textbox && charCount) {
+                                        textbox.addEventListener('input', function() {
+                                            const currentLength = this.value.length;
+                                            charCount.textContent = `${currentLength}/30`;
+                                        });
+                                    }
+                                });
+                            </script>
                         </div>
                         
                         <!-- Action Buttons Container -->
@@ -3686,8 +3726,31 @@
         // Update engraving option
         function updateEngraving(enabled) {
             console.log('Engraving enabled:', enabled);
+            const textboxContainer = document.getElementById('engraving-textbox-container');
+            const textbox = document.getElementById('engraving-textbox');
+            
+            if (engravingCheckbox.checked) {
+                textboxContainer.style.display = 'block';
+                textbox.focus();
+            } else {
+                textboxContainer.style.display = 'none';
+                textbox.value = '';
+                document.getElementById('engraving-char-count').textContent = '0/30';
+            }
+            
             // Add engraving update logic here
             updateProductHeader();
+            
+            // Add character count functionality
+            const engravingTextbox = document.getElementById('engraving-textbox');
+            const engravingCharCount = document.getElementById('engraving-char-count');
+            
+            if (engravingTextbox && engravingCharCount) {
+                engravingTextbox.addEventListener('input', function() {
+                    const currentLength = this.value.length;
+                    engravingCharCount.textContent = `${currentLength}/30`;
+                });
+            }
         }
         
         // Move 3D canvas between desktop and mobile containers
