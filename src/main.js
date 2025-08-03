@@ -1319,7 +1319,10 @@ class HeightfieldViewer {
         }
     }
 
-    async processImage(file, autoCrop = false, showLoading = true) {
+    async processImage(file, autoCrop = false, showLoading = true, uploadToS3 = true) {
+        // Store uploadToS3 flag for use in other functions
+        this.shouldUploadToS3 = uploadToS3;
+        
         if (showLoading) {
             showLoadingOverlay();
         }
@@ -3773,7 +3776,7 @@ setTimeout(() => {
                 const file = new File([blob], 'instructions.png', { type: 'image/png' });
                 
                 // Process the image with auto-crop (top portion) and no loading screen
-                window.viewer.processImage(file, true, false); // true for auto-crop, false for no loading screen
+                                        window.viewer.processImage(file, true, false, false); // true for auto-crop, false for no loading screen, false for no S3 upload
                 
                 // Show demo message for initial load
                 const demoMessage = document.getElementById('demo-message');

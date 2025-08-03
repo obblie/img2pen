@@ -1434,7 +1434,7 @@
                 gap: 12px !important;
                 align-items: center !important;
                 justify-content: center !important;
-                margin-top: 20px !important;
+                margin-top: -45px !important; /* Move badges back to original position */
             }
             
             .hero-container .hero-subtitle + div > div {
@@ -2669,39 +2669,39 @@
         
         <!-- Hero Section -->
         <div id="hero-container" class="hero-container">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; height: 100%; padding: 40px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; height: 100%; padding: 40px; max-width: 80%; margin: 0 auto;">
                 <!-- Left: Text Content -->
-                <div style="text-align: center;">
-                    <h1 class="hero-title">Custom Photo Pendant</h1>
-                    <p class="hero-subtitle">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you wherever you go, furever 🐶❤️</p>
+                <div style="text-align: left; margin-top: -35px;">
+                    <h1 class="hero-title" style="font-size: 4.5em; max-width: 500px; text-align: left;">Custom Photo Pendant</h1>
+                    <p class="hero-subtitle" style="font-size: 1.8em; max-width: 450px; text-align: left;">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you wherever you go, furever 🐶❤️</p>
                     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; justify-content: center; max-width: 400px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; justify-content: start; max-width: 500px;">
                             <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 0.9em;">✨ High Quality</span>
+                                <span style="font-weight: 600; color: white; font-size: 1.1em;">✨ High Quality</span>
                             </div>
                             <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 0.9em;">🚀 Fast Delivery</span>
+                                <span style="font-weight: 600; color: white; font-size: 1.1em;">🚀 Fast Delivery</span>
                             </div>
                             <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 0.9em;">🥹 Precious Results</span>
+                                <span style="font-weight: 600; color: white; font-size: 1.1em;">🥹 Precious Results</span>
                             </div>
                             <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 0.9em;">🎨 Custom Design</span>
+                                <span style="font-weight: 600; color: white; font-size: 1.1em;">🎨 Custom Design</span>
                             </div>
                             <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 0.9em;">🔒 Secure Payment</span>
+                                <span style="font-weight: 600; color: white; font-size: 1.1em;">🔒 Secure Payment</span>
                             </div>
                             <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 0.9em;">🌟 5-Star Reviews</span>
+                                <span style="font-weight: 600; color: white; font-size: 1.1em;">🌟 5-Star Reviews</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Right: Sample Image -->
-                <div style="text-align: center;">
+                <div style="text-align: center; margin-top: -10px;">
                     <div style="position: relative; display: inline-block;">
-                        <img src="/samplePendant.png" alt="Sample Pendant" style="width: 300px; height: 300px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3);">
+                        <img src="/samplePendant.png" alt="Sample Pendant" style="width: 400px; height: 400px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3);">
                         <div style="position: absolute; top: 10px; right: 10px; background: #ff6b6b; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">Sample</div>
                     </div>
                 </div>
@@ -2823,8 +2823,8 @@
                             <div id="demo-message" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: rgba(220, 53, 69, 0.9); color: #ffffff; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1001; pointer-events: none; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.3); text-align: center; max-width: 400px; display: none;">
                                 <div style="margin-bottom: 4px;">🎯 <strong>Best Practices</strong></div>
                                 <div style="font-size: 12px; opacity: 0.9; line-height: 1.3;">
-                                    This showcases good/bad practices and results.<br>
-                                    Original image available in carousel below with some pointers.
+                                    This preview showcases best practices for choosing your photo.<br>
+                                    See image below with further details.
                                 </div>
                             </div>
                             
@@ -3119,7 +3119,7 @@
             </div>
             
             <!-- Horizontal Scrolling Testimonials -->
-            <div id="testimonials-container" style="display: flex; overflow-x: auto; gap: 20px; padding: 10px 0; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+            <div id="testimonials-container" style="display: flex; overflow-x: hidden; gap: 20px; padding: 10px 0; scroll-behavior: auto; -webkit-overflow-scrolling: touch;">
                 <!-- Testimonial 1 -->
                 <div style="min-width: 300px; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; flex-shrink: 0;">
                     <div style="display: flex; align-items: center; margin-bottom: 15px;">
@@ -4854,46 +4854,76 @@
             const testimonialsContainer = document.getElementById('testimonials-container');
             
             if (testimonialsContainer) {
-                let scrollPosition = 0;
-                const scrollSpeed = 1; // pixels per frame
-                const scrollInterval = 50; // milliseconds between scroll updates
+                const scrollSpeed = 2; // pixels per frame
+                const scrollInterval = 25; // milliseconds between scroll updates
+                let scrollIntervalId = null;
+                let isPaused = false;
+                
+                function createInfiniteScroll() {
+                    // Clone all testimonials and append them
+                    const testimonials = Array.from(testimonialsContainer.children);
+                    testimonials.forEach(testimonial => {
+                        const clone = testimonial.cloneNode(true);
+                        testimonialsContainer.appendChild(clone);
+                    });
+                }
                 
                 function autoScroll() {
-                    if (testimonialsContainer.scrollLeft >= testimonialsContainer.scrollWidth - testimonialsContainer.clientWidth) {
-                        // Reset to beginning when reaching the end
+                    if (isPaused) return;
+                    
+                    const currentScrollLeft = testimonialsContainer.scrollLeft;
+                    const containerWidth = testimonialsContainer.scrollWidth / 2; // Half because we duplicated content
+                    
+                    // If we've scrolled through the original content, reset to beginning
+                    if (currentScrollLeft >= containerWidth) {
                         testimonialsContainer.scrollLeft = 0;
-                        scrollPosition = 0;
                     } else {
-                        scrollPosition += scrollSpeed;
-                        testimonialsContainer.scrollLeft = scrollPosition;
+                        testimonialsContainer.scrollLeft += scrollSpeed;
                     }
                 }
                 
+                function startScrolling() {
+                    if (scrollIntervalId) {
+                        clearInterval(scrollIntervalId);
+                    }
+                    scrollIntervalId = setInterval(autoScroll, scrollInterval);
+                }
+                
+                function pauseScrolling() {
+                    isPaused = true;
+                }
+                
+                function resumeScrolling() {
+                    isPaused = false;
+                }
+                
+                // Create infinite scroll by duplicating testimonials
+                createInfiniteScroll();
+                
                 // Start the infinite scroll
-                const scrollIntervalId = setInterval(autoScroll, scrollInterval);
+                startScrolling();
                 
                 // Pause scrolling when user hovers over testimonials
-                testimonialsContainer.addEventListener('mouseenter', function() {
-                    clearInterval(scrollIntervalId);
-                });
+                testimonialsContainer.addEventListener('mouseenter', pauseScrolling);
                 
                 // Resume scrolling when user leaves testimonials
-                testimonialsContainer.addEventListener('mouseleave', function() {
-                    // Restart the interval
-                    setInterval(autoScroll, scrollInterval);
-                });
+                testimonialsContainer.addEventListener('mouseleave', resumeScrolling);
                 
                 // Pause scrolling on touch devices when user touches
-                testimonialsContainer.addEventListener('touchstart', function() {
-                    clearInterval(scrollIntervalId);
-                });
+                testimonialsContainer.addEventListener('touchstart', pauseScrolling);
                 
                 // Resume scrolling after touch ends
                 testimonialsContainer.addEventListener('touchend', function() {
-                    setTimeout(() => {
-                        setInterval(autoScroll, scrollInterval);
-                    }, 1000); // Resume after 1 second
+                    setTimeout(resumeScrolling, 1000); // Resume after 1 second
                 });
+                
+                // Safety mechanism: Ensure scrolling never stops
+                setInterval(() => {
+                    if (!scrollIntervalId || isPaused) {
+                        console.log('🔄 Restarting testimonials scroll...');
+                        startScrolling();
+                    }
+                }, 5000); // Check every 5 seconds if scrolling stopped
             }
         });
     </script>
@@ -4906,4 +4936,5 @@
 
 </body>
 </html>
+<!-- Cache refresh: 2025-06-01 01:02 - S3 backend working --> 
 <!-- Cache refresh: 2025-06-01 01:02 - S3 backend working --> 
