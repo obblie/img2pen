@@ -5,6 +5,7 @@ import { BoxGeometry, MeshBasicMaterial, Mesh, Scene as ThreeScene, PerspectiveC
 import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
+// import { CSG } from 'three/addons/objects/CSG.js';
 
 // Constants for physical dimensions
 const MAX_DEPTH = 0.6; // mm (adjusted so total with rim = 2mm)
@@ -743,8 +744,14 @@ class HeightfieldViewer {
         this.directionalLight.castShadow = true;
         this.directionalLight.shadow.mapSize.width = 2048;
         this.directionalLight.shadow.mapSize.height = 2048;
-        this.directionalLight.shadow.camera.near = 0.5;
-        this.directionalLight.shadow.camera.far = 50;
+        this.directionalLight.shadow.camera.near = 0.1;
+        this.directionalLight.shadow.camera.far = 100;
+        this.directionalLight.shadow.camera.left = -30;
+        this.directionalLight.shadow.camera.right = 30;
+        this.directionalLight.shadow.camera.top = 30;
+        this.directionalLight.shadow.camera.bottom = -30;
+        this.directionalLight.shadow.bias = -0.001;
+        this.directionalLight.shadow.radius = 1.0;
         this.scene.add(this.directionalLight);
 
         // Secondary directional light (fill light) - from left
@@ -1517,6 +1524,27 @@ class HeightfieldViewer {
         };
     }
 
+    createBasePendantGeometry() {
+        // Create a simple cylinder geometry for the base pendant
+        const radius = this.pendantDiameter / 2;
+        const height = this.pendantThickness;
+        const segments = 32; // High resolution for smooth appearance
+        
+        const baseGeometry = new THREE.CylinderGeometry(radius, radius, height, segments);
+        
+        // Rotate to stand upright (Three.js cylinders are created along Y axis)
+        baseGeometry.rotateX(Math.PI / 2);
+        
+        return baseGeometry;
+    }
+
+    createBooleanUnionWithJumpring(baseGeometry) {
+        // For now, just return the original geometry
+        // The jumpring will be created separately in the geometry creation process
+        console.log('Boolean union with jumpring - returning original geometry');
+        return baseGeometry;
+    }
+
     createHeightfieldMesh(heightfieldData) {
         let alphaMap = null;
         let geometry = null;
@@ -1789,6 +1817,61 @@ class HeightfieldViewer {
                     const antiqued = 0.15 + (1 - 0.15) * ((1 - antiquingAmount) * t + antiquingAmount * (1 - t));
                     antiquingColorsCirc.push(antiqued, antiqued, antiqued);
                 }
+                // Create jumpring with relief applied
+                const jumpringRadius = 2;
+                const jumpringWireThickness = 0.5;
+                const jumpringSegments = 32;
+                const jumpringTubularSegments = 64;
+                
+                // Create jumpring vertices with relief applied
+                const jumpringStartIdx = allPositions.length / 3;
+                const jumpringPositions = [];
+                const jumpringUVs = [];
+                const jumpringColors = [];
+                
+                for (let i = 0; i <= jumpringSegments; i++) {
+                    const u = i / jumpringSegments * Math.PI * 2;
+                    for (let j = 0; j <= jumpringTubularSegments; j++) {
+                        const v = j / jumpringTubularSegments * Math.PI * 2;
+                        
+                        // Base jumpring position
+                        const baseX = (jumpringRadius + jumpringWireThickness * Math.cos(v)) * Math.cos(u);
+                        const baseY = (jumpringRadius + jumpringWireThickness * Math.cos(v)) * Math.sin(u) + this.pendantThickness / 2 + jumpringRadius + 11.45;
+                        const baseZ = jumpringWireThickness * Math.sin(v);
+                        
+                        // Apply minimal, consistent relief to the jumpring to avoid kinks
+                        const reliefZ = 0.05; // Small constant relief to maintain smooth shape
+                        const finalX = baseX;
+                        const finalY = baseY;
+                        const finalZ = baseZ + reliefZ;
+                        
+                        jumpringPositions.push(finalX, finalY, finalZ);
+                        jumpringUVs.push(i / jumpringSegments, j / jumpringTubularSegments);
+                        jumpringColors.push(1.0, 1.0, 1.0); // White for jumpring
+                    }
+                }
+                
+                // Add jumpring vertices to existing arrays
+                allPositions.push(...jumpringPositions);
+                allUVs.push(...jumpringUVs);
+                antiquingColorsCirc.push(...jumpringColors);
+                
+                // Create jumpring indices
+                const jumpringIndices = [];
+                for (let i = 0; i < jumpringSegments; i++) {
+                    for (let j = 0; j < jumpringTubularSegments; j++) {
+                        const a = jumpringStartIdx + i * (jumpringTubularSegments + 1) + j;
+                        const b = jumpringStartIdx + (i + 1) * (jumpringTubularSegments + 1) + j;
+                        const c = jumpringStartIdx + (i + 1) * (jumpringTubularSegments + 1) + j + 1;
+                        const d = jumpringStartIdx + i * (jumpringTubularSegments + 1) + j + 1;
+                        
+                        jumpringIndices.push(a, b, c, a, c, d);
+                    }
+                }
+                
+                // Add jumpring indices to existing indices
+                allIndices.push(...jumpringIndices);
+                
                 // Build BufferGeometry
                 geometry = new THREE.BufferGeometry();
                 geometry.setAttribute('position', new THREE.Float32BufferAttribute(allPositions, 3));
@@ -1796,6 +1879,12 @@ class HeightfieldViewer {
                 geometry.setAttribute('color', new THREE.Float32BufferAttribute(antiquingColorsCirc, 3));
                 geometry.setIndex(allIndices);
                 geometry.computeVertexNormals();
+                
+                // Perform boolean union with jumpring BEFORE relief is applied
+                // if (this.currentObjectType === 'circular-pendant') {
+                //     console.log('Performing boolean union with jumpring...');
+                //     geometry = this.createBooleanUnionWithJumpring(geometry);
+                // }
                 // Single material for all
                 const material = new THREE.MeshStandardMaterial({
                     color: METAL_MATERIALS['sterling-silver'].color,
@@ -1810,6 +1899,10 @@ class HeightfieldViewer {
                 });
                 const mesh = new THREE.Mesh(geometry, material);
                 
+                // Enable shadow casting for the pendant
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                
                 if (this.currentObjectType === 'circular-pendant') {
                     // For circular pendant, rotate to stand upright and position bottom edge at y=0
                     mesh.rotation.x = 0; // Remove the flat rotation
@@ -1821,8 +1914,13 @@ class HeightfieldViewer {
                 
                 this.scene.add(mesh);
                 this.heightfield = mesh;
-                this.createJumpring('small');
-                this.updateJumpringPosition();
+                
+                // Create platform at the bottom edge of the pendant
+                this.createPlatform();
+                
+                // Jumpring is now part of the same geometry, so no separate creation needed
+                // this.createJumpring('small');
+                // this.updateJumpringPosition();
                 // Ensure the correct metal material is applied on first render
                 const metalType = document.getElementById('metal-type')?.value || 'sterling-silver';
                 this.updateMetalMaterial(metalType);
@@ -2228,6 +2326,10 @@ class HeightfieldViewer {
         // Create mesh and position it upright like jewelry sitting on a platform
         const mesh = new THREE.Mesh(geometry, material);
         
+        // Enable shadow casting for the pendant
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        
         if (this.currentObjectType === 'circular-pendant') {
             // For circular pendant, rotate to stand upright and position bottom edge at y=0
             mesh.rotation.x = 0; // Remove the flat rotation
@@ -2239,6 +2341,10 @@ class HeightfieldViewer {
         
         this.scene.add(mesh);
         this.heightfield = mesh;
+        
+        // Create platform at the bottom edge of the pendant
+        this.createPlatform();
+        
         this.createJumpring('small');
         this.updateJumpringPosition();
         // Ensure the correct metal material is applied on first render
@@ -2494,6 +2600,8 @@ class HeightfieldViewer {
             envMapIntensity: 1.0
         });
         this.jumpring = new THREE.Mesh(ringGeometry, ringMaterial);
+        this.jumpring.castShadow = true;
+        this.jumpring.receiveShadow = true;
         this.scene.add(this.jumpring);
         console.log('Creating jumpring');
     }
@@ -2518,6 +2626,42 @@ class HeightfieldViewer {
         this.jumpring.position.set(x, y, z);
         // No rotation needed - jumpring naturally hangs down
         this.jumpring.rotation.set(0, 0, 0);
+    }
+
+    createPlatform() {
+        // Remove existing platform if any
+        if (this.platform) {
+            this.scene.remove(this.platform);
+        }
+        
+        // Create a platform that extends beyond the pendant
+        let platformSize;
+        if (this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud') {
+            platformSize = this.pendantDiameter * 1.5; // Make platform larger than pendant
+        } else if (this.currentObjectType === 'earrings') {
+            const earringSpacing = this.pendantDiameter * 1.2;
+            platformSize = earringSpacing * 1.5; // Make platform wide enough for both earrings
+        } else {
+            platformSize = Math.max(this.pendantWidth, this.pendantHeight) * 1.5;
+        }
+        
+        const platformGeometry = new THREE.BoxGeometry(platformSize * 10, 2, platformSize * 10);
+        const platformMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xf8f8f8, // Light gray color
+            metalness: 0.0,
+            roughness: 0.3
+        });
+        
+        this.platform = new THREE.Mesh(platformGeometry, platformMaterial);
+        
+        // Position platform at the bottom edge of the pendant (y=0)
+        this.platform.position.y = -13; // 13 units below the pendant bottom edge
+        
+        // Enable shadow receiving
+        this.platform.receiveShadow = true;
+        
+        this.scene.add(this.platform);
+        console.log('Platform created and added to scene');
     }
 
     addScaleGrid() {
