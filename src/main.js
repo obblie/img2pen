@@ -35,6 +35,12 @@ const METAL_MATERIALS = {
         metalness: 1.0,
         roughness: 0.1,
         envMapIntensity: 1.0
+    },
+    'stl': {
+        color: 0xE8E8E8, // Use sterling silver color for STL preview
+        metalness: 1.0,
+        roughness: 0.1,
+        envMapIntensity: 1.0
     }
 };
 
@@ -637,6 +643,9 @@ class HeightfieldViewer {
         this.textBoxCounter = 0;
         this.fontCache = {};
         this.defaultFontName = 'helvetiker';
+        
+        // Sprue text system
+        this.sprueTextObjects = [];
         
         // Load default font
         this.loadEngravingFont(this.defaultFontName);
@@ -1296,6 +1305,68 @@ class HeightfieldViewer {
             });
         }
 
+        // Debug Export STL button
+        const debugExportStlBtn = document.getElementById('debug-export-stl-btn');
+        if (debugExportStlBtn) {
+            debugExportStlBtn.addEventListener('click', () => {
+                console.log('Debug Export STL button clicked');
+                
+                // Generate STL with all objects including sprue text
+                const exporter = new STLExporter();
+                const group = new THREE.Group();
+                
+                // Add main pendant
+                if (this.heightfield) {
+                    console.log('Adding heightfield to STL export');
+                    group.add(this.heightfield.clone());
+                }
+                
+                // Add jumpring if it exists
+                if (this.jumpring) {
+                    console.log('Adding jumpring to STL export');
+                    group.add(this.jumpring.clone());
+                }
+                
+                // Add sprue text objects
+                if (this.sprueTextObjects && this.sprueTextObjects.length > 0) {
+                    console.log('Adding sprue text objects to STL export:', this.sprueTextObjects.length);
+                    this.sprueTextObjects.forEach((textObj, index) => {
+                        group.add(textObj.clone());
+                    });
+                }
+                
+                // Add platform/ground plane
+                const groundPlane = this.scene.children.find(child => child.userData && child.userData.isGroundPlane);
+                if (groundPlane) {
+                    console.log('Adding ground plane to STL export');
+                    group.add(groundPlane.clone());
+                }
+                
+                console.log('Total objects in STL export:', group.children.length);
+                
+                try {
+                    const stlString = exporter.parse(group);
+                    
+                    // Create download link
+                    const blob = new Blob([stlString], { type: 'application/octet-stream' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `pendant-debug-${Date.now()}.stl`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    console.log('STL file exported successfully');
+                    showNotification('STL file exported successfully!', 'success');
+                } catch (error) {
+                    console.error('Error exporting STL:', error);
+                    showNotification('Error exporting STL file', 'error');
+                }
+            });
+        }
+
         const highlightColorInput = document.getElementById('highlight-layer-color');
         if (highlightColorInput) {
             highlightColorInput.addEventListener('input', (e) => {
@@ -1545,6 +1616,169 @@ class HeightfieldViewer {
         return baseGeometry;
     }
 
+    validateMeshWatertight(geometry) {
+        // Check for watertight mesh by analyzing edge connectivity
+        const positions = geometry.attributes.position.array;
+        const indices = geometry.index.array;
+        
+        // Create edge map to detect open edges
+        const edgeMap = new Map();
+        
+        for (let i = 0; i < indices.length; i += 3) {
+            const a = indices[i];
+            const b = indices[i + 1];
+            const c = indices[i + 2];
+            
+            // Check each edge of the triangle
+            this.addEdgeToMap(edgeMap, a, b);
+            this.addEdgeToMap(edgeMap, b, c);
+            this.addEdgeToMap(edgeMap, c, a);
+        }
+        
+        // Count open edges (edges that appear only once)
+        let openEdges = 0;
+        for (const [edge, count] of edgeMap) {
+            if (count === 1) {
+                openEdges++;
+            }
+        }
+        
+        console.log(`Mesh analysis: ${openEdges} open edges found`);
+        
+        if (openEdges > 0) {
+            console.error(`❌ Mesh has ${openEdges} open edges - not watertight!`);
+            return false;
+        }
+        
+        return true;
+    }
+    
+    addEdgeToMap(edgeMap, v1, v2) {
+        // Create consistent edge key (smaller index first)
+        const edgeKey = v1 < v2 ? `${v1}-${v2}` : `${v2}-${v1}`;
+        edgeMap.set(edgeKey, (edgeMap.get(edgeKey) || 0) + 1);
+    }
+
+    fixMeshTopology(geometry) {
+        console.log('🔧 Applying mesh topology fixes...');
+        
+        // Step 1: Merge duplicate vertices (vertex welding)
+        const tolerance = 0.001; // 1mm tolerance for merging
+        const mergedGeometry = this.mergeVertices(geometry, tolerance);
+        
+        // Step 2: Remove degenerate triangles
+        const cleanGeometry = this.removeDegenerateTriangles(mergedGeometry);
+        
+        // Step 3: Fix face normals consistency
+        cleanGeometry.computeVertexNormals();
+        
+        console.log('✅ Mesh topology fixes applied');
+        return cleanGeometry;
+    }
+
+    mergeVertices(geometry, tolerance = 0.001) {
+        // Create a map of unique vertices
+        const vertices = [];
+        const indices = [];
+        const uvs = [];
+        const colors = [];
+        
+        const positions = geometry.attributes.position.array;
+        const originalIndices = geometry.index.array;
+        const originalUVs = geometry.attributes.uv?.array;
+        const originalColors = geometry.attributes.color?.array;
+        
+        const vertexMap = new Map();
+        const newIndices = [];
+        
+        for (let i = 0; i < originalIndices.length; i++) {
+            const oldIndex = originalIndices[i];
+            const x = positions[oldIndex * 3];
+            const y = positions[oldIndex * 3 + 1];
+            const z = positions[oldIndex * 3 + 2];
+            
+            // Create a key for this vertex position
+            const key = `${Math.round(x / tolerance)}_${Math.round(y / tolerance)}_${Math.round(z / tolerance)}`;
+            
+            if (vertexMap.has(key)) {
+                // Reuse existing vertex
+                newIndices.push(vertexMap.get(key));
+            } else {
+                // Add new unique vertex
+                const newIndex = vertices.length / 3;
+                vertices.push(x, y, z);
+                
+                if (originalUVs) {
+                    uvs.push(originalUVs[oldIndex * 2], originalUVs[oldIndex * 2 + 1]);
+                }
+                
+                if (originalColors) {
+                    colors.push(originalColors[oldIndex * 3], originalColors[oldIndex * 3 + 1], originalColors[oldIndex * 3 + 2]);
+                }
+                
+                vertexMap.set(key, newIndex);
+                newIndices.push(newIndex);
+            }
+        }
+        
+        console.log(`Vertex welding: ${positions.length / 3} → ${vertices.length / 3} vertices`);
+        
+        // Create new geometry with merged vertices
+        const newGeometry = new THREE.BufferGeometry();
+        newGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        newGeometry.setIndex(newIndices);
+        
+        if (uvs.length > 0) {
+            newGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        }
+        
+        if (colors.length > 0) {
+            newGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        }
+        
+        return newGeometry;
+    }
+
+    removeDegenerateTriangles(geometry) {
+        const positions = geometry.attributes.position.array;
+        const indices = geometry.index.array;
+        const uvs = geometry.attributes.uv?.array;
+        const colors = geometry.attributes.color?.array;
+        
+        const validIndices = [];
+        let degenerateCount = 0;
+        
+        for (let i = 0; i < indices.length; i += 3) {
+            const a = indices[i];
+            const b = indices[i + 1];
+            const c = indices[i + 2];
+            
+            // Check if triangle is degenerate (has duplicate vertices)
+            if (a !== b && b !== c && c !== a) {
+                validIndices.push(a, b, c);
+            } else {
+                degenerateCount++;
+            }
+        }
+        
+        console.log(`Removed ${degenerateCount} degenerate triangles`);
+        
+        // Create new geometry without degenerate triangles
+        const newGeometry = new THREE.BufferGeometry();
+        newGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        newGeometry.setIndex(validIndices);
+        
+        if (uvs) {
+            newGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        }
+        
+        if (colors) {
+            newGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        }
+        
+        return newGeometry;
+    }
+
     createHeightfieldMesh(heightfieldData) {
         let alphaMap = null;
         let geometry = null;
@@ -1581,7 +1815,7 @@ class HeightfieldViewer {
                 this.bottomDisc = null;
                 this.sideWall = null;
 
-                // Relief (top) - subtract border thickness from diameter to keep total size at 25mm
+
                 const diameter = this.pendantDiameter;
                 const effectiveRadius = (diameter / 2) - this.borderThickness; // Inner radius for design
                 const outerRadius = diameter / 2; // Outer radius including border
@@ -1681,24 +1915,28 @@ class HeightfieldViewer {
                     const c = bottomStartIdx + (i < edgePoints.length ? i + 1 : 1);
                     allIndices.push(a, b, c);
                 }
-                // 3. Side wall (quads between edge of relief and bottom disc)
-                const wallStartIdx = allPositions.length / 3;
+                // 3. Side wall - connect relief edge to bottom edge
+                // For each edge point, create wall vertices that will connect to existing geometry
+                const wallTopStartIdx = allPositions.length / 3;
+                
+                // Add wall vertices - top edge matches relief edge points
                 for (let i = 0; i < edgePoints.length; ++i) {
-                    // Top edge
-                    const x1 = edgePoints[i].x, y1 = edgePoints[i].y, z1 = edgePoints[i].z;
-                    const x2 = edgePoints[(i + 1) % edgePoints.length].x, y2 = edgePoints[(i + 1) % edgePoints.length].y, z2 = edgePoints[(i + 1) % edgePoints.length].z;
-                    // Bottom edge
-                    const x1b = x1, y1b = y1, z1b = -thickness;
-                    const x2b = x2, y2b = y2, z2b = -thickness;
-                    // Add wall vertices
-                    allPositions.push(x1, y1, z1); // 0 top current
-                    allPositions.push(x2, y2, z2); // 1 top next
-                    allPositions.push(x1b, y1b, z1b); // 2 bottom current
-                    allPositions.push(x2b, y2b, z2b); // 3 bottom next
-                    allUVs.push(0, 0, 0, 0, 0, 0, 0, 0); // dummy UVs
-                    const base = wallStartIdx + i * 4;
-                    allIndices.push(base, base + 2, base + 1);
-                    allIndices.push(base + 1, base + 2, base + 3);
+                    allPositions.push(edgePoints[i].x, edgePoints[i].y, edgePoints[i].z);
+                    allUVs.push(0, 0);
+                }
+                
+                // Create wall faces connecting to bottom disc edge
+                for (let i = 0; i < edgePoints.length; ++i) {
+                    const next = (i + 1) % edgePoints.length;
+                    
+                    const wallTopCurrent = wallTopStartIdx + i;
+                    const wallTopNext = wallTopStartIdx + next;
+                    const bottomCurrent = bottomStartIdx + 1 + i;  // +1 to skip center
+                    const bottomNext = bottomStartIdx + 1 + next;
+                    
+                    // Create wall quad (two triangles)
+                    allIndices.push(wallTopCurrent, bottomCurrent, wallTopNext);
+                    allIndices.push(wallTopNext, bottomCurrent, bottomNext);
                 }
                 // 4. Border (rim) - extend to exactly outerRadius for 25mm total diameter
                 const rimStartIdx = allPositions.length / 3;
@@ -1872,6 +2110,210 @@ class HeightfieldViewer {
                 // Add jumpring indices to existing indices
                 allIndices.push(...jumpringIndices);
                 
+                // Add sprue to the side of the pendant - TEST VERSION
+                console.log('Adding sprue...');
+                const sprueWidth = 6; // 6mm width - reduced by 25% from 8mm
+                const sprueLength = 20; // 20mm extension - make it longer
+                const sprueHeight = this.pendantThickness;
+                
+                // Sprue position - make it very visible
+                const sprueStartX = effectiveRadius - 0; // Start 5mm inside pendant (moved right by 10 units)
+                const sprueStartY = 0; // Center vertically
+                const sprueStartZ = .5; // Raise it up 5mm
+                
+                const sprueStartIdx = allPositions.length / 3;
+                console.log('Sprue start index:', sprueStartIdx);
+                
+                // Create solid box-like sprue (simpler approach)
+                const sprueVertices = [
+                    // Top face (4 corners)
+                    sprueStartX, sprueStartY - sprueWidth/2, sprueStartZ, // 0: Top back-left
+                    sprueStartX + sprueLength, sprueStartY - sprueWidth/2, sprueStartZ, // 1: Top front-left
+                    sprueStartX + sprueLength, sprueStartY + sprueWidth/2, sprueStartZ, // 2: Top front-right
+                    sprueStartX, sprueStartY + sprueWidth/2, sprueStartZ, // 3: Top back-right
+                    
+                    // Bottom face (4 corners)
+                    sprueStartX, sprueStartY - sprueWidth/2, sprueStartZ - sprueHeight, // 4: Bottom back-left
+                    sprueStartX + sprueLength, sprueStartY - sprueWidth/2, sprueStartZ - sprueHeight, // 5: Bottom front-left
+                    sprueStartX + sprueLength, sprueStartY + sprueWidth/2, sprueStartZ - sprueHeight, // 6: Bottom front-right
+                    sprueStartX, sprueStartY + sprueWidth/2, sprueStartZ - sprueHeight, // 7: Bottom back-right
+                ];
+                
+                console.log('Sprue vertices:', sprueVertices);
+                
+                // Add sprue vertices
+                allPositions.push(...sprueVertices);
+                
+                // Add UVs for sprue vertices
+                const sprueUVs = [];
+                for (let i = 0; i < sprueVertices.length / 3; i++) {
+                    sprueUVs.push(0, 0);
+                }
+                allUVs.push(...sprueUVs);
+                
+                // Add colors for sprue - make it red to be very visible
+                const sprueColors = [];
+                for (let i = 0; i < sprueVertices.length / 3; i++) {
+                    sprueColors.push(1.0, 0.0, 0.0); // Red for sprue to make it visible
+                }
+                antiquingColorsCirc.push(...sprueColors);
+                
+                // Create solid box indices (standard box geometry)
+                const sprueIndices = [
+                    // Top face
+                    sprueStartIdx + 0, sprueStartIdx + 1, sprueStartIdx + 2,
+                    sprueStartIdx + 0, sprueStartIdx + 2, sprueStartIdx + 3,
+                    
+                    // Bottom face
+                    sprueStartIdx + 4, sprueStartIdx + 6, sprueStartIdx + 5,
+                    sprueStartIdx + 4, sprueStartIdx + 7, sprueStartIdx + 6,
+                    
+                    // Front face
+                    sprueStartIdx + 1, sprueStartIdx + 5, sprueStartIdx + 6,
+                    sprueStartIdx + 1, sprueStartIdx + 6, sprueStartIdx + 2,
+                    
+                    // Back face
+                    sprueStartIdx + 0, sprueStartIdx + 3, sprueStartIdx + 7,
+                    sprueStartIdx + 0, sprueStartIdx + 7, sprueStartIdx + 4,
+                    
+                    // Left face
+                    sprueStartIdx + 0, sprueStartIdx + 4, sprueStartIdx + 5,
+                    sprueStartIdx + 0, sprueStartIdx + 5, sprueStartIdx + 1,
+                    
+                    // Right face
+                    sprueStartIdx + 3, sprueStartIdx + 2, sprueStartIdx + 6,
+                    sprueStartIdx + 3, sprueStartIdx + 6, sprueStartIdx + 7,
+                ];
+                
+                console.log('Sprue indices:', sprueIndices);
+                
+                // Add sprue indices to existing indices
+                allIndices.push(...sprueIndices);
+                console.log('Sprue added successfully');
+                
+                // Add embossed text to sprue based on metal type
+                const sprueMetalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+                let textContent = '';
+                switch (sprueMetalType) {
+                    case 'gold-14k':
+                        textContent = '14KY';
+                        break;
+                    case 'rose-gold-14k':
+                        textContent = '14KR';
+                        break;
+                    case 'stl':
+                        textContent = 'STL';
+                        break;
+                    case 'sterling-silver':
+                    default:
+                        textContent = 'SS';
+                        break;
+                }
+                
+                // Create solid 3D text geometry for boolean union
+                console.log('Creating solid text geometry for embossing:', textContent);
+                
+                // Create simple solid text shapes using basic geometry
+                // Clear any existing sprue text objects
+                this.clearSprueText();
+                const textObjects = [];
+                const charWidth = 1.2; // Width per character
+                const charHeight = 1.8; // Height of characters  
+                const charDepth = 0.5; // Depth for embossing
+                const charSpacing = 1.4; // Spacing between characters
+                
+                // Calculate starting position to center the text
+                const totalWidth = (textContent.length - 1) * charSpacing + charWidth;
+                const startX = sprueStartX + sprueLength / 2 - totalWidth / 2;
+                const textY = sprueStartY;
+                const textZ = sprueStartZ + charDepth / 2; // Half depth above sprue surface
+                
+                // Create extruded text using TextGeometry (with font fallback)
+                const loader = new FontLoader();
+                
+                // Try to load font, with fallback to simple shapes
+                loader.load(
+                    'https://threejs.org/examples/fonts/helvetiker_bold.typeface.json',
+                    (font) => {
+                        // Success: create proper extruded text
+                        console.log('Font loaded successfully, creating extruded text');
+                        
+                        const textGeometry = new TextGeometry(textContent, {
+                            font: font,
+                            size: 1.5, // 1.5mm tall font
+                            height: 0.5, // 0.5mm extrusion depth
+                            curveSegments: 12,
+                            bevelEnabled: false
+                        });
+                        
+                        const textMesh = new THREE.Mesh(textGeometry, new THREE.MeshStandardMaterial({
+                            color: 0x00ff00, // Green for visibility
+                            metalness: 1.0,
+                            roughness: 0.1
+                        }));
+                        
+                        // Center the text
+                        textGeometry.computeBoundingBox();
+                        const textBox = textGeometry.boundingBox;
+                        const textWidth = textBox.max.x - textBox.min.x;
+                        const textHeight = textBox.max.y - textBox.min.y;
+                        
+                        // Position text centered on sprue, embossed by 0.3mm
+                        const textX = sprueStartX + sprueLength / 2 - textWidth / 2;
+                        const textY = sprueStartY - textHeight / 2;
+                        const textZ = sprueStartZ - 0.3; // Embossed 0.3mm below surface
+                        
+                        textMesh.position.set(textX, textY, textZ);
+                        
+                        // Scale if needed to fit sprue
+                        const maxWidth = sprueLength * 0.8;
+                        const maxHeight = sprueWidth * 0.8;
+                        const scaleX = Math.min(1, maxWidth / textWidth);
+                        const scaleY = Math.min(1, maxHeight / textHeight);
+                        const scale = Math.min(scaleX, scaleY);
+                        
+                        if (scale < 1) {
+                            textMesh.scale.set(scale, scale, 1);
+                        }
+                        
+                        textObjects.push(textMesh);
+                        this.sprueTextObjects.push(textMesh);
+                        this.scene.add(textMesh);
+                        console.log('Extruded text created:', textContent);
+                        console.log('Final sprue text objects count:', this.sprueTextObjects.length);
+                    },
+                    (progress) => {
+                        console.log('Font loading progress:', progress);
+                    },
+                    (error) => {
+                        // Fallback: create simple text using basic shapes
+                        console.log('Font loading failed, using fallback shapes');
+                        
+                        for (let i = 0; i < textContent.length; i++) {
+                            const char = textContent[i];
+                            const charBox = new THREE.BoxGeometry(charWidth * 0.8, charHeight, charDepth);
+                            const charMesh = new THREE.Mesh(charBox, new THREE.MeshStandardMaterial({
+                                color: 0x00ff00,
+                                metalness: 1.0,
+                                roughness: 0.1
+                            }));
+                            
+                            const charX = startX + i * charSpacing;
+                            charMesh.position.set(charX, textY, textZ);
+                            
+                            textObjects.push(charMesh);
+                            this.sprueTextObjects.push(charMesh);
+                            this.scene.add(charMesh);
+                        }
+                        console.log('Fallback text shapes created');
+                        console.log('Final sprue text objects count:', this.sprueTextObjects.length);
+                    }
+                );
+                
+                // Note: Text objects are created asynchronously in the callback above
+                // The actual count will be logged inside the callback
+                console.log('Font loading initiated for text:', textContent);
+                
                 // Build BufferGeometry
                 geometry = new THREE.BufferGeometry();
                 geometry.setAttribute('position', new THREE.Float32BufferAttribute(allPositions, 3));
@@ -1880,11 +2322,19 @@ class HeightfieldViewer {
                 geometry.setIndex(allIndices);
                 geometry.computeVertexNormals();
                 
-                // Perform boolean union with jumpring BEFORE relief is applied
-                // if (this.currentObjectType === 'circular-pendant') {
-                //     console.log('Performing boolean union with jumpring...');
-                //     geometry = this.createBooleanUnionWithJumpring(geometry);
-                // }
+                // Fix mesh topology issues before validation
+                console.log('🔧 Fixing mesh topology...');
+                geometry = this.fixMeshTopology(geometry);
+                
+                // Validate mesh is watertight (non-blocking for debugging)
+                console.log('🔍 Validating mesh integrity...');
+                const meshValid = this.validateMeshWatertight(geometry);
+                if (!meshValid) {
+                    console.error('❌ WARNING: Mesh is not watertight! Continuing for debugging...');
+                    showNotification('Mesh has open edges - check console for details', 'error');
+                } else {
+                    console.log('✅ Mesh validation passed - watertight mesh confirmed');
+                }
                 // Single material for all
                 const material = new THREE.MeshStandardMaterial({
                     color: METAL_MATERIALS['sterling-silver'].color,
@@ -2550,6 +3000,142 @@ class HeightfieldViewer {
             this.jumpring.material.roughness = materialProps.roughness;
             this.jumpring.material.envMapIntensity = materialProps.envMapIntensity;
         }
+        
+        // Update sprue text when metal type changes
+        console.log('Calling updateSprueText for metal type:', metalType);
+        this.updateSprueText(metalType);
+    }
+    
+    clearSprueText() {
+        console.log('Clearing sprue text objects. Count:', this.sprueTextObjects.length);
+        // Remove existing sprue text objects from scene
+        this.sprueTextObjects.forEach(textObj => {
+            this.scene.remove(textObj);
+            if (textObj.geometry) textObj.geometry.dispose();
+            if (textObj.material) textObj.material.dispose();
+        });
+        this.sprueTextObjects = [];
+        console.log('Sprue text objects cleared');
+    }
+    
+    updateSprueText(metalType) {
+        // Only update if we have sprue text objects
+        if (this.sprueTextObjects.length === 0) {
+            console.log('No sprue text objects to update');
+            return;
+        }
+        
+        // Determine the correct text content based on metal type
+        let textContent = '';
+        switch (metalType) {
+            case 'gold-14k':
+                textContent = '14KY';
+                break;
+            case 'rose-gold-14k':
+                textContent = '14KR';
+                break;
+            case 'stl':
+                textContent = 'STL';
+                break;
+            case 'sterling-silver':
+            default:
+                textContent = 'SS';
+                break;
+        }
+        
+        console.log('Updating sprue text to:', textContent);
+        console.log('Current sprue text objects count:', this.sprueTextObjects.length);
+        
+        // Store the current metal properties for the new text
+        const materialProps = METAL_MATERIALS[metalType];
+        
+        // Get the position and scale from the first text object (they should all be positioned together)
+        const firstTextObj = this.sprueTextObjects[0];
+        const position = firstTextObj.position.clone();
+        const scale = firstTextObj.scale.clone();
+        
+        // Calculate embossed position: 0.3mm below sprue surface
+        // The sprue surface is at sprueStartZ, so embossed text should be at sprueStartZ - 0.3
+        // We need to find sprueStartZ from the current position and adjust
+        const sprueSurfaceZ = position.z + 0.3; // Reverse the embossment to find surface
+        position.z = sprueSurfaceZ - 0.3; // Position 0.3mm below surface
+        
+        console.log('Stored position:', position);
+        console.log('Stored scale:', scale);
+        
+        // Clear existing text objects
+        this.clearSprueText();
+        
+        // Create new text objects with the correct content
+        const loader = new FontLoader();
+        
+        loader.load(
+            'https://threejs.org/examples/fonts/helvetiker_bold.typeface.json',
+            (font) => {
+                // Success: create proper extruded text
+                console.log('Font loaded successfully, creating new extruded text:', textContent);
+                
+                const textGeometry = new TextGeometry(textContent, {
+                    font: font,
+                    size: 1.5, // 1.5mm tall font
+                    height: 0.5, // 0.5mm extrusion depth
+                    curveSegments: 12,
+                    bevelEnabled: false
+                });
+                
+                const textMesh = new THREE.Mesh(textGeometry, new THREE.MeshStandardMaterial({
+                    color: materialProps.color,
+                    metalness: materialProps.metalness,
+                    roughness: materialProps.roughness,
+                    envMapIntensity: materialProps.envMapIntensity
+                }));
+                
+                // Apply the stored position and scale
+                textMesh.position.copy(position);
+                textMesh.scale.copy(scale);
+                
+                this.sprueTextObjects.push(textMesh);
+                this.scene.add(textMesh);
+                console.log('New extruded text created:', textContent);
+            },
+            (progress) => {
+                console.log('Font loading progress:', progress);
+            },
+            (error) => {
+                // Fallback: create simple text using basic shapes
+                console.log('Font loading failed, using fallback shapes for:', textContent);
+                
+                const charWidth = 1.2; // Width per character
+                const charHeight = 1.8; // Height of characters  
+                const charDepth = 0.5; // Depth for embossing
+                const charSpacing = 1.4; // Spacing between characters
+                
+                // Calculate starting position to center the text
+                const totalWidth = (textContent.length - 1) * charSpacing + charWidth;
+                const startX = position.x - totalWidth / 2;
+                const textY = position.y;
+                const textZ = position.z;
+                
+                for (let i = 0; i < textContent.length; i++) {
+                    const char = textContent[i];
+                    const charBox = new THREE.BoxGeometry(charWidth * 0.8, charHeight, charDepth);
+                    const charMesh = new THREE.Mesh(charBox, new THREE.MeshStandardMaterial({
+                        color: materialProps.color,
+                        metalness: materialProps.metalness,
+                        roughness: materialProps.roughness,
+                        envMapIntensity: materialProps.envMapIntensity
+                    }));
+                    
+                    const charX = startX + i * charSpacing;
+                    charMesh.position.set(charX, textY, textZ);
+                    charMesh.scale.copy(scale);
+                    
+                    this.sprueTextObjects.push(charMesh);
+                    this.scene.add(charMesh);
+                }
+                console.log('Fallback text shapes created for:', textContent);
+            }
+        );
     }
 
     updateMetalFinish(finish) {
@@ -3688,6 +4274,9 @@ class HeightfieldViewer {
         // Clear heightfield data
         this.heightfieldData = null;
         this.originalImageDataUrl = null;
+        
+        // Clear sprue text
+        this.clearSprueText();
 
         // Reset camera to default position
         this.camera.position.copy(this.defaultCameraPosition);
@@ -3751,6 +4340,9 @@ class HeightfieldViewer {
             this.engravingMesh.geometry.dispose();
             this.engravingMesh.material.dispose();
         }
+        
+        // Clear sprue text
+        this.clearSprueText();
         
         // Dispose of renderer
         if (this.renderer) {
