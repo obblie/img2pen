@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Robust Boolean System Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        #console {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 New Robust Boolean System Test</h1>
+        
+        <div class="status info">
+            <strong>Status:</strong> <span id="status">Initializing...</span>
+        </div>
+        
+        <div>
+            <button onclick="runTest()">🧪 Run System Test</button>
+            <button onclick="clearConsole()">🗑️ Clear Console</button>
+            <button onclick="checkSystem()">🔍 Check System Status</button>
+        </div>
+        
+        <h3>Console Output:</h3>
+        <div id="console"></div>
+    </div>
+
+    <script type="module">
+        import { testNewSystem } from './src/test-new-system.js';
+        
+        // Override console.log to capture output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const consoleDiv = document.getElementById('console');
+        
+        function addToConsole(message, type = 'log') {
+            const line = document.createElement('div');
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            line.style.color = type === 'error' ? '#dc3545' : '#007bff';
+            consoleDiv.appendChild(line);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToConsole(args.join(' '));
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToConsole(args.join(' '), 'error');
+        };
+        
+        // Global functions
+        window.runTest = async function() {
+            document.getElementById('status').textContent = 'Running test...';
+            document.getElementById('status').parentElement.className = 'status info';
+            
+            try {
+                const result = await testNewSystem();
+                if (result) {
+                    document.getElementById('status').textContent = 'Test passed! ✅';
+                    document.getElementById('status').parentElement.className = 'status success';
+                } else {
+                    document.getElementById('status').textContent = 'Test failed! ❌';
+                    document.getElementById('status').parentElement.className = 'status error';
+                }
+            } catch (error) {
+                document.getElementById('status').textContent = 'Test error! ❌';
+                document.getElementById('status').parentElement.className = 'status error';
+                console.error('Test error:', error);
+            }
+        };
+        
+        window.clearConsole = function() {
+            consoleDiv.innerHTML = '';
+        };
+        
+        window.checkSystem = function() {
+            console.log('🔍 Checking system status...');
+            if (window.viewer) {
+                console.log('✅ Main viewer is available');
+                console.log('🔄 New system enabled:', window.viewer.useNewSystem);
+                if (window.viewer.robustBooleanSystem) {
+                    console.log('✅ Robust boolean system is initialized');
+                } else {
+                    console.log('❌ Robust boolean system not initialized');
+                }
+            } else {
+                console.log('❌ Main viewer not available');
+            }
+        };
+        
+        // Auto-run test after page loads
+        setTimeout(() => {
+            console.log('🚀 Page loaded, ready for testing');
+            document.getElementById('status').textContent = 'Ready for testing';
+            document.getElementById('status').parentElement.className = 'status success';
+        }, 1000);
+    </script>
+</body>
+</html> 

@@ -1367,6 +1367,15 @@ class HeightfieldViewer {
             });
         }
 
+        // Pendant Only Export STL button
+        const exportPendantOnlyBtn = document.getElementById('export-pendant-only-btn');
+        if (exportPendantOnlyBtn) {
+            exportPendantOnlyBtn.addEventListener('click', () => {
+                console.log('Export Pendant Only button clicked');
+                this.exportPendantOnly();
+            });
+        }
+
         const highlightColorInput = document.getElementById('highlight-layer-color');
         if (highlightColorInput) {
             highlightColorInput.addEventListener('input', (e) => {
@@ -3593,6 +3602,377 @@ class HeightfieldViewer {
         link.download = 'pendant.stl';
         link.click();
         document.body.removeChild(link);
+    }
+
+    exportPendantOnly() {
+        const exporter = new STLExporter();
+        // Create a group to export ONLY the pendant (no jumpring, sprue, or text)
+        const group = new THREE.Group();
+        
+        if (this.heightfieldData && this.heightfield) {
+            console.log('Exporting pendant only (no jumpring, sprue, or text)');
+            
+            // Create a complete pendant geometry with relief, bottom disc, side walls, and border
+            const completePendantGeometry = this.createCompletePendantGeometry(this.heightfieldData);
+            
+            if (completePendantGeometry) {
+                // Create a new mesh with the complete geometry and current material
+                const completePendantMesh = new THREE.Mesh(completePendantGeometry, this.heightfield.material.clone());
+                
+                // Copy the position and rotation from the original heightfield
+                completePendantMesh.position.copy(this.heightfield.position);
+                completePendantMesh.rotation.copy(this.heightfield.rotation);
+                completePendantMesh.scale.copy(this.heightfield.scale);
+                
+                group.add(completePendantMesh);
+                console.log('Complete pendant geometry created and added to export');
+            } else {
+                console.warn('Failed to create complete pendant geometry');
+                showNotification('Failed to create complete pendant geometry', 'warning');
+                return;
+            }
+        } else {
+            console.warn('No pendant geometry found to export');
+            showNotification('No pendant geometry found to export', 'warning');
+            return;
+        }
+        
+        // Ensure we don't include any jumpring or sprue objects
+        if (this.jumpring) {
+            console.log('Jumpring exists but will be excluded from pendant-only export');
+        }
+        
+        if (this.sprueTextObjects && this.sprueTextObjects.length > 0) {
+            console.log(`Sprue text objects exist (${this.sprueTextObjects.length}) but will be excluded from pendant-only export`);
+        }
+        
+        try {
+            const stlString = exporter.parse(group);
+            const blob = new Blob([stlString], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.href = URL.createObjectURL(blob);
+            link.download = 'pendant-only.stl';
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('Pendant-only STL exported successfully');
+            showNotification('Pendant-only STL exported successfully!', 'success');
+        } catch (error) {
+            console.error('Error exporting pendant-only STL:', error);
+            showNotification('Error exporting pendant-only STL file', 'error');
+        }
+    }
+
+    createCompletePendantGeometry(heightfieldData) {
+        // Create a complete pendant geometry with relief, bottom disc, side walls, and border
+        // This excludes only the jumpring, sprue, and red layer
+        try {
+            const { width, height, data } = heightfieldData;
+            const MAX_DEPTH = 0.6; // mm
+            
+            // Create geometry based on the current object type
+            let geometry;
+            
+            switch (this.currentObjectType) {
+                case 'circular-pendant':
+                    // Create circular pendant geometry with relief, bottom disc, side walls, and border
+                    const diameter = this.pendantDiameter;
+                    const effectiveRadius = (diameter / 2) - this.borderThickness; // Inner radius for design
+                    const outerRadius = diameter / 2; // Outer radius including border
+                    const widthSegments = width - 1;
+                    const heightSegments = height - 1;
+                    const thickness = this.pendantThickness;
+                    
+                    // Relief positions, normals, uvs
+                    const reliefPositions = [];
+                    const reliefUVs = [];
+                    const gridIdx = (x, y) => y * (widthSegments + 1) + x;
+                    const grid = [];
+                    
+                    // Generate vertices in a grid
+                    for (let y = 0; y <= heightSegments; ++y) {
+                        for (let x = 0; x <= widthSegments; ++x) {
+                            const px = (x / widthSegments - 0.5) * (effectiveRadius * 2);
+                            const py = (y / heightSegments - 0.5) * (effectiveRadius * 2);
+                            const dist = Math.sqrt(px * px + py * py);
+                            let z = 0;
+                            let u = (px / effectiveRadius + 1) / 2;
+                            let v = (py / effectiveRadius + 1) / 2;
+                            
+                            if (dist <= effectiveRadius) {
+                                const pixelX = Math.floor(u * (width - 1));
+                                const pixelY = height - 1 - Math.floor(v * (height - 1));
+                                const pixelIndex = (pixelY * width + pixelX) * 4;
+                                const gray = (data[pixelIndex] * 0.299 +
+                                    data[pixelIndex + 1] * 0.587 +
+                                    data[pixelIndex + 2] * 0.114) / 255;
+                                z = gray * MAX_DEPTH;
+                            }
+                            
+                            grid.push({ px, py, z, u, v, inCircle: dist <= effectiveRadius });
+                        }
+                    }
+                    
+                    // Build positions/uvs for only in-circle vertices, and map old grid index to new
+                    const idxMap = new Array(grid.length).fill(-1);
+                    let idxCounter = 0;
+                    for (let i = 0; i < grid.length; ++i) {
+                        if (grid[i].inCircle) {
+                            reliefPositions.push(grid[i].px, grid[i].py, grid[i].z);
+                            reliefUVs.push(grid[i].u, grid[i].v);
+                            idxMap[i] = idxCounter++;
+                        }
+                    }
+                    
+                    // Build indices for triangles fully inside the circle
+                    const reliefIndices = [];
+                    for (let y = 0; y < heightSegments; ++y) {
+                        for (let x = 0; x < widthSegments; ++x) {
+                            const a = gridIdx(x, y);
+                            const b = gridIdx(x + 1, y);
+                            const c = gridIdx(x, y + 1);
+                            const d = gridIdx(x + 1, y + 1);
+                            if (grid[a].inCircle && grid[b].inCircle && grid[c].inCircle)
+                                reliefIndices.push(idxMap[a], idxMap[b], idxMap[c]);
+                            if (grid[b].inCircle && grid[d].inCircle && grid[c].inCircle)
+                                reliefIndices.push(idxMap[b], idxMap[d], idxMap[c]);
+                        }
+                    }
+                    
+                    // Find edge points of the relief (for bottom disc and side wall)
+                    const edgePoints = [];
+                    for (let y = 0; y <= heightSegments; ++y) {
+                        for (let x = 0; x <= widthSegments; ++x) {
+                            const idx = y * (widthSegments + 1) + x;
+                            if (grid[idx].inCircle) {
+                                // Is this an edge? (at least one neighbor is out of circle)
+                                const neighbors = [
+                                    gridIdx(x - 1, y), gridIdx(x + 1, y),
+                                    gridIdx(x, y - 1), gridIdx(x, y + 1)
+                                ];
+                                if (neighbors.some(n => n < 0 || n >= grid.length || !grid[n] || !grid[n].inCircle)) {
+                                    edgePoints.push({ x: grid[idx].px, y: grid[idx].py, z: grid[idx].z });
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Sort edge points by angle from center for a clean bottom disc
+                    edgePoints.sort((a, b) => {
+                        const angleA = Math.atan2(a.y, a.x);
+                        const angleB = Math.atan2(b.y, b.x);
+                        return angleA - angleB;
+                    });
+                    
+                    // --- Merge all into a single geometry ---
+                    // 1. Relief (top)
+                    const allPositions = [...reliefPositions];
+                    const allUVs = [...reliefUVs];
+                    const allIndices = [...reliefIndices];
+                    
+                    // 2. Bottom disc (fan from center to edge points)
+                    const bottomStartIdx = allPositions.length / 3;
+                    allPositions.push(0, 0, -thickness); // center
+                    allUVs.push(0.5, 0.5);
+                    for (let i = 0; i < edgePoints.length; ++i) {
+                        allPositions.push(edgePoints[i].x, edgePoints[i].y, -thickness);
+                        allUVs.push((edgePoints[i].x / effectiveRadius + 1) / 2, (edgePoints[i].y / effectiveRadius + 1) / 2);
+                    }
+                    for (let i = 1; i <= edgePoints.length; ++i) {
+                        const a = bottomStartIdx;
+                        const b = bottomStartIdx + i;
+                        const c = bottomStartIdx + (i < edgePoints.length ? i + 1 : 1);
+                        allIndices.push(a, b, c);
+                    }
+                    
+                    // 3. Side wall - connect relief edge to bottom edge
+                    const wallTopStartIdx = allPositions.length / 3;
+                    
+                    // Add wall vertices - top edge matches relief edge points
+                    for (let i = 0; i < edgePoints.length; ++i) {
+                        allPositions.push(edgePoints[i].x, edgePoints[i].y, edgePoints[i].z);
+                        allUVs.push(0, 0);
+                    }
+                    
+                    // Create wall faces connecting to bottom disc edge
+                    for (let i = 0; i < edgePoints.length; ++i) {
+                        const next = (i + 1) % edgePoints.length;
+                        
+                        const wallTopCurrent = wallTopStartIdx + i;
+                        const wallTopNext = wallTopStartIdx + next;
+                        const bottomCurrent = bottomStartIdx + 1 + i;  // +1 to skip center
+                        const bottomNext = bottomStartIdx + 1 + next;
+                        
+                        // Create wall quad (two triangles)
+                        allIndices.push(wallTopCurrent, bottomCurrent, wallTopNext);
+                        allIndices.push(wallTopNext, bottomCurrent, bottomNext);
+                    }
+                    
+                    // 4. Border (rim) - extend to exactly outerRadius for total diameter
+                    const rimStartIdx = allPositions.length / 3;
+                    const border = this.borderThickness;
+                    
+                    // Find maxZ of the relief
+                    let maxZ = -Infinity;
+                    for (let i = 0; i < grid.length; ++i) {
+                        if (grid[i].inCircle && grid[i].z > maxZ) maxZ = grid[i].z;
+                    }
+                    const rimTopZ = maxZ + 0.4; // Rim 0.4mm above relief for proper recess
+                    
+                    for (let i = 0; i < edgePoints.length; ++i) {
+                        const next = (i + 1) % edgePoints.length;
+                        // Outward normal
+                        const dx = edgePoints[i].x;
+                        const dy = edgePoints[i].y;
+                        const len = Math.sqrt(dx * dx + dy * dy);
+                        const nx = dx / len;
+                        const ny = dy / len;
+                        // Outer edge points - extend to exactly outerRadius
+                        const ox1 = nx * outerRadius;
+                        const oy1 = ny * outerRadius;
+                        const nx2 = edgePoints[next].x / Math.sqrt(edgePoints[next].x ** 2 + edgePoints[next].y ** 2);
+                        const ny2 = edgePoints[next].y / Math.sqrt(edgePoints[next].x ** 2 + edgePoints[next].y ** 2);
+                        const ox2 = nx2 * outerRadius;
+                        const oy2 = ny2 * outerRadius;
+                        
+                        // Top and bottom (rim top always at rimTopZ)
+                        allPositions.push(edgePoints[i].x, edgePoints[i].y, rimTopZ); // 0 inner top
+                        allPositions.push(edgePoints[next].x, edgePoints[next].y, rimTopZ); // 1 inner top next
+                        allPositions.push(ox1, oy1, rimTopZ); // 2 outer top
+                        allPositions.push(ox2, oy2, rimTopZ); // 3 outer top next
+                        allPositions.push(edgePoints[i].x, edgePoints[i].y, -thickness); // 4 inner bottom
+                        allPositions.push(edgePoints[next].x, edgePoints[next].y, -thickness); // 5 inner bottom next
+                        allPositions.push(ox1, oy1, -thickness); // 6 outer bottom
+                        allPositions.push(ox2, oy2, -thickness); // 7 outer bottom next
+                        allUVs.push(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0); // dummy UVs
+                        
+                        const b = rimStartIdx + i * 8;
+                        // Top rim quad
+                        allIndices.push(b+2, b+3, b+0);
+                        allIndices.push(b+3, b+1, b+0);
+                        // Bottom rim quad
+                        allIndices.push(b+4, b+6, b+5);
+                        allIndices.push(b+5, b+6, b+7);
+                        // Outer wall
+                        allIndices.push(b+2, b+6, b+3);
+                        allIndices.push(b+3, b+6, b+7);
+                        // Inner wall
+                        allIndices.push(b+0, b+1, b+4);
+                        allIndices.push(b+1, b+5, b+4);
+                    }
+                    
+                    geometry = new THREE.BufferGeometry();
+                    geometry.setAttribute('position', new THREE.Float32BufferAttribute(allPositions, 3));
+                    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(allUVs, 2));
+                    geometry.setIndex(allIndices);
+                    geometry.computeVertexNormals();
+                    break;
+                    
+                default:
+                    // For other object types, create a simple plane geometry
+                    geometry = new THREE.PlaneGeometry(
+                        this.pendantDiameter,
+                        this.pendantDiameter,
+                        width - 1,
+                        height - 1
+                    );
+                    break;
+            }
+            
+            return geometry;
+        } catch (error) {
+            console.error('Error creating complete pendant geometry:', error);
+            return null;
+        }
+    }
+
+    createCleanPendantGeometry(heightfieldData) {
+        // Create a clean pendant geometry from the original heightfield data
+        // This recreates just the pendant relief without any jumpring or sprue
+        try {
+            const { width, height, data } = heightfieldData;
+            const MAX_DEPTH = 0.6; // mm
+            
+            // Create geometry based on the current object type
+            let geometry;
+            
+            switch (this.currentObjectType) {
+                case 'circular-pendant':
+                    // Create circular pendant geometry
+                    const diameter = this.pendantDiameter;
+                    const radius = diameter / 2;
+                    const widthSegments = width - 1;
+                    const heightSegments = height - 1;
+                    
+                    // Create relief positions for circular pendant
+                    const reliefPositions = [];
+                    const reliefUVs = [];
+                    const reliefIndices = [];
+                    
+                    // Generate vertices in a grid
+                    for (let y = 0; y <= heightSegments; ++y) {
+                        for (let x = 0; x <= widthSegments; ++x) {
+                            const px = (x / widthSegments - 0.5) * diameter;
+                            const py = (y / heightSegments - 0.5) * diameter;
+                            const dist = Math.sqrt(px * px + py * py);
+                            
+                            let z = 0;
+                            let u = (px / radius + 1) / 2;
+                            let v = (py / radius + 1) / 2;
+                            
+                            if (dist <= radius) {
+                                const pixelX = Math.floor(u * (width - 1));
+                                const pixelY = height - 1 - Math.floor(v * (height - 1));
+                                const pixelIndex = (pixelY * width + pixelX) * 4;
+                                const gray = (data[pixelIndex] * 0.299 +
+                                    data[pixelIndex + 1] * 0.587 +
+                                    data[pixelIndex + 2] * 0.114) / 255;
+                                z = gray * MAX_DEPTH;
+                            }
+                            
+                            reliefPositions.push(px, py, z);
+                            reliefUVs.push(u, v);
+                        }
+                    }
+                    
+                    // Generate indices for triangles
+                    for (let y = 0; y < heightSegments; ++y) {
+                        for (let x = 0; x < widthSegments; ++x) {
+                            const a = y * (widthSegments + 1) + x;
+                            const b = y * (widthSegments + 1) + x + 1;
+                            const c = (y + 1) * (widthSegments + 1) + x;
+                            const d = (y + 1) * (widthSegments + 1) + x + 1;
+                            
+                            reliefIndices.push(a, b, c);
+                            reliefIndices.push(b, d, c);
+                        }
+                    }
+                    
+                    geometry = new THREE.BufferGeometry();
+                    geometry.setAttribute('position', new THREE.Float32BufferAttribute(reliefPositions, 3));
+                    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(reliefUVs, 2));
+                    geometry.setIndex(reliefIndices);
+                    geometry.computeVertexNormals();
+                    break;
+                    
+                default:
+                    // For other object types, create a simple plane geometry
+                    geometry = new THREE.PlaneGeometry(
+                        this.pendantDiameter,
+                        this.pendantDiameter,
+                        width - 1,
+                        height - 1
+                    );
+                    break;
+            }
+            
+            return geometry;
+        } catch (error) {
+            console.error('Error creating clean pendant geometry:', error);
+            return null;
+        }
     }
 
     loadEngravingFont(fontName, callback) {
