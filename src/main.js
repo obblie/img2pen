@@ -692,9 +692,7 @@ class HeightfieldViewer {
                 🎮 3D Controls
             </div>
             <div style="line-height: 1.4; opacity: 0.9;">
-                <div style="margin-bottom: 4px;">• <strong>Scroll</strong> to zoom in/out</div>
                 <div style="margin-bottom: 4px;">• <strong>Drag</strong> to rotate view</div>
-                <div style="margin-bottom: 4px;">• <strong>Right-click + drag</strong> to pan</div>
                 <div style="font-size: 11px; opacity: 0.8; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(236, 240, 241, 0.3);">
                     💡 <strong>Tip:</strong> Click outside canvas to scroll the page
                 </div>
@@ -702,12 +700,12 @@ class HeightfieldViewer {
         `;
         canvasContainer.appendChild(controlsMessage);
 
-        // Setup camera - angled view to show pendant standing upright on platform
-        this.camera.position.set(33, 20, 47);
+        // Setup camera - angled view to show pendant standing upright on platform (20% closer)
+        this.camera.position.set(26.4, 16, 37.6);
         this.camera.lookAt(0, 0, 0);
         
         // Store default camera position for reset functionality
-        this.defaultCameraPosition = new THREE.Vector3(33, 20, 47);
+        this.defaultCameraPosition = new THREE.Vector3(26.4, 16, 37.6);
 
         // Setup controls
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -717,7 +715,7 @@ class HeightfieldViewer {
         // Lock the pendant in place - disable panning but allow rotation
         this.controls.enablePan = false;      // Disable panning (two-finger drag)
         this.controls.enableRotate = true;    // Enable rotation (single-finger drag)
-        this.controls.enableZoom = true;      // Keep zoom enabled for viewing details
+        this.controls.enableZoom = false;     // Zoom locked - users cannot zoom in/out
 
         // Use Poly Haven HDRI for environment map
         const rgbeLoader = new RGBELoader();
@@ -1031,12 +1029,10 @@ class HeightfieldViewer {
 
         const cameraDistance = document.getElementById('camera-distance');
         if (cameraDistance) {
-            cameraDistance.addEventListener('input', (e) => {
-                const distance = parseFloat(e.target.value);
-                const direction = new THREE.Vector3();
-                this.camera.getWorldDirection(direction);
-                this.camera.position.copy(this.controls.target).add(direction.multiplyScalar(-distance));
-            });
+            // Camera distance/zoom is locked - slider disabled
+            cameraDistance.disabled = true;
+            cameraDistance.style.opacity = '0.5';
+            cameraDistance.style.cursor = 'not-allowed';
         }
 
         // Rotate toggle
@@ -2119,7 +2115,8 @@ class HeightfieldViewer {
                 // Add jumpring indices to existing indices
                 allIndices.push(...jumpringIndices);
                 
-                // Add sprue to the side of the pendant - TEST VERSION
+                // SPRUE HIDDEN - Sprue creation code commented out
+                /* Add sprue to the side of the pendant - TEST VERSION
                 console.log('Adding sprue...');
                 const sprueWidth = 6; // 6mm width - reduced by 25% from 8mm
                 const sprueLength = 20; // 20mm extension - make it longer
@@ -2322,6 +2319,7 @@ class HeightfieldViewer {
                 // Note: Text objects are created asynchronously in the callback above
                 // The actual count will be logged inside the callback
                 console.log('Font loading initiated for text:', textContent);
+                */ // END OF SPRUE CODE - HIDDEN
                 
                 // Build BufferGeometry
                 geometry = new THREE.BufferGeometry();
