@@ -2649,6 +2649,20 @@
             max-height: 400px;
             overflow-y: auto;
         }
+        
+        /* Hide Shopify cart toggle */
+        [data-shopify-button-component],
+        .shopify-buy__cart-toggle,
+        .shopify-buy__cart-toggle-wrapper,
+        button[data-shopify-cart-toggle],
+        [id*="shopify-cart"],
+        [class*="shopify-buy__cart-toggle"],
+        [class*="shopify-buy-frame"][class*="cart"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
     </style>
     <!-- Cropper.js CSS -->
     <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
@@ -4633,10 +4647,8 @@
         function initializeImagineButton() {
             console.log('🎨 Initializing Imagine button...');
             
-            // Wait a bit for the viewer to be ready
-            setTimeout(() => {
-                console.log('🎨 Delayed Imagine button initialization...');
-                
+            // Initialize immediately - no delay
+            function init() {
                 const imagineButton = document.querySelector('.imagine-button');
                 const aiPromptModal = document.getElementById('ai-prompt-modal');
                 const aiPromptInput = document.getElementById('ai-prompt-input-modal');
@@ -4727,9 +4739,9 @@
                             console.log('✅ AI generation triggered successfully');
                             
                         } else {
-                            // If we can't find the elements, wait a bit and try again
-                            console.log('⏳ Original elements not found, waiting 2 seconds...');
-                            await new Promise(resolve => setTimeout(resolve, 2000));
+                            // If we can't find the elements, try again immediately
+                            console.log('⏳ Original elements not found, retrying immediately...');
+                            await new Promise(resolve => setTimeout(resolve, 10));
                             
                             const retryPromptInput = document.getElementById('prompt-input');
                             const retryPromptSubmitBtn = document.getElementById('prompt-submit');
@@ -4756,7 +4768,20 @@
                 });
                 
                 console.log('✅ Imagine button initialized successfully');
-            }, 1000); // Reduced delay since we're waiting for functions directly
+            }
+            
+            // Try to initialize immediately
+            init();
+            
+            // If elements not ready, check periodically (but quickly)
+            if (!document.querySelector('.imagine-button')) {
+                const checkInterval = setInterval(() => {
+                    if (document.querySelector('.imagine-button')) {
+                        clearInterval(checkInterval);
+                        init();
+                    }
+                }, 10); // Check every 10ms instead of waiting 1 second
+            }
         }
     </script>
     
@@ -5161,6 +5186,70 @@
           }, 1000);
           
           console.log('Shopify product component initialized and stored');
+          
+          // Hide Shopify cart toggle after component loads and continuously monitor
+          function hideCartToggle() {
+            // Hide cart toggle using various selectors
+            const cartSelectors = [
+              '[data-shopify-button-component]',
+              '.shopify-buy__cart-toggle',
+              '.shopify-buy__cart-toggle-wrapper',
+              'button[data-shopify-cart-toggle]',
+              '[id*="shopify-cart"]',
+              '[class*="shopify-buy__cart-toggle"]',
+              '[class*="shopify-buy-frame"][class*="cart"]',
+              'iframe[name*="cart"]',
+              'iframe[title*="cart" i]',
+              '[data-shopify-cart]'
+            ];
+            
+            cartSelectors.forEach(selector => {
+              try {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                  el.style.display = 'none !important';
+                  el.style.visibility = 'hidden !important';
+                  el.style.opacity = '0 !important';
+                  el.style.pointerEvents = 'none !important';
+                  el.style.width = '0 !important';
+                  el.style.height = '0 !important';
+                  el.style.position = 'absolute !important';
+                  el.style.left = '-9999px !important';
+                });
+              } catch(e) {
+                // Ignore selector errors
+              }
+            });
+            
+            // Also check for iframes that might contain the cart
+            const iframes = document.querySelectorAll('iframe');
+            iframes.forEach(iframe => {
+              try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                if (iframeDoc) {
+                  const cartElements = iframeDoc.querySelectorAll('[class*="cart"], [id*="cart"], button[title*="cart" i]');
+                  cartElements.forEach(el => {
+                    if (el.textContent.toLowerCase().includes('cart') || 
+                        el.getAttribute('title')?.toLowerCase().includes('cart') ||
+                        el.getAttribute('aria-label')?.toLowerCase().includes('cart')) {
+                      el.style.display = 'none';
+                      el.style.visibility = 'hidden';
+                    }
+                  });
+                }
+              } catch(e) {
+                // Cross-origin iframe, can't access
+              }
+            });
+          }
+          
+          // Run immediately and then periodically
+          setTimeout(hideCartToggle, 1000);
+          setTimeout(hideCartToggle, 2000);
+          setTimeout(hideCartToggle, 3000);
+          
+          // Also monitor continuously
+          setInterval(hideCartToggle, 2000);
         });
       }
     })();

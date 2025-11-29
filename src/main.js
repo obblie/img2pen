@@ -572,28 +572,9 @@ function showLoadingOverlay() {
     const status = document.getElementById('loading-status');
     const bar = document.getElementById('loading-progress-bar');
     overlay.style.display = 'flex';
-    status.textContent = 'Analyzing image...';
+    status.textContent = 'Processing image...';
     bar.style.width = '0%';
-    let steps = [
-        { t: 0, text: 'Analyzing image...', pct: 10 },
-        { t: 800, text: 'Detecting features...', pct: 30 },
-        { t: 1600, text: 'Processing image...', pct: 55 },
-        { t: 2400, text: 'Generating 3D Geometries...', pct: 80 },
-        { t: 3200, text: 'Finalizing model...', pct: 100 }
-    ];
-    steps.forEach(step => {
-        setTimeout(() => {
-            status.textContent = step.text;
-            bar.style.width = step.pct + '%';
-            
-            // Hide overlay when finalizing is complete
-            if (step.pct === 100) {
-                setTimeout(() => {
-                    hideLoadingOverlay();
-                }, 800); // Brief delay after showing 100%
-            }
-        }, step.t);
-    });
+    // No delays - processing happens immediately
 }
 function hideLoadingOverlay() {
     document.getElementById('loading-overlay').style.display = 'none';
@@ -1367,99 +1348,103 @@ class HeightfieldViewer {
         if (showLoading) {
             showLoadingOverlay();
         }
-        setTimeout(async () => {
-            const image = await this.loadImage(file);
+        // Process immediately - no delay
+        const image = await this.loadImage(file);
+        
+        // If auto-crop is enabled, crop slightly lower than the top portion
+        if (autoCrop) {
+            console.log('🖼️ Auto-cropping image (slightly lower)');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
             
-            // If auto-crop is enabled, crop the top portion of the image
-            if (autoCrop) {
-                console.log('🖼️ Auto-cropping top portion of image');
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Set canvas size to half the image height (top portion)
-                canvas.width = image.width;
-                canvas.height = Math.floor(image.height / 2);
-                
-                // Draw only the top half of the image
-                ctx.drawImage(image, 0, 0, image.width, canvas.height, 0, 0, canvas.width, canvas.height);
-                
-                // Convert back to image
-                const croppedImage = new Image();
-                croppedImage.src = canvas.toDataURL();
-                await new Promise(resolve => {
-                    croppedImage.onload = resolve;
-                });
-                
-                console.log('✅ Image auto-cropped to top portion');
-                const heightfieldData = this.generateHeightfieldData(croppedImage);
-                this.createHeightfieldMesh(heightfieldData);
-            } else {
-                const heightfieldData = this.generateHeightfieldData(image);
-                this.createHeightfieldMesh(heightfieldData);
-                
-                // Hide demo message when user uploads their own image (not for initial load)
-                if (!autoCrop) {
-                    const demoMessage = document.getElementById('demo-message');
-                    if (demoMessage) {
-                        demoMessage.style.display = 'none';
-                    }
+            // Start crop from 10% down from the top, crop 50% of the image height
+            const cropStartY = Math.floor(image.height * 0.1); // Start 10% down from top
+            const cropHeight = Math.floor(image.height * 0.5); // Crop 50% of the height
+            
+            canvas.width = image.width;
+            canvas.height = cropHeight;
+            
+            // Draw from slightly lower position
+            ctx.drawImage(image, 0, cropStartY, image.width, cropHeight, 0, 0, canvas.width, canvas.height);
+            
+            // Convert back to image
+            const croppedImage = new Image();
+            croppedImage.src = canvas.toDataURL();
+            await new Promise(resolve => {
+                croppedImage.onload = resolve;
+            });
+            
+            console.log('✅ Image auto-cropped to top portion');
+            const heightfieldData = this.generateHeightfieldData(croppedImage);
+            this.createHeightfieldMesh(heightfieldData);
+        } else {
+            const heightfieldData = this.generateHeightfieldData(image);
+            this.createHeightfieldMesh(heightfieldData);
+            
+            // Hide demo message when user uploads their own image (not for initial load)
+            if (!autoCrop) {
+                const demoMessage = document.getElementById('demo-message');
+                if (demoMessage) {
+                    demoMessage.style.display = 'none';
                 }
             }
-            // Show the canvas container when image is processed
-            const canvasContainer = document.getElementById('canvas-container');
-            
-            // Use the full container dimensions for the 3D scene
-            const containerWidth = canvasContainer.clientWidth;
-            const containerHeight = canvasContainer.clientHeight;
-            
-            console.log('Container dimensions:', containerWidth, 'x', containerHeight);
-            
-            // Set explicit dimensions to ensure proper sizing
-            const targetWidth = Math.max(containerWidth, 1200);
-            const targetHeight = Math.max(containerHeight, 600);
-            
-            console.log('Target dimensions:', targetWidth, 'x', targetHeight);
-            
-            // Resize renderer to match canvas container dimensions
-            const isMobileDevice = window.innerWidth <= 768;
-            
-            if (isMobileDevice) {
-                // For mobile, use the mobile container dimensions
-                const mobileContainer = document.getElementById('mobile-canvas-container');
-                if (mobileContainer) {
-                    const mobileWidth = mobileContainer.clientWidth;
-                    const mobileHeight = mobileContainer.clientHeight;
-                    console.log('Mobile container dimensions:', mobileWidth, 'x', mobileHeight);
-                    
-                    // Ensure minimum dimensions
-                    const finalWidth = Math.max(mobileWidth, 300);
-                    const finalHeight = Math.max(mobileHeight, 300);
-                    
-                    this.renderer.setSize(finalWidth, finalHeight);
-                    this.renderer.domElement.style.width = '100%';
-                    this.renderer.domElement.style.height = '100%';
-                    this.renderer.domElement.style.display = 'block';
-                    this.camera.aspect = finalWidth / finalHeight;
-                    this.camera.updateProjectionMatrix();
-                    
-                    console.log('Mobile renderer resized to:', finalWidth, 'x', finalHeight);
-                } else {
-                    console.error('Mobile container not found');
-                }
-            } else {
-                // For desktop, use the original logic
-                this.renderer.setSize(targetWidth, targetHeight);
+        }
+        // Show the canvas container when image is processed
+        const canvasContainer = document.getElementById('canvas-container');
+        
+        // Use the full container dimensions for the 3D scene
+        const containerWidth = canvasContainer.clientWidth;
+        const containerHeight = canvasContainer.clientHeight;
+        
+        console.log('Container dimensions:', containerWidth, 'x', containerHeight);
+        
+        // Set explicit dimensions to ensure proper sizing
+        const targetWidth = Math.max(containerWidth, 1200);
+        const targetHeight = Math.max(containerHeight, 600);
+        
+        console.log('Target dimensions:', targetWidth, 'x', targetHeight);
+        
+        // Resize renderer to match canvas container dimensions
+        const isMobileDevice = window.innerWidth <= 768;
+        
+        if (isMobileDevice) {
+            // For mobile, use the mobile container dimensions
+            const mobileContainer = document.getElementById('mobile-canvas-container');
+            if (mobileContainer) {
+                const mobileWidth = mobileContainer.clientWidth;
+                const mobileHeight = mobileContainer.clientHeight;
+                console.log('Mobile container dimensions:', mobileWidth, 'x', mobileHeight);
+                
+                // Ensure minimum dimensions
+                const finalWidth = Math.max(mobileWidth, 300);
+                const finalHeight = Math.max(mobileHeight, 300);
+                
+                this.renderer.setSize(finalWidth, finalHeight);
                 this.renderer.domElement.style.width = '100%';
                 this.renderer.domElement.style.height = '100%';
                 this.renderer.domElement.style.display = 'block';
-                this.camera.aspect = containerWidth / containerHeight;
+                this.camera.aspect = finalWidth / finalHeight;
                 this.camera.updateProjectionMatrix();
+                
+                console.log('Mobile renderer resized to:', finalWidth, 'x', finalHeight);
+            } else {
+                console.error('Mobile container not found');
             }
-            
-            // Show the UI menu when canvas is visible (only on desktop)
-            const isMobile = window.innerWidth <= 768;
-            const uiMenu = document.getElementById('ui-menu');
-            
+        } else {
+            // For desktop, use the original logic
+            this.renderer.setSize(targetWidth, targetHeight);
+            this.renderer.domElement.style.width = '100%';
+            this.renderer.domElement.style.height = '100%';
+            this.renderer.domElement.style.display = 'block';
+            this.camera.aspect = containerWidth / containerHeight;
+            this.camera.updateProjectionMatrix();
+        }
+        
+        // Show the UI menu when canvas is visible (only on desktop)
+        const isMobile = window.innerWidth <= 768;
+        const uiMenu = document.getElementById('ui-menu');
+        
+        if (uiMenu) {
             if (!isMobile) {
                 console.log('Positioning control panel in upper right corner...');
                 // Force positioning to upper right corner with !important
@@ -1483,30 +1468,6 @@ class HeightfieldViewer {
                 `);
                 console.log('Control panel positioned! Current styles:', uiMenu.style.cssText);
                 // Drag functionality is already initialized in DOMContentLoaded
-                
-                // Force positioning again after a delay to ensure it takes effect
-                setTimeout(() => {
-                    console.log('Re-applying control panel positioning...');
-                    uiMenu.setAttribute('style', `
-                        position: absolute !important;
-                        top: 80px !important;
-                        right: 80px !important;
-                        left: auto !important;
-                        width: 350px !important;
-                        height: 80vh !important;
-                        z-index: 1000 !important;
-                        display: block !important;
-                        background: rgba(255,255,255,0.95) !important;
-                        padding: 20px !important;
-                        overflow-y: auto !important;
-                        cursor: move !important;
-                        box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
-                        border-radius: 12px !important;
-                        visibility: visible !important;
-                        opacity: 1 !important;
-                    `);
-                    console.log('Control panel re-positioned!');
-                }, 500);
             } else {
                 console.log('Mobile detected - keeping UI menu hidden');
                 // Ensure UI menu is hidden on mobile
@@ -1517,9 +1478,16 @@ class HeightfieldViewer {
                     z-index: -1 !important;
                 `);
             }
-            // Scroll to the scene container
-            document.getElementById('scene-container').scrollIntoView({ behavior: 'smooth' });
-        }, 100); // Process immediately since loading overlay is handled separately
+        } else {
+            console.warn('UI menu element not found, skipping positioning');
+        }
+        // Scroll to the scene container
+        document.getElementById('scene-container').scrollIntoView({ behavior: 'smooth' });
+        
+        // Hide loading overlay immediately after processing completes
+        if (showLoading) {
+            hideLoadingOverlay();
+        }
     }
 
     loadImage(fileOrBlob) {
@@ -3194,7 +3162,9 @@ class HeightfieldViewer {
         const platformMaterial = new THREE.MeshStandardMaterial({ 
             color: 0xf8f8f8, // Light gray color
             metalness: 0.0,
-            roughness: 0.3
+            roughness: 0.3,
+            transparent: true,
+            opacity: 0.4 // Semi-transparent (40% opacity)
         });
         
         this.platform = new THREE.Mesh(platformGeometry, platformMaterial);
@@ -4769,34 +4739,55 @@ try {
 window.viewer.generateImageWithOpenAI = generateImageWithOpenAI;
 window.viewer.uploadDalleImageToS3 = uploadDalleImageToS3;
 
-// Load default image (instructions.png) on page load
-setTimeout(() => {
-    if (window.viewer) {
-        console.log('🖼️ Loading default image: instructions.png');
-        
-        // Fetch the instructions.png image
-        fetch('/instructions.png')
-            .then(response => response.blob())
-            .then(blob => {
-                // Create a file object from the blob
-                const file = new File([blob], 'instructions.png', { type: 'image/png' });
-                
-                // Process the image with auto-crop (top portion) and no loading screen
-                                        window.viewer.processImage(file, true, false, false); // true for auto-crop, false for no loading screen, false for no S3 upload
-                
-                // Show demo message for initial load
-                const demoMessage = document.getElementById('demo-message');
-                if (demoMessage) {
-                    demoMessage.style.display = 'block';
-                }
-                
-                console.log('✅ Default image loaded successfully');
-            })
-            .catch(error => {
-                console.error('❌ Failed to load default image:', error);
-            });
-    }
-}, 1000); // Wait 1 second for viewer to be fully initialized
+// Load default image (pet.png) on page load - no delay
+if (window.viewer) {
+    console.log('🖼️ Loading default image: pet.png');
+    
+    // Fetch the pet.png image
+    fetch('/pet.png')
+        .then(response => response.blob())
+        .then(blob => {
+            // Create a file object from the blob
+            const file = new File([blob], 'pet.png', { type: 'image/png' });
+            
+            // Process the image with auto-crop (top portion) and no loading screen
+            window.viewer.processImage(file, true, false, false); // true for auto-crop, false for no loading screen, false for no S3 upload
+            
+            // Show demo message for initial load
+            const demoMessage = document.getElementById('demo-message');
+            if (demoMessage) {
+                demoMessage.style.display = 'block';
+            }
+            
+            console.log('✅ Default image loaded successfully');
+        })
+        .catch(error => {
+            console.error('❌ Failed to load default image:', error);
+        });
+} else {
+    // If viewer not ready, wait for it (but only if absolutely necessary)
+    const checkViewer = setInterval(() => {
+        if (window.viewer) {
+            clearInterval(checkViewer);
+            console.log('🖼️ Loading default image: pet.png');
+            
+            fetch('/pet.png')
+                .then(response => response.blob())
+                .then(blob => {
+                    const file = new File([blob], 'pet.png', { type: 'image/png' });
+                    window.viewer.processImage(file, true, false, false);
+                    const demoMessage = document.getElementById('demo-message');
+                    if (demoMessage) {
+                        demoMessage.style.display = 'block';
+                    }
+                    console.log('✅ Default image loaded successfully');
+                })
+                .catch(error => {
+                    console.error('❌ Failed to load default image:', error);
+                });
+        }
+    }, 10); // Check every 10ms instead of waiting 1 second
+}
 
 // Show deployment GUID in lower left
 fetch('./version.json')
@@ -4995,11 +4986,11 @@ async function generateImageWithOpenAI(prompt) {
         
         testImage.src = dataUrl;
         
-        // Wait for image validation (with timeout)
+        // Wait for image validation (with reduced timeout for faster processing)
         try {
             await Promise.race([
                 imageLoadPromise,
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Image validation timeout')), 5000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Image validation timeout')), 1000))
             ]);
         } catch (validationError) {
             console.error('❌ Image validation failed:', validationError);
