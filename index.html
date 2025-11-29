@@ -2804,58 +2804,17 @@
 
                             </div>
                             
-                            <!-- Canvas Controls Message -->
-                            <div id="canvas-controls-message" style="position: absolute; top: 15px; right: 15px; background: rgba(44, 62, 80, 0.9); color: #ecf0f1; padding: 12px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; max-width: 280px; z-index: 1001; pointer-events: none; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 1px solid rgba(236, 240, 241, 0.2);">
-                                <div style="margin-bottom: 6px; font-weight: 600; color: #ffffff;">
-                                    🎮 3D Controls
-                                </div>
-                                <div style="line-height: 1.4; opacity: 0.9;">
-                                    <div style="margin-bottom: 4px;">• <strong>Scroll</strong> to zoom in/out</div>
-                                    <div style="margin-bottom: 4px;">• <strong>Drag</strong> to rotate view</div>
-                                    <div style="margin-bottom: 4px;">• <strong>Right-click + drag</strong> to pan</div>
-                                    <div style="font-size: 11px; opacity: 0.8; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(236, 240, 241, 0.3);">
-                                        💡 <strong>Tip:</strong> Click outside canvas to scroll the page
-                                    </div>
-                                </div>
-                            </div>
-                            
                             <!-- Demo Message -->
                             <div id="demo-message" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: rgba(220, 53, 69, 0.9); color: #ffffff; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1001; pointer-events: none; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.3); text-align: center; max-width: 400px; display: none;">
-                                <div style="margin-bottom: 4px;">🎯 <strong>Best Practices</strong></div>
+                                <div style="margin-bottom: 4px;"><strong>Best Practices</strong></div>
                                 <div style="font-size: 12px; opacity: 0.9; line-height: 1.3;">
-                                    This preview showcases best practices for choosing your photo.<br>
-                                    See image below with further details.
+                                    For best results, use an evenly and well-lit image.<br>
+                                    See the reference images for examples.
                                 </div>
                             </div>
                             
                             <style>
                                 @media (max-width: 768px) {
-                                    #canvas-controls-message {
-                                        top: 8px !important;
-                                        right: 8px !important;
-                                        padding: 6px 8px !important;
-                                        border-radius: 4px !important;
-                                        font-size: 8px !important;
-                                        max-width: 140px !important;
-                                        line-height: 1.2 !important;
-                                    }
-                                    
-                                    #canvas-controls-message > div:first-child {
-                                        margin-bottom: 3px !important;
-                                        font-size: 9px !important;
-                                    }
-                                    
-                                    #canvas-controls-message > div:last-child > div {
-                                        margin-bottom: 2px !important;
-                                        font-size: 7px !important;
-                                    }
-                                    
-                                    #canvas-controls-message > div:last-child > div:last-child {
-                                        font-size: 6px !important;
-                                        margin-top: 3px !important;
-                                        padding-top: 3px !important;
-                                    }
-                                    
                                     #demo-message {
                                         bottom: 40px !important;
                                         padding: 8px 12px !important;
@@ -2880,126 +2839,22 @@
                             <img id="main-image-viewer" src="" alt="Product View" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
                         </div>
                     </div>
-                    
-                    <!-- Product View Carousel -->
-                    <div class="product-carousel">
-                        <div class="carousel-thumbnail active" data-view="3d">
-                            <img src="/retrieverMetal.png" alt="3D Scene" class="carousel-image">
-                        </div>
-                        <div class="carousel-thumbnail" data-view="sample">
-                            <img src="/samplePendant.png" alt="Sample Pendant" class="carousel-image">
-                        </div>
-                        <div class="carousel-thumbnail" data-view="side">
-                            <img src="/instructions.png" alt="Instructions" class="carousel-image">
-                        </div>
-                        <div class="carousel-thumbnail" data-view="front">
-                            <img src="/retrieverModel.png" alt="Front View" class="carousel-image">
-                        </div>
-                        <div class="carousel-thumbnail" data-view="retriever-metal">
-                            <img src="/retrieverMetal.png" alt="Retriever Metal" class="carousel-image">
-                        </div>
-                        <div class="carousel-thumbnail" data-view="sailing">
-                            <img src="/sailingSceneProductPhoto.png" alt="Sailing Scene" class="carousel-image">
-                        </div>
-                        <div class="carousel-thumbnail" data-view="before">
-                            <img src="/before.png" alt="Before" class="carousel-image">
-                        </div>
-                    </div>
                 </div>
                 
                 <!-- Product Details Section -->
                 <div class="product-details-section">
-                    <!-- Product Header -->
-                    <div class="product-header">
-                        <h1 class="product-title">Custom Photo Pendant</h1>
-                        <div class="product-price">$169.99</div>
-                        <p class="product-subtitle">Sterling Silver with 18" Princess Length</p>
-                    </div>
-                    
                     <!-- Product Options -->        
                     <div class="product-options">
-                        <!-- Metal Type Selection -->
-                        <div class="option-group">
-                            <label class="option-label">Metal Type:</label>
-                            <div class="option-buttons">
-                                <button class="option-button active" data-metal="silver">
-                                    <span class="option-icon">🩶</span>
-                                    Sterling Silver
-                                </button>
-                                <button class="option-button" data-metal="gold">
-                                    <span class="option-icon">🥇</span>
-                                    14k Yellow Gold
-                                </button>
-                                <button class="option-button" data-metal="rose-gold">
-                                    <span class="option-icon">🌹</span>
-                                    14k Rose Gold
-                                </button>
-                                <button class="option-button" data-metal="stl">
-                                    <span class="option-icon">🖨️</span>
-                                    STL File
-                                </button>
-                            </div>
+                        <!-- Shopify Buy Button -->
+                        <div class="option-group" style="margin-top: 20px;">
+                            <div id='product-component-1764405426589'></div>
                         </div>
                         
-                        <!-- Chain Length Selection -->
-                        <div class="option-group">
-                            <label class="option-label" for="chain-length">Chain Length:</label>
-                            <select class="option-select" id="chain-length">
-                                <option value="16">16" - Choker Length</option>
-                                <option value="18" selected>18" - Princess Length</option>
-                                <option value="20">20" - Matinee Length</option>
-                                <option value="24">24" - Opera Length</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Engraving Option -->
-                        <div class="option-group">
-                            <label class="option-checkbox">
-                                <input type="checkbox" id="engraving-checkbox">
-                                <span class="checkmark"></span>
-                                <span class="checkbox-label">Add Engraving</span>
-                                <span class="checkbox-price">+$49</span>
-                            </label>
-                            <div id="engraving-textbox-container" style="display: none; margin-top: 10px;">
-                                <input type="text" id="engraving-textbox" placeholder="Enter engraving text (max 30 characters)" maxlength="30" style="width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
-                                <div id="engraving-char-count" style="font-size: 12px; color: #666; margin-top: 4px; text-align: right;">0/30</div>
-                            </div>
-                            
-                            <script>
-                                // Add event listener for engraving checkbox
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    const engravingCheckbox = document.getElementById('engraving-checkbox');
-                                    const textboxContainer = document.getElementById('engraving-textbox-container');
-                                    const textbox = document.getElementById('engraving-textbox');
-                                    const charCount = document.getElementById('engraving-char-count');
-                                    
-                                    if (engravingCheckbox) {
-                                        engravingCheckbox.addEventListener('change', function() {
-                                            console.log('Engraving checkbox changed:', this.checked);
-                                            
-                                            if (this.checked) {
-                                                textboxContainer.style.display = 'block';
-                                                textbox.focus();
-                                            } else {
-                                                textboxContainer.style.display = 'none';
-                                                // Don't clear the textbox value - retain the content
-                                                // Only update character count if textbox has content
-                                                if (textbox.value.length > 0) {
-                                                    charCount.textContent = `${textbox.value.length}/30`;
-                                                }
-                                            }
-                                        });
-                                    }
-                                    
-                                    // Add character count functionality
-                                    if (textbox && charCount) {
-                                        textbox.addEventListener('input', function() {
-                                            const currentLength = this.value.length;
-                                            charCount.textContent = `${currentLength}/30`;
-                                        });
-                                    }
-                                });
-                            </script>
+                        <!-- Submit Order Button -->
+                        <div class="option-group" style="margin-top: 20px;">
+                            <button id="export-stl" style="width: 100%; background: linear-gradient(135deg, #576eb6 0%, #4e63a4 100%); color: white; border: none; padding: 14px 24px; border-radius: 31px; font-weight: 600; font-size: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(87, 110, 182, 0.4);">
+                                Submit Order
+                            </button>
                         </div>
                         
                         <!-- Action Buttons Container -->
@@ -3047,14 +2902,6 @@
                             <p class="debug-help-text" style="color: #718096; font-size: 12px; margin-top: 5px;">Export current 3D model as STL file</p>
                         </div>
 
-                        <!-- Pendant Only Export STL Section -->
-                        <div class="debug-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                            <button class="debug-button" id="export-pendant-only-btn" style="background: #3182ce; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(49, 130, 206, 0.4);">
-                                <span class="button-icon">💎</span>
-                                <span class="button-text">Export Pendant Only</span>
-                            </button>
-                            <p class="debug-help-text" style="color: #718096; font-size: 12px; margin-top: 5px;">Export pendant without jumpring, sprue, or text</p>
-                        </div>
                     </div>
                     
 
@@ -3366,7 +3213,7 @@
                         <button id="auto-contrast-btn" class="auto-contrast-button" style="background: #48bb78; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Auto Optimize for Laser</button>
                     </div>
                     <div class="control-group">
-                        <label style="font-size: 12px; color: #ccc;">Optimize contrast for optimal laser engraving results</label>
+                        <label style="font-size: 12px; color: #ccc;">For best results, use an evenly and well-lit image. See the reference images for examples.</label>
                     </div>
                 </div>
             </div>
@@ -3430,11 +3277,6 @@
             
             // Mobile Shopify-style interactions
             initializeMobileInteractions();
-            
-            // Initialize product header with default values
-            setTimeout(() => {
-                updateProductHeader();
-            }, 200);
             
             // Force initial layout visibility
             setTimeout(() => {
@@ -3632,36 +3474,9 @@
             
             // Initialize UI interactions
             console.log('About to initialize UI interactions...');
-            initializeCarouselInteractions();
             initializeOptionInteractions();
             initializePhotoButton();
             initializeImagineButton();
-            
-            // Sync desktop metal select with ecommerce buttons
-            setTimeout(() => {
-                const metalSelect = document.getElementById('metal-type');
-                if (metalSelect) {
-                    metalSelect.addEventListener('change', function() {
-                        console.log('Desktop metal select changed to:', this.value);
-                        // Map material type back to UI button type
-                        let buttonType;
-                        switch(this.value) {
-                            case 'sterling-silver': buttonType = 'silver'; break;
-                            case 'gold-14k': buttonType = 'gold'; break;
-                            case 'rose-gold-14k': buttonType = 'rose-gold'; break;
-                            default: buttonType = 'silver';
-                        }
-                        
-                        // Update button states
-                        const metalButtons = document.querySelectorAll('.option-button[data-metal]');
-                        metalButtons.forEach(btn => {
-                            btn.classList.toggle('active', btn.getAttribute('data-metal') === buttonType);
-                        });
-                        
-                        updateProductHeader();
-                    });
-                }
-            }, 1000);
             
             // Check for canvas and Three.js setup
             const checkForCanvas = setInterval(function() {
@@ -3733,43 +3548,6 @@
             console.log('Updating metal type to:', metalType);
             // Update the 3D model material
             // This would integrate with your existing 3D rendering logic
-        }
-        
-        // Update chain length
-        function updateChainLength(length) {
-            console.log('Updating chain length to:', length);
-            // Add chain length update logic here
-            updateProductHeader();
-        }
-        
-        // Update engraving option
-        function updateEngraving(enabled) {
-            console.log('Engraving enabled:', enabled);
-            const textboxContainer = document.getElementById('engraving-textbox-container');
-            const textbox = document.getElementById('engraving-textbox');
-            
-            if (engravingCheckbox.checked) {
-                textboxContainer.style.display = 'block';
-                textbox.focus();
-            } else {
-                textboxContainer.style.display = 'none';
-                textbox.value = '';
-                document.getElementById('engraving-char-count').textContent = '0/30';
-            }
-            
-            // Add engraving update logic here
-            updateProductHeader();
-            
-            // Add character count functionality
-            const engravingTextbox = document.getElementById('engraving-textbox');
-            const engravingCharCount = document.getElementById('engraving-char-count');
-            
-            if (engravingTextbox && engravingCharCount) {
-                engravingTextbox.addEventListener('input', function() {
-                    const currentLength = this.value.length;
-                    engravingCharCount.textContent = `${currentLength}/30`;
-                });
-            }
         }
         
         // Move 3D canvas between desktop and mobile containers
@@ -4426,69 +4204,10 @@
             }
         }
         
-        // Initialize carousel thumbnail interactions
-        function initializeCarouselInteractions() {
-            const thumbnails = document.querySelectorAll('.carousel-thumbnail');
-            thumbnails.forEach(thumbnail => {
-                thumbnail.addEventListener('click', function() {
-                    // Remove active class from all thumbnails
-                    thumbnails.forEach(t => t.classList.remove('active'));
-                    // Add active class to clicked thumbnail
-                    this.classList.add('active');
-                    
-                    // Handle different view types
-                    const viewType = this.getAttribute('data-view');
-                    handleViewChange(viewType);
-                });
-            });
-        }
-        
         // Initialize product option interactions
         function initializeOptionInteractions() {
             console.log('Initializing option interactions...');
             
-            // Metal type button interactions
-            const metalButtons = document.querySelectorAll('.option-button[data-metal]');
-            console.log('Found metal buttons:', metalButtons.length);
-            
-            if (metalButtons.length === 0) {
-                console.warn('No metal buttons found! Retrying in 500ms...');
-                setTimeout(initializeOptionInteractions, 500);
-                return;
-            }
-            
-            metalButtons.forEach(button => {
-                console.log('Adding click listener to button:', button.getAttribute('data-metal'));
-                button.addEventListener('click', function() {
-                    console.log('Metal button clicked:', this.getAttribute('data-metal'));
-                    
-                    // Remove active class from all metal buttons
-                    metalButtons.forEach(b => b.classList.remove('active'));
-                    // Add active class to clicked button
-                    this.classList.add('active');
-                    
-                    // Update metal type
-                    const metalType = this.getAttribute('data-metal');
-                    console.log('Calling updateMetalType with:', metalType);
-                    updateMetalType(metalType);
-                });
-            });
-            
-            // Chain length selection
-            const chainLengthSelect = document.getElementById('chain-length');
-            if (chainLengthSelect) {
-                chainLengthSelect.addEventListener('change', function() {
-                    updateChainLength(this.value);
-                });
-            }
-            
-            // Engraving checkbox
-            const engravingCheckbox = document.getElementById('engraving-checkbox');
-            if (engravingCheckbox) {
-                engravingCheckbox.addEventListener('change', function() {
-                    updateEngraving(this.checked);
-                });
-            }
         }
         
         // Initialize add photo button
@@ -4576,8 +4295,279 @@
             }
         }
         
-        // Update metal type
-        function updateMetalType(metalType) {
+        // Update Shopify buy button variant based on metal type
+        function updateShopifyVariant(metalType) {
+            // Map metal types to Shopify option values
+            // Adjust these values to match your Shopify product's option names
+            let shopifyOptionValue;
+            switch(metalType) {
+                case 'silver':
+                    shopifyOptionValue = 'Sterling Silver';
+                    break;
+                case 'gold':
+                    shopifyOptionValue = '14K Yellow Gold';
+                    break;
+                case 'rose-gold':
+                    shopifyOptionValue = 'Rose Gold';
+                    break;
+                case 'stl':
+                    shopifyOptionValue = 'STL File';
+                    break;
+                default:
+                    shopifyOptionValue = 'Sterling Silver';
+            }
+            
+            console.log('=== Updating Shopify variant ===');
+            console.log('Metal type:', metalType);
+            console.log('Target option value:', shopifyOptionValue);
+            
+            // Try to update, with retry if component not ready
+            function attemptUpdate() {
+                const productNode = document.getElementById('product-component-1764405426589');
+                if (!productNode) {
+                    console.log('Shopify product node not found, will retry...');
+                    setTimeout(attemptUpdate, 500);
+                    return;
+                }
+                
+                try {
+                    // Method 1: Try accessing iframe content (Shopify renders in iframe)
+                    const iframe = productNode.querySelector('iframe');
+                    if (iframe) {
+                        console.log('Found Shopify iframe, attempting to access content...');
+                        try {
+                            const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                            if (iframeDoc) {
+                                // Search inside iframe
+                                const optionSelects = iframeDoc.querySelectorAll('select');
+                                console.log('Found select elements in iframe:', optionSelects.length);
+                                
+                                if (optionSelects.length > 0) {
+                                    for (let select of optionSelects) {
+                                        const options = Array.from(select.options);
+                                        console.log('Checking iframe select with options:', options.map(o => o.textContent.trim()));
+                                        
+                                        let matchingOption = options.find(opt => 
+                                            opt.textContent.trim() === shopifyOptionValue ||
+                                            opt.textContent.trim().toLowerCase() === shopifyOptionValue.toLowerCase()
+                                        );
+                                        
+                                        if (!matchingOption) {
+                                            matchingOption = options.find(opt => 
+                                                opt.textContent.trim().toLowerCase().includes(shopifyOptionValue.toLowerCase()) ||
+                                                shopifyOptionValue.toLowerCase().includes(opt.textContent.trim().toLowerCase())
+                                            );
+                                        }
+                                        
+                                        if (matchingOption) {
+                                            select.value = matchingOption.value;
+                                            select.dispatchEvent(new Event('change', { bubbles: true }));
+                                            select.dispatchEvent(new Event('input', { bubbles: true }));
+                                            console.log('✅ Shopify variant updated via iframe select:', matchingOption.textContent);
+                                            return true;
+                                        }
+                                    }
+                                }
+                                
+                                // Try radio buttons in iframe
+                                const radioButtons = iframeDoc.querySelectorAll('input[type="radio"]');
+                                if (radioButtons.length > 0) {
+                                    for (let radio of radioButtons) {
+                                        const label = iframeDoc.querySelector(`label[for="${radio.id}"]`);
+                                        const labelText = label ? label.textContent.trim() : '';
+                                        if (labelText === shopifyOptionValue || 
+                                            labelText.toLowerCase() === shopifyOptionValue.toLowerCase()) {
+                                            radio.checked = true;
+                                            radio.dispatchEvent(new Event('change', { bubbles: true }));
+                                            radio.dispatchEvent(new Event('click', { bubbles: true }));
+                                            console.log('✅ Shopify variant updated via iframe radio button');
+                                            return true;
+                                        }
+                                    }
+                                }
+                                
+                                // Try buttons in iframe
+                                const buttons = iframeDoc.querySelectorAll('button, [role="button"]');
+                                for (let button of buttons) {
+                                    const buttonText = button.textContent.trim();
+                                    if (buttonText === shopifyOptionValue || 
+                                        buttonText.toLowerCase() === shopifyOptionValue.toLowerCase()) {
+                                        button.click();
+                                        console.log('✅ Shopify variant updated via iframe button');
+                                        return true;
+                                    }
+                                }
+                            } else {
+                                console.warn('Cannot access iframe content (cross-origin restriction)');
+                            }
+                        } catch (iframeError) {
+                            console.warn('Cannot access iframe content:', iframeError.message);
+                            console.log('This is likely due to cross-origin restrictions. Trying API method instead...');
+                        }
+                    }
+                    
+                    // Method 2: Use Shopify Buy Button SDK API (preferred method)
+                    const component = window.shopifyProductComponent;
+                    if (component && component.model) {
+                        const model = component.model;
+                        console.log('Using Shopify component model API');
+                        
+                        if (model.variants && model.variants.length > 0) {
+                            console.log('Available variants:', model.variants.map(v => ({
+                                id: v.id,
+                                title: v.title,
+                                options: v.selectedOptions?.map(o => ({ name: o.name, value: o.value }))
+                            })));
+                            
+                            // Find variant that matches the metal type
+                            const matchingVariant = model.variants.find(variant => {
+                                if (variant.selectedOptions && variant.selectedOptions.length > 0) {
+                                    // Check if any option matches our target value
+                                    return variant.selectedOptions.some(option => {
+                                        const optionValue = option.value || '';
+                                        return optionValue === shopifyOptionValue ||
+                                               optionValue.toLowerCase() === shopifyOptionValue.toLowerCase() ||
+                                               optionValue.toLowerCase().includes(shopifyOptionValue.toLowerCase()) ||
+                                               shopifyOptionValue.toLowerCase().includes(optionValue.toLowerCase());
+                                    });
+                                }
+                                return false;
+                            });
+                            
+                            if (matchingVariant) {
+                                console.log('Found matching variant:', matchingVariant);
+                                
+                                // Try different methods to set the variant
+                                if (typeof model.selectVariant === 'function') {
+                                    model.selectVariant(matchingVariant);
+                                    console.log('✅ Called model.selectVariant()');
+                                } else if (typeof model.setVariant === 'function') {
+                                    model.setVariant(matchingVariant);
+                                    console.log('✅ Called model.setVariant()');
+                                } else if (typeof model.setSelectedVariant === 'function') {
+                                    model.setSelectedVariant(matchingVariant);
+                                    console.log('✅ Called model.setSelectedVariant()');
+                                } else {
+                                    // Direct assignment
+                                    model.selectedVariant = matchingVariant;
+                                    console.log('✅ Set model.selectedVariant directly');
+                                }
+                                
+                                // Try to trigger a re-render
+                                if (component.update) {
+                                    component.update();
+                                } else if (component.render) {
+                                    component.render();
+                                } else if (window.shopifyBuyUI && window.shopifyBuyUI.updateComponent) {
+                                    window.shopifyBuyUI.updateComponent(component);
+                                }
+                                
+                                console.log('✅ Shopify variant updated via model API');
+                                return true;
+                            } else {
+                                console.warn('No matching variant found. Available option values:', 
+                                    model.variants.flatMap(v => 
+                                        v.selectedOptions?.map(o => o.value) || []
+                                    )
+                                );
+                            }
+                        }
+                    }
+                    
+                    // Method 3: Find and update select dropdown in main DOM (fallback)
+                    const optionSelects = productNode.querySelectorAll('select');
+                    console.log('Found select elements in main DOM:', optionSelects.length);
+                    
+                    if (optionSelects.length > 0) {
+                        // Try each select to find the one with metal options
+                        for (let select of optionSelects) {
+                            const options = Array.from(select.options);
+                            console.log('Checking select with options:', options.map(o => o.textContent.trim()));
+                            
+                            // Try exact match first
+                            let matchingOption = options.find(opt => 
+                                opt.textContent.trim() === shopifyOptionValue
+                            );
+                            
+                            // Try case-insensitive match
+                            if (!matchingOption) {
+                                matchingOption = options.find(opt => 
+                                    opt.textContent.trim().toLowerCase() === shopifyOptionValue.toLowerCase()
+                                );
+                            }
+                            
+                            // Try partial match
+                            if (!matchingOption) {
+                                matchingOption = options.find(opt => 
+                                    opt.textContent.trim().toLowerCase().includes(shopifyOptionValue.toLowerCase()) ||
+                                    shopifyOptionValue.toLowerCase().includes(opt.textContent.trim().toLowerCase())
+                                );
+                            }
+                            
+                            if (matchingOption) {
+                                select.value = matchingOption.value;
+                                // Trigger multiple events to ensure Shopify picks it up
+                                select.dispatchEvent(new Event('change', { bubbles: true }));
+                                select.dispatchEvent(new Event('input', { bubbles: true }));
+                                // Also try native change
+                                if (select.onchange) select.onchange();
+                                console.log('✅ Shopify variant updated via select:', matchingOption.textContent);
+                                return true;
+                            }
+                        }
+                    }
+                    
+                    // Method 2: Try radio buttons
+                    const radioButtons = productNode.querySelectorAll('input[type="radio"]');
+                    console.log('Found radio buttons:', radioButtons.length);
+                    if (radioButtons.length > 0) {
+                        for (let radio of radioButtons) {
+                            const label = productNode.querySelector(`label[for="${radio.id}"]`);
+                            const labelText = label ? label.textContent.trim() : '';
+                            const radioValue = radio.value || '';
+                            
+                            if (labelText === shopifyOptionValue || 
+                                labelText.toLowerCase() === shopifyOptionValue.toLowerCase() ||
+                                radioValue.toLowerCase().includes(shopifyOptionValue.toLowerCase())) {
+                                radio.checked = true;
+                                radio.dispatchEvent(new Event('change', { bubbles: true }));
+                                radio.dispatchEvent(new Event('click', { bubbles: true }));
+                                console.log('✅ Shopify variant updated via radio button');
+                                return true;
+                            }
+                        }
+                    }
+                    
+                    // Method 3: Try buttons
+                    const buttons = productNode.querySelectorAll('button, [role="button"]');
+                    console.log('Found buttons:', buttons.length);
+                    for (let button of buttons) {
+                        const buttonText = button.textContent.trim();
+                        if (buttonText === shopifyOptionValue || 
+                            buttonText.toLowerCase() === shopifyOptionValue.toLowerCase()) {
+                            button.click();
+                            console.log('✅ Shopify variant updated via button click');
+                            return true;
+                        }
+                    }
+                    
+                    console.warn('⚠️ Could not find matching option for:', shopifyOptionValue);
+                    console.log('Product node HTML:', productNode.innerHTML.substring(0, 500));
+                    return false;
+                    
+                } catch (error) {
+                    console.error('❌ Error updating Shopify variant:', error);
+                    console.error('Error stack:', error.stack);
+                    return false;
+                }
+            }
+            
+            // Start the update attempt
+            attemptUpdate();
+        }
+        
+        // Update metal type - make globally accessible for Shopify reverse sync
+        window.updateMetalType = function(metalType) {
             console.log('=== updateMetalType called ===');
             console.log('Metal type requested:', metalType);
             console.log('Window.viewer exists:', !!window.viewer);
@@ -4632,110 +4622,13 @@
                 console.log('metal-type select not found');
             }
             
-            // Update price based on metal type (optional)
-            updateProductHeader();
+            // Update Shopify buy button variant (only if not updating from Shopify)
+            if (!window.updatingFromShopify) {
+              updateShopifyVariant(metalType);
         }
-        
-        // Update chain length
-        function updateChainLength(length) {
-            console.log('Updating chain length to:', length);
-            // Add chain length update logic here
-        }
-        
-        // Update engraving
-        function updateEngraving(enabled) {
-            console.log('Engraving enabled:', enabled);
-            // Add engraving update logic here
-        }
+        };
         
         // Update price based on metal type
-        function updateProductHeader() {
-            const priceElement = document.querySelector('.product-price');
-            const subtitleElement = document.querySelector('.product-subtitle');
-            const chainSelect = document.getElementById('chain-length');
-            const engravingCheckbox = document.getElementById('engraving-checkbox');
-            
-            if (!priceElement || !subtitleElement) return;
-            
-            // Get current selections
-            const activeMetalButton = document.querySelector('.option-button.active');
-            const metalType = activeMetalButton ? activeMetalButton.getAttribute('data-metal') : 'silver';
-            const chainLength = chainSelect ? chainSelect.value : '18';
-            const engravingEnabled = engravingCheckbox ? engravingCheckbox.checked : false;
-            
-            // Calculate price
-            let basePrice = 169.99;
-            let price = basePrice;
-            
-            switch(metalType) {
-                case 'silver':
-                    price = basePrice; // Sterling silver base price
-                    break;
-                case 'gold':
-                    price = basePrice + 335; // Gold upcharge
-                    break;
-                case 'rose-gold':
-                    price = basePrice + 320; // Rose gold upcharge
-                    break;
-                case 'stl':
-                    price = 25; // STL file price
-                    break;
-            }
-            
-            // Add engraving cost
-            if (engravingEnabled) {
-                price += 49;
-            }
-            
-            // Update price
-            priceElement.textContent = `$${price.toFixed(2)}`;
-            
-            // Update subtitle
-            let metalName = 'Sterling Silver';
-            switch(metalType) {
-                case 'silver':
-                    metalName = 'Sterling Silver';
-                    break;
-                case 'gold':
-                    metalName = '14k Yellow Gold';
-                    break;
-                case 'rose-gold':
-                    metalName = '14k Rose Gold';
-                    break;
-                case 'stl':
-                    metalName = 'STL File';
-                    break;
-            }
-            
-            let chainName = '18" Princess Length';
-            switch(chainLength) {
-                case '16':
-                    chainName = '16" Choker Length';
-                    break;
-                case '18':
-                    chainName = '18" Princess Length';
-                    break;
-                case '20':
-                    chainName = '20" Matinee Length';
-                    break;
-                case '24':
-                    chainName = '24" Opera Length';
-                    break;
-            }
-            
-            let subtitle;
-            if (metalType === 'stl') {
-                subtitle = `${metalName} - 3D Printable File`;
-            } else {
-                subtitle = `${metalName} with ${chainName}`;
-                if (engravingEnabled) {
-                    subtitle += ' + Engraving';
-                }
-            }
-            
-            subtitleElement.textContent = subtitle;
-        }
-        
         // Initialize Imagine button functionality
         function initializeImagineButton() {
             console.log('🎨 Initializing Imagine button...');
@@ -4952,6 +4845,327 @@
     // The font will be loaded via JS from the official Three.js CDN
     </script>
     <!-- Optionally, add FontLoader via module import in main.js -->
+    
+    <!-- Shopify Buy Button Script -->
+    <script type="text/javascript">
+    /*<![CDATA[*/
+    (function () {
+      var scriptURL = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
+      if (window.ShopifyBuy) {
+        if (window.ShopifyBuy.UI) {
+          ShopifyBuyInit();
+        } else {
+          loadScript();
+        }
+      } else {
+        loadScript();
+      }
+      function loadScript() {
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = scriptURL;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(script);
+        script.onload = ShopifyBuyInit;
+      }
+      // Store Shopify component reference globally
+      window.shopifyProductComponent = null;
+      
+      function ShopifyBuyInit() {
+        var client = ShopifyBuy.buildClient({
+          domain: 'z0u750-mb.myshopify.com',
+          storefrontAccessToken: '73a8e88f430939341abe6e2afdd62d90',
+        });
+        ShopifyBuy.UI.onReady(client).then(function (ui) {
+          // Store UI instance for later access
+          window.shopifyBuyUI = ui;
+          
+          var component = ui.createComponent('product', {
+            id: '10066983190819',
+            node: document.getElementById('product-component-1764405426589'),
+            moneyFormat: '%24%7B%7Bamount%7D%7D',
+            options: {
+      "product": {
+        "styles": {
+          "product": {
+            "@media (min-width: 601px)": {
+              "max-width": "100%",
+              "margin-left": "0",
+              "margin-bottom": "50px"
+            },
+            "text-align": "left"
+          },
+          "title": {
+            "font-size": "26px"
+          },
+          "button": {
+            ":hover": {
+              "background-color": "#4e63a4"
+            },
+            "background-color": "#576eb6",
+            ":focus": {
+              "background-color": "#4e63a4"
+            },
+            "border-radius": "31px"
+          },
+          "price": {
+            "font-size": "18px"
+          },
+          "compareAt": {
+            "font-size": "15.299999999999999px"
+          },
+          "unitPrice": {
+            "font-size": "15.299999999999999px"
+          }
+        },
+        "buttonDestination": "checkout",
+        "layout": "horizontal",
+        "contents": {
+          "img": false,
+          "imgWithCarousel": true,
+          "description": true
+        },
+        "width": "100%",
+        "text": {
+          "button": "Buy now"
+        }
+      },
+      "productSet": {
+        "styles": {
+          "products": {
+            "@media (min-width: 601px)": {
+              "margin-left": "-20px"
+            }
+          }
+        }
+      },
+      "modalProduct": {
+        "contents": {
+          "img": false,
+          "imgWithCarousel": true,
+          "button": false,
+          "buttonWithQuantity": true
+        },
+        "styles": {
+          "product": {
+            "@media (min-width: 601px)": {
+              "max-width": "100%",
+              "margin-left": "0px",
+              "margin-bottom": "0px"
+            }
+          },
+          "button": {
+            ":hover": {
+              "background-color": "#4e63a4"
+            },
+            "background-color": "#576eb6",
+            ":focus": {
+              "background-color": "#4e63a4"
+            },
+            "border-radius": "31px"
+          },
+          "title": {
+            "font-family": "Helvetica Neue, sans-serif",
+            "font-weight": "bold",
+            "font-size": "26px",
+            "color": "#4c4c4c"
+          },
+          "price": {
+            "font-family": "Helvetica Neue, sans-serif",
+            "font-weight": "normal",
+            "font-size": "18px",
+            "color": "#4c4c4c"
+          },
+          "compareAt": {
+            "font-family": "Helvetica Neue, sans-serif",
+            "font-weight": "normal",
+            "font-size": "15.299999999999999px",
+            "color": "#4c4c4c"
+          },
+          "unitPrice": {
+            "font-family": "Helvetica Neue, sans-serif",
+            "font-weight": "normal",
+            "font-size": "15.299999999999999px",
+            "color": "#4c4c4c"
+          }
+        },
+        "text": {
+          "button": "Add to cart"
+        }
+      },
+      "option": {},
+      "cart": {
+        "styles": {
+          "button": {
+            ":hover": {
+              "background-color": "#4e63a4"
+            },
+            "background-color": "#576eb6",
+            ":focus": {
+              "background-color": "#4e63a4"
+            },
+            "border-radius": "31px"
+          }
+        },
+        "text": {
+          "total": "Subtotal",
+          "button": "Checkout"
+        }
+      },
+      "toggle": {
+        "styles": {
+          "toggle": {
+            "background-color": "#576eb6",
+            ":hover": {
+              "background-color": "#4e63a4"
+            },
+            ":focus": {
+              "background-color": "#4e63a4"
+            }
+          }
+        }
+      }
+    },
+          });
+          
+          // Store component reference globally for variant updates
+          window.shopifyProductComponent = component;
+          
+          // Set up reverse sync: Listen for Shopify variant changes via iframe (more reliable)
+          function setupShopifyVariantListener() {
+            const productNode = document.getElementById('product-component-1764405426589');
+            if (!productNode) {
+              console.log('Product node not found, retrying...');
+              setTimeout(setupShopifyVariantListener, 500);
+              return;
+            }
+            
+            const iframe = productNode.querySelector('iframe');
+            if (!iframe) {
+              console.log('Iframe not found, retrying...');
+              setTimeout(setupShopifyVariantListener, 500);
+              return;
+            }
+            
+            try {
+              const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+              if (!iframeDoc) {
+                console.log('Cannot access iframe document, retrying...');
+                setTimeout(setupShopifyVariantListener, 500);
+                return;
+              }
+              
+              console.log('✅ Setting up Shopify variant change listener via iframe');
+              
+              // Map Shopify option values back to metal types
+              function mapShopifyOptionToMetalType(optionValue) {
+                if (!optionValue) return null;
+                
+                const value = optionValue.toLowerCase();
+                
+                // Map Shopify option values to our metal types
+                if (value.includes('sterling') || value.includes('silver')) {
+                  return 'silver';
+                } else if (value.includes('yellow gold') || value.includes('14k yellow')) {
+                  return 'gold';
+                } else if (value.includes('rose gold') || value.includes('14k rose')) {
+                  return 'rose-gold';
+                } else if (value.includes('stl')) {
+                  return 'stl';
+                }
+                
+                return null;
+              }
+              
+              // Function to handle variant changes from iframe
+              function handleVariantChangeFromIframe() {
+                // Get the select element from iframe
+                const select = iframeDoc.querySelector('select');
+                if (!select) {
+                  return;
+                }
+                
+                const selectedOption = select.options[select.selectedIndex];
+                if (!selectedOption) {
+                  return;
+                }
+                
+                const optionValue = selectedOption.textContent.trim();
+                console.log('=== Shopify variant changed ===');
+                console.log('Selected option:', optionValue);
+                
+                // Map to our metal type
+                const metalType = mapShopifyOptionToMetalType(optionValue);
+                if (metalType) {
+                  console.log('Mapped to metal type:', metalType);
+                  
+                  // Update Three.js material (but prevent circular updates)
+                  if (window.updateMetalType && !window.updatingFromShopify) {
+                    window.updatingFromShopify = true;
+                    window.updateMetalType(metalType);
+                    // Reset flag after a short delay
+                    setTimeout(() => {
+                      window.updatingFromShopify = false;
+                    }, 100);
+                  }
+                } else {
+                  console.warn('Could not map Shopify option to metal type:', optionValue);
+                }
+              }
+              
+              // Listen for change events on select elements
+              iframeDoc.addEventListener('change', function(e) {
+                if (e.target.tagName === 'SELECT') {
+                  console.log('Iframe select changed');
+                  setTimeout(handleVariantChangeFromIframe, 50);
+                }
+              }, true);
+              
+              // Also poll for changes (backup method)
+              let lastSelectedValue = '';
+              setInterval(function() {
+                const select = iframeDoc.querySelector('select');
+                if (select) {
+                  const currentValue = select.options[select.selectedIndex]?.textContent.trim();
+                  if (currentValue && currentValue !== lastSelectedValue) {
+                    lastSelectedValue = currentValue;
+                    console.log('Detected select value change via polling:', currentValue);
+                    handleVariantChangeFromIframe();
+                  }
+                }
+              }, 300);
+              
+              console.log('✅ Added iframe event listeners for reverse sync');
+              
+            } catch (e) {
+              console.error('Cannot access iframe for event listeners:', e);
+              // Retry after delay
+              setTimeout(setupShopifyVariantListener, 1000);
+            }
+          }
+          
+          // Start setting up the listener after a delay to ensure iframe is loaded
+          setTimeout(setupShopifyVariantListener, 2000);
+          
+          // Also wait for component to be fully rendered, then set up observer
+          setTimeout(function() {
+            const productNode = document.getElementById('product-component-1764405426589');
+            if (productNode) {
+              console.log('Shopify product component DOM ready');
+              console.log('Component structure:', {
+                component: component,
+                node: productNode,
+                hasModel: !!(component && component.model),
+                selectElements: productNode.querySelectorAll('select').length
+              });
+            }
+          }, 1000);
+          
+          console.log('Shopify product component initialized and stored');
+        });
+      }
+    })();
+    /*]]>*/
+    </script>
 
 </body>
 </html>

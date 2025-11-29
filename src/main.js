@@ -666,39 +666,6 @@ class HeightfieldViewer {
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.2;
         canvasContainer.appendChild(this.renderer.domElement);
-        
-        // Add controls message after renderer is appended
-        const controlsMessage = document.createElement('div');
-        controlsMessage.id = 'canvas-controls-message';
-        controlsMessage.style.cssText = `
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(44, 62, 80, 0.9);
-            color: #ecf0f1;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 500;
-            max-width: 280px;
-            z-index: 1001;
-            pointer-events: none;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            border: 1px solid rgba(236, 240, 241, 0.2);
-        `;
-        controlsMessage.innerHTML = `
-            <div style="margin-bottom: 6px; font-weight: 600; color: #ffffff;">
-                🎮 3D Controls
-            </div>
-            <div style="line-height: 1.4; opacity: 0.9;">
-                <div style="margin-bottom: 4px;">• <strong>Drag</strong> to rotate view</div>
-                <div style="font-size: 11px; opacity: 0.8; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(236, 240, 241, 0.3);">
-                    💡 <strong>Tip:</strong> Click outside canvas to scroll the page
-                </div>
-            </div>
-        `;
-        canvasContainer.appendChild(controlsMessage);
 
         // Setup camera - angled view to show pendant standing upright on platform (20% closer)
         this.camera.position.set(26.4, 16, 37.6);
@@ -1360,15 +1327,6 @@ class HeightfieldViewer {
                     console.error('Error exporting STL:', error);
                     showNotification('Error exporting STL file', 'error');
                 }
-            });
-        }
-
-        // Pendant Only Export STL button
-        const exportPendantOnlyBtn = document.getElementById('export-pendant-only-btn');
-        if (exportPendantOnlyBtn) {
-            exportPendantOnlyBtn.addEventListener('click', () => {
-                console.log('Export Pendant Only button clicked');
-                this.exportPendantOnly();
             });
         }
 
@@ -2334,14 +2292,8 @@ class HeightfieldViewer {
                 geometry = this.fixMeshTopology(geometry);
                 
                 // Validate mesh is watertight (non-blocking for debugging)
-                console.log('🔍 Validating mesh integrity...');
-                const meshValid = this.validateMeshWatertight(geometry);
-                if (!meshValid) {
-                    console.error('❌ WARNING: Mesh is not watertight! Continuing for debugging...');
-                    showNotification('Mesh has open edges - check console for details', 'error');
-                } else {
-                    console.log('✅ Mesh validation passed - watertight mesh confirmed');
-                }
+                // Validation runs silently - no warnings displayed
+                this.validateMeshWatertight(geometry);
                 // Single material for all
                 const material = new THREE.MeshStandardMaterial({
                     color: METAL_MATERIALS['sterling-silver'].color,
@@ -3602,66 +3554,6 @@ class HeightfieldViewer {
         document.body.removeChild(link);
     }
 
-    exportPendantOnly() {
-        const exporter = new STLExporter();
-        // Create a group to export ONLY the pendant (no jumpring, sprue, or text)
-        const group = new THREE.Group();
-        
-        if (this.heightfieldData && this.heightfield) {
-            console.log('Exporting pendant only (no jumpring, sprue, or text)');
-            
-            // Create a complete pendant geometry with relief, bottom disc, side walls, and border
-            const completePendantGeometry = this.createCompletePendantGeometry(this.heightfieldData);
-            
-            if (completePendantGeometry) {
-                // Create a new mesh with the complete geometry and current material
-                const completePendantMesh = new THREE.Mesh(completePendantGeometry, this.heightfield.material.clone());
-                
-                // Copy the position and rotation from the original heightfield
-                completePendantMesh.position.copy(this.heightfield.position);
-                completePendantMesh.rotation.copy(this.heightfield.rotation);
-                completePendantMesh.scale.copy(this.heightfield.scale);
-                
-                group.add(completePendantMesh);
-                console.log('Complete pendant geometry created and added to export');
-            } else {
-                console.warn('Failed to create complete pendant geometry');
-                showNotification('Failed to create complete pendant geometry', 'warning');
-                return;
-            }
-        } else {
-            console.warn('No pendant geometry found to export');
-            showNotification('No pendant geometry found to export', 'warning');
-            return;
-        }
-        
-        // Ensure we don't include any jumpring or sprue objects
-        if (this.jumpring) {
-            console.log('Jumpring exists but will be excluded from pendant-only export');
-        }
-        
-        if (this.sprueTextObjects && this.sprueTextObjects.length > 0) {
-            console.log(`Sprue text objects exist (${this.sprueTextObjects.length}) but will be excluded from pendant-only export`);
-        }
-        
-        try {
-            const stlString = exporter.parse(group);
-            const blob = new Blob([stlString], { type: 'text/plain' });
-            const link = document.createElement('a');
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.href = URL.createObjectURL(blob);
-            link.download = 'pendant-only.stl';
-            link.click();
-            document.body.removeChild(link);
-            
-            console.log('Pendant-only STL exported successfully');
-            showNotification('Pendant-only STL exported successfully!', 'success');
-        } catch (error) {
-            console.error('Error exporting pendant-only STL:', error);
-            showNotification('Error exporting pendant-only STL file', 'error');
-        }
-    }
 
     createCompletePendantGeometry(heightfieldData) {
         // Create a complete pendant geometry with relief, bottom disc, side walls, and border
