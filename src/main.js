@@ -175,10 +175,19 @@ async function uploadImageToGitHub(file) {
 }
 
 // S3 Upload Functions
-async function submitOrderWithS3(name, email, stlString) {
+async function submitOrderWithS3(name, email, stlString, orderId = null) {
     try {
+        // Use provided order ID or get from sessionStorage
+        const stlOrderId = orderId || sessionStorage.getItem('stlOrderId');
+        if (!stlOrderId) {
+            console.warn('⚠️ No order ID found, generating new one');
+            if (typeof generateStlOrderId === 'function') {
+                generateStlOrderId();
+            }
+        }
+        
         // Step 1: Get signed URL from backend
-        console.log('📋 Requesting signed URL for STL upload...');
+        console.log('📋 Requesting signed URL for STL upload with Order ID:', stlOrderId);
         const urlResponse = await fetch(`${BACKEND_URL}/api/get-upload-url`, {
             method: 'POST',
             headers: {
@@ -187,7 +196,8 @@ async function submitOrderWithS3(name, email, stlString) {
             body: JSON.stringify({
                 name: name,
                 email: email,
-                fileType: 'application/octet-stream'
+                fileType: 'application/octet-stream',
+                orderId: stlOrderId  // Include order ID in upload request
             })
         });
 
@@ -198,6 +208,12 @@ async function submitOrderWithS3(name, email, stlString) {
 
         const urlData = await urlResponse.json();
         console.log('✅ Signed URL received:', urlData.filename);
+        
+        // Get order ID from sessionStorage if not provided
+        const finalOrderId = stlOrderId || sessionStorage.getItem('stlOrderId');
+        if (finalOrderId) {
+            console.log('✅ Order ID for this upload:', finalOrderId);
+        }
 
         // Step 2: Upload directly to S3 using signed URL
         const stlBlob = new Blob([stlString], { type: 'application/octet-stream' });
@@ -257,7 +273,8 @@ async function submitOrderWithS3(name, email, stlString) {
         return {
             success: true,
             guid: urlData.guid,
-            filename: urlData.filename
+            filename: urlData.filename,
+            orderId: stlOrderId
         };
 
     } catch (error) {
@@ -265,6 +282,133 @@ async function submitOrderWithS3(name, email, stlString) {
         showNotification(`Failed to upload: ${error.message}`, 'error');
         throw error;
     }
+}
+
+// Generate a GUID immediately (before checkout opens)
+function generateStlOrderId() {
+    // Generate a UUID v4
+    function uuidv4() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+    
+    const orderId = uuidv4();
+    console.log('🆔 Generated STL Order ID:', orderId);
+    
+    // Store immediately
+    sessionStorage.setItem('stlOrderId', orderId);
+    localStorage.setItem('lastStlOrderId', orderId);
+    
+    // Add to checkout immediately
+    addStlIdToShopifyCheckout(orderId);
+    
+    return orderId;
+}
+
+// Make function globally available
+window.generateStlOrderId = generateStlOrderId;
+
+// Function to add STL ID to Shopify checkout immediately
+function addStlIdToShopifyCheckout(stlId) {
+    console.log('🛒 Adding STL Order ID to Shopify checkout:', stlId);
+    
+    try {
+        // Store for checkout interceptor
+        sessionStorage.setItem('stlFileId', stlId);
+        
+        // Add to checkout URL parameters
+        const checkoutParams = new URLSearchParams({
+            'attributes[STL Order ID]': stlId
+        });
+        
+        sessionStorage.setItem('shopifyCheckoutParams', checkoutParams.toString());
+        console.log('✅ Checkout parameters stored:', checkoutParams.toString());
+        
+        // Set up checkout interceptor
+        interceptShopifyCheckout();
+        
+    } catch (error) {
+        console.error('❌ Error adding STL ID to Shopify checkout:', error);
+    }
+}
+
+// Function to intercept Shopify checkout and add STL ID
+function interceptShopifyCheckout() {
+    console.log('🔧 Setting up Shopify checkout interceptor...');
+    
+    // Monitor for navigation to checkout
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    function addStlIdToCheckout(url) {
+        if (url && (url.includes('checkout') || url.includes('cart'))) {
+            const orderId = sessionStorage.getItem('stlOrderId');
+            if (orderId) {
+                const urlObj = new URL(url, window.location.origin);
+                urlObj.searchParams.set('attributes[STL Order ID]', orderId);
+                return urlObj.toString();
+            }
+        }
+        return url;
+    }
+    
+    // Override pushState
+    history.pushState = function(...args) {
+        if (args[2]) {
+            args[2] = addStlIdToCheckout(args[2]);
+        }
+        return originalPushState.apply(history, args);
+    };
+    
+    // Override replaceState
+    history.replaceState = function(...args) {
+        if (args[2]) {
+            args[2] = addStlIdToCheckout(args[2]);
+        }
+        return originalReplaceState.apply(history, args);
+    };
+    
+    // Also intercept window.location changes
+    let lastUrl = window.location.href;
+    setInterval(() => {
+        const currentUrl = window.location.href;
+        if (currentUrl !== lastUrl && (currentUrl.includes('checkout') || currentUrl.includes('cart'))) {
+            const orderId = sessionStorage.getItem('stlOrderId');
+            if (orderId && !currentUrl.includes('STL Order ID')) {
+                console.log('🛒 Intercepting checkout navigation, adding STL Order ID...');
+                const urlObj = new URL(currentUrl);
+                urlObj.searchParams.set('attributes[STL Order ID]', orderId);
+                window.location.href = urlObj.toString();
+            }
+        }
+        lastUrl = currentUrl;
+    }, 100);
+    
+    console.log('✅ Checkout interceptor set up');
+}
+
+// Function to add STL ID to Shopify cart after item is added
+function addStlIdToShopifyCartAfterAdd(stlId) {
+    console.log('🛒 Attempting to add STL ID to cart after item added:', stlId);
+    
+    // The STL ID is already stored in sessionStorage
+    // It will be picked up by the checkout interceptor
+    // For Shopify Buy Button, we can also try to add it as a note or attribute
+    
+    // Store in a way that Shopify webhook can access
+    // This will be sent to your backend when order is created
+    const orderMetadata = {
+        stlFileId: stlId,
+        stlFileName: sessionStorage.getItem('stlFileName') || '',
+        stlUploadTime: sessionStorage.getItem('stlUploadTime') || new Date().toISOString()
+    };
+    
+    // Store for backend webhook processing
+    localStorage.setItem('pendingOrderStlId', JSON.stringify(orderMetadata));
+    console.log('✅ Order metadata stored for webhook:', orderMetadata);
 }
 
 async function uploadImageToS3(file) {
@@ -632,15 +776,17 @@ class HeightfieldViewer {
         this.loadEngravingFont(this.defaultFontName);
         
         this.init();
-        this.initializeRulerOverlay();
-        this.setupRulerToggle();
+        // Rulers removed - no longer initializing
+        // this.initializeRulerOverlay();
+        // this.setupRulerToggle();
     }
 
     init() {
         // Setup renderer with improved quality settings
         const canvasContainer = document.getElementById('canvas-container');
         this.renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
-        this.renderer.setClearColor(0x333333);
+        // Set background to be slightly darker than main page (#f8f9fa -> #e8e9ea)
+        this.renderer.setClearColor(0xe8e9ea);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -670,8 +816,10 @@ class HeightfieldViewer {
         rgbeLoader.load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/venice_sunset_1k.hdr', (texture) => {
             texture.mapping = THREE.EquirectangularReflectionMapping;
             this.scene.environment = texture;
-            this.scene.background = texture;
-            this.scene.backgroundBlurriness = 0.8;
+            // Set background to solid color slightly darker than main page (#f8f9fa -> #e8e9ea)
+            // Keep HDRI for environment reflections but use solid color for background
+            this.scene.background = new THREE.Color(0xe8e9ea);
+            this.scene.backgroundBlurriness = 0;
             this.envMapLoaded = true;
             if (this.heightfield) {
                 this.heightfield.material.metalness = 1.0;
@@ -1225,28 +1373,35 @@ class HeightfieldViewer {
 
 
 
-        // Change Export STL button to Submit Order (no longer generates STL)
-        const submitOrderBtn = document.getElementById('export-stl');
-        if (submitOrderBtn) {
-            submitOrderBtn.textContent = 'Submit Order';
-            submitOrderBtn.removeEventListener('click', this.exportSTL);
-            submitOrderBtn.addEventListener('click', async () => {
-                // Prompt for user info
-                const name = prompt('Enter your name:');
-                if (!name) return showNotification('Name is required.', 'error');
-                const email = prompt('Enter your email:');
-                if (!email) return showNotification('Email is required.', 'error');
-                
-                // Note: STL generation and upload now happens when Buy Now button is clicked
-                showNotification('Please use the "Buy Now" button to complete your order and generate the STL file.', 'info');
-            });
-        }
+        // Submit Order button removed - STL generation now happens automatically when Buy Now button is clicked
         
         // Function to generate and upload STL (called from Buy Now button)
         // Store reference to 'this' to use in the function
         const viewerInstance = this;
+        
+        // Track STL generation state to prevent duplicates
+        let isGeneratingSTL = false;
+        let stlGeneratedForSession = false;
+        
         window.generateAndUploadSTL = async () => {
             console.log('🔧 generateAndUploadSTL called');
+            
+            // Prevent duplicate calls
+            if (isGeneratingSTL) {
+                console.warn('⚠️ STL generation already in progress, skipping duplicate call');
+                return false;
+            }
+            
+            // Check if STL was already generated for this session
+            if (stlGeneratedForSession) {
+                console.warn('⚠️ STL already generated for this session, skipping duplicate call');
+                return false;
+            }
+            
+            // Set flag to prevent duplicates
+            isGeneratingSTL = true;
+            console.log('🔧 STL generation started, flag set to prevent duplicates');
+            
             console.log('🔧 Viewer instance:', viewerInstance);
             console.log('🔧 window.viewer:', window.viewer);
             console.log('🔧 Has heightfield:', !!viewerInstance.heightfield);
@@ -1255,6 +1410,7 @@ class HeightfieldViewer {
             if (!viewerInstance.heightfield) {
                 console.error('❌ No heightfield to export');
                 console.error('❌ Heightfield check failed - viewerInstance.heightfield is:', viewerInstance.heightfield);
+                isGeneratingSTL = false; // Reset flag
                 showNotification('No 3D model available to export.', 'error');
                 return false;
             }
@@ -1289,9 +1445,31 @@ class HeightfieldViewer {
                 const email = 'customer@example.com'; // Could be extracted from Shopify checkout
                 console.log('📦 User info:', { name, email });
                 
-                // Upload to S3
-                console.log('📤 Step 2: Uploading STL to S3...');
-                await submitOrderWithS3(name, email, stlString);
+                // Get the pre-generated order ID (created before checkout opened)
+                const orderId = sessionStorage.getItem('stlOrderId');
+                if (!orderId) {
+                    console.warn('⚠️ No order ID found, generating new one');
+                    generateStlOrderId();
+                }
+                
+                // Upload to S3 with the order ID
+                const finalOrderId = sessionStorage.getItem('stlOrderId');
+                if (!finalOrderId) {
+                    console.error('❌ No order ID available for upload');
+                    isGeneratingSTL = false;
+                    return false;
+                }
+                console.log('📤 Step 2: Uploading STL to S3 with Order ID:', finalOrderId);
+                const uploadResult = await submitOrderWithS3(name, email, stlString, finalOrderId);
+                
+                // Store filename with order ID
+                if (uploadResult && uploadResult.filename) {
+                    sessionStorage.setItem('stlFileName', uploadResult.filename);
+                    console.log('✅ STL file uploaded and linked to Order ID:', orderId);
+                }
+                
+                // Mark as generated for this session
+                stlGeneratedForSession = true;
                 console.log('✅ STL upload completed successfully');
                 return true;
             } catch (error) {
@@ -1299,6 +1477,10 @@ class HeightfieldViewer {
                 console.error('❌ Error stack:', error.stack);
                 showNotification('Error generating STL file: ' + error.message, 'error');
                 return false;
+            } finally {
+                // Always reset the flag
+                isGeneratingSTL = false;
+                console.log('🔧 STL generation flag reset');
             }
         };
         
@@ -4819,8 +5001,9 @@ window.viewer.uploadDalleImageToS3 = uploadDalleImageToS3;
 if (window.viewer) {
     console.log('🖼️ Loading default image: pet.png');
     
-    // Fetch the pet.png image
-    fetch('/pet.png')
+    // Fetch the pet.png image with cache-busting to ensure fresh load
+    const timestamp = new Date().getTime();
+    fetch(`/pet.png?t=${timestamp}`, { cache: 'no-store' })
         .then(response => response.blob())
         .then(blob => {
             // Create a file object from the blob
@@ -4847,7 +5030,9 @@ if (window.viewer) {
             clearInterval(checkViewer);
             console.log('🖼️ Loading default image: pet.png');
             
-            fetch('/pet.png')
+            // Fetch with cache-busting to ensure fresh load
+            const timestamp = new Date().getTime();
+            fetch(`/pet.png?t=${timestamp}`, { cache: 'no-store' })
                 .then(response => response.blob())
                 .then(blob => {
                     const file = new File([blob], 'pet.png', { type: 'image/png' });

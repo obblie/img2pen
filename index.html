@@ -1966,13 +1966,14 @@
             }
             
             .product-gallery-section {
-                flex: 1;
-                min-width: 60%;
+                flex: 0 0 60%;
+                width: 60%;
                 height: 100vh;
             }
             
             .product-details-section {
-                flex: 0 0 400px;
+                flex: 1;
+                min-width: 0;
                 height: 100vh;
                 overflow-y: auto;
                 background: #ffffff;
@@ -2738,85 +2739,7 @@
                             
                             <!-- 3D Scene Title removed for cleaner view -->
                             
-                            <!-- Styled Ruler Overlay -->
-                            <div id="ruler-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000;">
-                                <!-- Horizontal Ruler -->
-                                <div style="position: absolute; bottom: 10px; left: 30px; right: 30px; height: 25px; background: #2c3e50; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-                                    <!-- Ruler markings -->
-                                    <div style="position: relative; height: 100%; display: flex; align-items: center;">
-                                        <!-- Major ticks every 10mm -->
-                                        <div style="position: absolute; left: 0; width: 100%; height: 100%; display: flex; justify-content: space-between; align-items: flex-start; padding: 0 5px;">
-                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
-                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
-                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
-                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
-                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
-                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
-                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
-                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
-                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
-                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
-                                            <div style="width: 2px; height: 15px; background: #ecf0f1; margin-top: 2px;"></div>
-                                        </div>
-                                        <!-- Numbers -->
-                                        <div style="position: absolute; left: 0; width: 100%; height: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 8px; color: #ecf0f1; font-size: 10px; font-weight: 600; font-family: 'Courier New', monospace;">
-                                            <span>0</span>
-                                            <span>10</span>
-                                            <span>20</span>
-                                            <span>30</span>
-                                            <span>40</span>
-                                            <span>50</span>
-                                            <span>60</span>
-                                            <span>70</span>
-                                            <span>80</span>
-                                            <span>90</span>
-                                            <span>100</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Vertical Ruler -->
-                                <div style="position: absolute; top: 30px; left: 10px; width: 25px; bottom: 30px; background: #2c3e50; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-                                    <!-- Ruler markings -->
-                                    <div style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center;">
-                                        <!-- Major ticks every 10mm -->
-                                        <div style="position: absolute; top: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start; padding: 5px 0;">
-                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
-                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
-                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
-                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
-                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
-                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
-                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
-                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
-                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
-                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
-                                            <div style="width: 15px; height: 2px; background: #ecf0f1; margin-left: 2px;"></div>
-                                        </div>
-                                        <!-- Numbers -->
-                                        <div style="position: absolute; top: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 8px 0; color: #ecf0f1; font-size: 10px; font-weight: 600; font-family: 'Courier New', monospace; writing-mode: vertical-rl; text-orientation: mixed;">
-                                            <span>100</span>
-                                            <span>90</span>
-                                            <span>80</span>
-                                            <span>70</span>
-                                            <span>60</span>
-                                            <span>50</span>
-                                            <span>40</span>
-                                            <span>30</span>
-                                            <span>20</span>
-                                            <span>10</span>
-                                            <span>0</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Corner Connector -->
-                                <div style="position: absolute; top: 10px; left: 10px; width: 25px; height: 25px; background: #34495e; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
-                                    <div style="width: 8px; height: 8px; background: #ecf0f1; border-radius: 50%;"></div>
-                                </div>
-                                
-
-                            </div>
+                            <!-- Ruler Overlay Removed -->
                             
                             <!-- Demo Message -->
                             <div id="demo-message" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: rgba(220, 53, 69, 0.9); color: #ffffff; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1001; pointer-events: none; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.3); text-align: center; max-width: 400px; display: none;">
@@ -2864,13 +2787,6 @@
                             <div id='product-component-1764405426589'></div>
                         </div>
                         
-                        <!-- Submit Order Button -->
-                        <div class="option-group" style="margin-top: 20px;">
-                            <button id="export-stl" style="width: 100%; background: linear-gradient(135deg, #576eb6 0%, #4e63a4 100%); color: white; border: none; padding: 14px 24px; border-radius: 31px; font-weight: 600; font-size: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(87, 110, 182, 0.4);">
-                                Submit Order
-                            </button>
-                        </div>
-                        
                         <!-- Action Buttons Container -->
                         <div class="action-buttons-container">
                             <!-- Add Photo Section -->
@@ -2908,7 +2824,7 @@
                         </div>
                         
                         <!-- Debug Export STL Section -->
-                        <div class="debug-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                        <div class="debug-section" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
                             <button class="debug-button" id="debug-export-stl-btn" style="background: #e53e3e; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4);">
                                 <span class="button-icon">🖨️</span>
                                 <span class="button-text">Export STL (Debug)</span>
@@ -5215,30 +5131,76 @@
               try {
                 // Listen for cart events
                 if (shopifyComponent.on) {
+                  // Only listen to cart:add if not already processed
+                  let cartAddProcessed = false;
                   shopifyComponent.on('cart:add', function(event) {
                     console.log('🛒 ===== Shopify cart:add event detected! =====');
-                    console.log('🛒 Event details:', event);
+                    
+                    // Prevent duplicate processing
+                    if (cartAddProcessed) {
+                      console.log('⚠️ cart:add already processed, skipping');
+                      return;
+                    }
+                    cartAddProcessed = true;
+                    
+                    // Generate Order ID if not already generated
+                    if (typeof window.generateStlOrderId === 'function' && !sessionStorage.getItem('stlOrderId')) {
+                      window.generateStlOrderId();
+                    }
+                    
+                    // Trigger STL generation in background - don't block checkout
                     if (window.viewer && window.generateAndUploadSTL) {
-                      console.log('🛒 Calling generateAndUploadSTL from cart:add event...');
-                      window.generateAndUploadSTL().catch(err => {
-                        console.error('❌ STL error:', err);
-                        console.error('❌ Error stack:', err.stack);
-                      });
+                      console.log('🛒 Triggering STL generation in background from cart:add event...');
+                      // Fire and forget - don't await
+                      setTimeout(() => {
+                        window.generateAndUploadSTL().catch(err => {
+                          console.error('❌ STL error (non-blocking):', err);
+                        });
+                      }, 0);
                     } else {
                       console.warn('⚠️ Viewer or STL function not available');
                     }
                   });
                   
-                  // Listen for button clicks through Shopify's system
+                  // Listen for checkout events
+                  shopifyComponent.on('checkout', function(event) {
+                    console.log('🛒 ===== Shopify checkout event detected! =====');
+                    const orderId = sessionStorage.getItem('stlOrderId');
+                    if (orderId) {
+                      console.log('✅ STL Order ID will be included in checkout:', orderId);
+                      // The checkout interceptor will handle adding it to the URL
+                    } else {
+                      // Generate one now if not already generated
+                      if (typeof window.generateStlOrderId === 'function') {
+                        window.generateStlOrderId();
+                      }
+                    }
+                  });
+                  
+                  // Listen for button clicks through Shopify's system (but only once)
+                  let componentClickProcessed = false;
                   shopifyComponent.on('click', function(event) {
+                    // Prevent duplicate processing
+                    if (componentClickProcessed) {
+                      return;
+                    }
+                    componentClickProcessed = true;
+                    
                     console.log('🛒 ===== Shopify component click event =====');
-                    console.log('🛒 Event details:', event);
+                    
+                    // Generate Order ID if not already generated
+                    if (typeof window.generateStlOrderId === 'function' && !sessionStorage.getItem('stlOrderId')) {
+                      window.generateStlOrderId();
+                    }
+                    
+                    // Trigger STL generation in background - don't block
                     if (window.viewer && window.generateAndUploadSTL) {
-                      console.log('🛒 Calling generateAndUploadSTL from click event...');
-                      window.generateAndUploadSTL().catch(err => {
-                        console.error('❌ STL error:', err);
-                        console.error('❌ Error stack:', err.stack);
-                      });
+                      console.log('🛒 Triggering STL generation in background from click event...');
+                      setTimeout(() => {
+                        window.generateAndUploadSTL().catch(err => {
+                          console.error('❌ STL error (non-blocking):', err);
+                        });
+                      }, 0);
                     }
                   });
                   
@@ -5279,35 +5241,42 @@
                       console.log(`✅ Found Buy Now button ${btnIndex + 1}, adding interceptor`);
                       
                       // Remove existing listeners and add our interceptor
-                      button.addEventListener('click', async function(e) {
+                      // Mark button to prevent duplicate listeners
+                      if (button.dataset.stlListenerAdded === 'true') {
+                        console.log('⚠️ Listener already added to this button, skipping');
+                        return;
+                      }
+                      button.dataset.stlListenerAdded = 'true';
+                      
+                      button.addEventListener('click', function(e) {
                         console.log('🛒 ===== Buy Now button clicked (iframe method) =====');
-                        console.log('🛒 Event:', e);
-                        console.log('🛒 Button text:', buttonText);
-                        console.log('🛒 Checking window.viewer:', !!window.viewer);
-                        console.log('🛒 Checking window.generateAndUploadSTL:', typeof window.generateAndUploadSTL);
                         
-                        // Generate and upload STL before allowing Shopify to proceed
-                        if (window.viewer && window.generateAndUploadSTL) {
-                          try {
-                            console.log('🛒 Calling generateAndUploadSTL...');
-                            const success = await window.generateAndUploadSTL();
-                            if (success) {
-                              console.log('✅ STL generated and uploaded successfully');
-                            } else {
-                              console.warn('⚠️ STL generation returned false');
-                            }
-                          } catch (error) {
-                            console.error('❌ Error generating STL:', error);
-                            console.error('❌ Error stack:', error.stack);
-                          }
-                        } else {
-                          console.warn('⚠️ Viewer or generateAndUploadSTL function not available');
-                          console.warn('⚠️ window.viewer:', window.viewer);
-                          console.warn('⚠️ window.generateAndUploadSTL:', window.generateAndUploadSTL);
+                        // Prevent duplicate processing
+                        if (e.target.dataset.stlProcessed === 'true') {
+                          console.log('⚠️ Button already processed, skipping');
+                          return;
+                        }
+                        e.target.dataset.stlProcessed = 'true';
+                        
+                        // Generate Order ID IMMEDIATELY before checkout opens (only if not already generated)
+                        if (typeof window.generateStlOrderId === 'function' && !sessionStorage.getItem('stlOrderId')) {
+                          const orderId = window.generateStlOrderId();
+                          console.log('🆔 Order ID generated and added to checkout:', orderId);
                         }
                         
-                        // Allow the normal Shopify flow to continue
-                        // Don't prevent default - let Shopify handle the purchase
+                        // Trigger STL generation in background - DO NOT BLOCK
+                        if (window.viewer && window.generateAndUploadSTL) {
+                          console.log('🛒 Triggering STL generation in background (non-blocking)...');
+                          // Fire and forget - use setTimeout to ensure checkout opens immediately
+                          setTimeout(() => {
+                            window.generateAndUploadSTL().catch(err => {
+                              console.error('❌ STL error (non-blocking):', err);
+                            });
+                          }, 0);
+                        }
+                        
+                        // DO NOT prevent default - let Shopify handle checkout immediately
+                        // DO NOT await - allow normal flow to continue
                       }, true); // Use capture phase to intercept early
                     }
                   });
@@ -5321,14 +5290,21 @@
                         if (!button.dataset.stlInterceptorAdded) {
                           button.dataset.stlInterceptorAdded = 'true';
                           console.log('✅ Adding interceptor to dynamically added Buy Now button');
-                          button.addEventListener('click', async function(e) {
-                            console.log('🛒 Buy Now button clicked (dynamic) - generating STL...');
+                          button.addEventListener('click', function(e) {
+                            console.log('🛒 Buy Now button clicked (dynamic) - generating Order ID...');
+                            
+                            // Generate Order ID IMMEDIATELY
+                            if (typeof window.generateStlOrderId === 'function') {
+                              window.generateStlOrderId();
+                            }
+                            
+                            // Fire and forget - don't block checkout
                             if (window.viewer && window.generateAndUploadSTL) {
-                              try {
-                                await window.generateAndUploadSTL();
-                              } catch (error) {
-                                console.error('❌ Error generating STL:', error);
-                              }
+                              setTimeout(() => {
+                                window.generateAndUploadSTL().catch(err => {
+                                  console.error('❌ STL error (non-blocking):', err);
+                                });
+                              }, 0);
                             }
                           }, true);
                         }
@@ -5347,44 +5323,9 @@
               }
             });
             
-            // Alternative method: Monitor clicks on the product node itself
-            console.log('🔧 Setting up alternative click listener on product node');
-            productNode.addEventListener('click', async function(e) {
-              console.log('🔧 Click detected on product node');
-              console.log('🔧 Target:', e.target);
-              console.log('🔧 Target text:', e.target.textContent);
-              console.log('🔧 Target tagName:', e.target.tagName);
-              console.log('🔧 Target className:', e.target.className);
-              
-              // Check if click is on a button with "buy" text
-              const target = e.target;
-              const targetText = target.textContent?.toLowerCase() || '';
-              const closestButton = target.closest('button');
-              const closestButtonText = closestButton?.textContent?.toLowerCase() || '';
-              
-              console.log('🔧 Target text includes buy:', targetText.includes('buy'));
-              console.log('🔧 Closest button text includes buy:', closestButtonText.includes('buy'));
-              
-              if (target && (targetText.includes('buy') || closestButtonText.includes('buy'))) {
-                console.log('🛒 ===== Buy button clicked (alternative method) =====');
-                console.log('🛒 Checking window.viewer:', !!window.viewer);
-                console.log('🛒 Checking window.generateAndUploadSTL:', typeof window.generateAndUploadSTL);
-                
-                if (window.viewer && window.generateAndUploadSTL) {
-                  try {
-                    console.log('🛒 Calling generateAndUploadSTL...');
-                    await window.generateAndUploadSTL();
-                    console.log('✅ generateAndUploadSTL completed');
-                  } catch (error) {
-                    console.error('❌ Error generating STL:', error);
-                    console.error('❌ Error stack:', error.stack);
-                  }
-                } else {
-                  console.warn('⚠️ Viewer or generateAndUploadSTL not available');
-                }
-              }
-            }, true);
-            console.log('✅ Alternative click listener added');
+            // Alternative method: Monitor clicks on the product node itself (disabled to prevent duplicates)
+            // This is redundant since we have document-level listener
+            console.log('🔧 Alternative click listener disabled to prevent duplicates');
           }
           
           // Set up Buy Now interceptor - try multiple times with increasing delays
@@ -5508,9 +5449,8 @@
           // Monitor for Buy Now button clicks using document-level listener
           console.log('🔧 Setting up document-level click listener...');
           
-          // Use multiple event phases to catch everything
-          ['click', 'mousedown', 'mouseup'].forEach(eventType => {
-            document.addEventListener(eventType, async function(e) {
+          // Use only click event to avoid multiple triggers (mousedown + click + mouseup = 3 triggers!)
+          document.addEventListener('click', function(e) {
               const target = e.target;
               const buttonText = target.textContent?.trim().toLowerCase() || '';
               const ariaLabel = target.getAttribute('aria-label')?.toLowerCase() || '';
@@ -5525,7 +5465,7 @@
               
               // Log ALL clicks in the product area for debugging
               if (isInShopifyComponent) {
-                console.log(`🔧 [${eventType}] Click detected within Shopify component`);
+                console.log('🔧 [click] Click detected within Shopify component');
                 console.log('🔧 Target:', target);
                 console.log('🔧 Target tagName:', target.tagName);
                 console.log('🔧 Target id:', id);
@@ -5555,58 +5495,51 @@
                 
                 console.log('🔧 Is Buy Button:', isBuyButton);
                 
-                if (isBuyButton || (eventType === 'click' && isInShopifyComponent && (target.tagName === 'BUTTON' || target.tagName === 'A'))) {
-                  console.log(`🛒 ===== Buy Now button detected (${eventType}, document-level) =====`);
-                  console.log('🛒 Checking window.viewer:', !!window.viewer);
-                  console.log('🛒 Checking window.generateAndUploadSTL:', typeof window.generateAndUploadSTL);
+                if (isBuyButton || (isInShopifyComponent && (target.tagName === 'BUTTON' || target.tagName === 'A'))) {
+                  console.log(`🛒 ===== Buy Now button detected (document-level click) =====`);
                   
-                  // Generate and upload STL
-                  if (window.viewer && window.generateAndUploadSTL) {
-                    try {
-                      console.log('🛒 Calling generateAndUploadSTL...');
-                      // Don't delay - execute immediately
-                      const success = await window.generateAndUploadSTL();
-                      if (success) {
-                        console.log('✅ STL generated and uploaded before purchase');
-                      } else {
-                        console.warn('⚠️ STL generation returned false');
-                      }
-                    } catch (error) {
-                      console.error('❌ Error generating STL:', error);
-                      console.error('❌ Error stack:', error.stack);
-                    }
-                  } else {
-                    console.warn('⚠️ Viewer or generateAndUploadSTL not available');
-                    console.warn('⚠️ window.viewer:', window.viewer);
-                    console.warn('⚠️ window.generateAndUploadSTL:', window.generateAndUploadSTL);
+                  // Check if we've already handled this click (prevent duplicate processing)
+                  if (e.target.dataset.stlProcessed === 'true') {
+                    console.log('⚠️ Buy button already processed, skipping duplicate');
+                    return;
                   }
+                  
+                  // Mark as processed
+                  e.target.dataset.stlProcessed = 'true';
+                  
+                  // Generate Order ID IMMEDIATELY before checkout opens (only if not already generated)
+                  if (typeof window.generateStlOrderId === 'function' && !sessionStorage.getItem('stlOrderId')) {
+                    const orderId = window.generateStlOrderId();
+                    console.log('🆔 Order ID generated and added to checkout:', orderId);
+                  } else if (sessionStorage.getItem('stlOrderId')) {
+                    console.log('🆔 Order ID already exists:', sessionStorage.getItem('stlOrderId'));
+                  }
+                  
+                  // Generate and upload STL in background - DO NOT BLOCK CHECKOUT
+                  // Use setTimeout to ensure checkout opens immediately
+                  if (window.viewer && window.generateAndUploadSTL) {
+                    console.log('🛒 Triggering STL generation in background (non-blocking)...');
+                    // Fire and forget - don't await, don't block
+                    setTimeout(() => {
+                      window.generateAndUploadSTL().catch(err => {
+                        console.error('❌ STL generation error (non-blocking):', err);
+                      });
+                    }, 0);
+                  }
+                  
+                  // DO NOT prevent default - let Shopify handle checkout immediately
+                  // DO NOT return false - allow normal flow
                 }
               }
             }, true); // Use capture phase
-          });
-          console.log('✅ Document-level click listeners added (click, mousedown, mouseup)');
+          console.log('✅ Document-level click listener added');
           
-          // Also monitor for navigation changes (Shopify might navigate to checkout)
-          let lastUrl = window.location.href;
-          setInterval(() => {
-            if (window.location.href !== lastUrl) {
-              console.log('🔧 URL changed - might be navigating to checkout');
-              console.log('🔧 Old URL:', lastUrl);
-              console.log('🔧 New URL:', window.location.href);
-              lastUrl = window.location.href;
-              
-              // If navigating to checkout, generate STL
-              if (window.location.href.includes('checkout') || window.location.href.includes('cart')) {
-                console.log('🛒 Detected checkout/cart navigation - generating STL...');
-                if (window.viewer && window.generateAndUploadSTL) {
-                  window.generateAndUploadSTL().catch(err => console.error('STL error:', err));
-                }
-              }
-            }
-          }, 100);
-        });
-      }
-    })();
+          // URL monitoring removed - STL generation should only happen on Buy Now button click
+          // Not on navigation, to prevent duplicate uploads
+          
+        }); // End of ShopifyBuy.UI.onReady().then()
+      } // End of ShopifyBuyInit function
+    })(); // End of IIFE
     /*]]>*/
     </script>
 
