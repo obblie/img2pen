@@ -5185,7 +5185,261 @@
             }
           }, 1000);
           
+          // Store component globally for access
+          window.shopifyProductComponent = component;
           console.log('Shopify product component initialized and stored');
+          console.log('🔧 Component stored:', !!window.shopifyProductComponent);
+          
+          // Intercept Buy Now button click to generate and upload STL
+          function setupBuyNowInterceptor() {
+            console.log('🔧 setupBuyNowInterceptor called');
+            const productNode = document.getElementById('product-component-1764405426589');
+            console.log('🔧 Product node:', productNode);
+            
+            if (!productNode) {
+              console.log('⚠️ Product node not found, retrying in 500ms...');
+              setTimeout(setupBuyNowInterceptor, 500);
+              return;
+            }
+            
+            console.log('✅ Product node found');
+            console.log('🔧 Product node HTML:', productNode.innerHTML.substring(0, 500));
+            console.log('🔧 Checking for window.viewer:', !!window.viewer);
+            console.log('🔧 Checking for window.generateAndUploadSTL:', typeof window.generateAndUploadSTL);
+            console.log('🔧 Checking for window.shopifyProductComponent:', !!window.shopifyProductComponent);
+            
+            // Try to use Shopify's event system if available
+            const shopifyComponent = window.shopifyProductComponent || component;
+            if (window.shopifyBuyUI && shopifyComponent) {
+              console.log('🔧 Attempting to use Shopify UI event system...');
+              try {
+                // Listen for cart events
+                if (shopifyComponent.on) {
+                  shopifyComponent.on('cart:add', function(event) {
+                    console.log('🛒 ===== Shopify cart:add event detected! =====');
+                    console.log('🛒 Event details:', event);
+                    if (window.viewer && window.generateAndUploadSTL) {
+                      console.log('🛒 Calling generateAndUploadSTL from cart:add event...');
+                      window.generateAndUploadSTL().catch(err => {
+                        console.error('❌ STL error:', err);
+                        console.error('❌ Error stack:', err.stack);
+                      });
+                    } else {
+                      console.warn('⚠️ Viewer or STL function not available');
+                    }
+                  });
+                  
+                  // Listen for button clicks through Shopify's system
+                  shopifyComponent.on('click', function(event) {
+                    console.log('🛒 ===== Shopify component click event =====');
+                    console.log('🛒 Event details:', event);
+                    if (window.viewer && window.generateAndUploadSTL) {
+                      console.log('🛒 Calling generateAndUploadSTL from click event...');
+                      window.generateAndUploadSTL().catch(err => {
+                        console.error('❌ STL error:', err);
+                        console.error('❌ Error stack:', err.stack);
+                      });
+                    }
+                  });
+                  
+                  console.log('✅ Shopify event listeners added');
+                } else {
+                  console.warn('⚠️ Component.on method not available');
+                }
+              } catch (e) {
+                console.warn('⚠️ Could not add Shopify event listeners:', e);
+                console.warn('⚠️ Error details:', e.message, e.stack);
+              }
+            } else {
+              console.warn('⚠️ Shopify UI or component not available');
+              console.warn('⚠️ shopifyBuyUI:', !!window.shopifyBuyUI);
+              console.warn('⚠️ shopifyComponent:', !!shopifyComponent);
+            }
+            
+            // Find the iframe containing the Shopify button
+            const iframes = productNode.querySelectorAll('iframe');
+            console.log('🔧 Found iframes:', iframes.length);
+            
+            iframes.forEach((iframe, index) => {
+              console.log(`🔧 Processing iframe ${index + 1}...`);
+              try {
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                if (iframeDoc) {
+                  console.log(`✅ Can access iframe ${index + 1} document`);
+                  // Look for Buy Now button
+                  const buyNowButtons = iframeDoc.querySelectorAll('button, [role="button"], a[href*="cart"]');
+                  console.log(`🔧 Found ${buyNowButtons.length} potential buttons in iframe ${index + 1}`);
+                  
+                  buyNowButtons.forEach((button, btnIndex) => {
+                    const buttonText = button.textContent.trim().toLowerCase();
+                    const ariaLabel = button.getAttribute('aria-label')?.toLowerCase() || '';
+                    console.log(`🔧 Button ${btnIndex + 1}: text="${buttonText}", aria-label="${ariaLabel}"`);
+                    
+                    if (buttonText.includes('buy now') || buttonText.includes('buy') || ariaLabel.includes('buy')) {
+                      console.log(`✅ Found Buy Now button ${btnIndex + 1}, adding interceptor`);
+                      
+                      // Remove existing listeners and add our interceptor
+                      button.addEventListener('click', async function(e) {
+                        console.log('🛒 ===== Buy Now button clicked (iframe method) =====');
+                        console.log('🛒 Event:', e);
+                        console.log('🛒 Button text:', buttonText);
+                        console.log('🛒 Checking window.viewer:', !!window.viewer);
+                        console.log('🛒 Checking window.generateAndUploadSTL:', typeof window.generateAndUploadSTL);
+                        
+                        // Generate and upload STL before allowing Shopify to proceed
+                        if (window.viewer && window.generateAndUploadSTL) {
+                          try {
+                            console.log('🛒 Calling generateAndUploadSTL...');
+                            const success = await window.generateAndUploadSTL();
+                            if (success) {
+                              console.log('✅ STL generated and uploaded successfully');
+                            } else {
+                              console.warn('⚠️ STL generation returned false');
+                            }
+                          } catch (error) {
+                            console.error('❌ Error generating STL:', error);
+                            console.error('❌ Error stack:', error.stack);
+                          }
+                        } else {
+                          console.warn('⚠️ Viewer or generateAndUploadSTL function not available');
+                          console.warn('⚠️ window.viewer:', window.viewer);
+                          console.warn('⚠️ window.generateAndUploadSTL:', window.generateAndUploadSTL);
+                        }
+                        
+                        // Allow the normal Shopify flow to continue
+                        // Don't prevent default - let Shopify handle the purchase
+                      }, true); // Use capture phase to intercept early
+                    }
+                  });
+                  
+                  // Also monitor for dynamically added buttons
+                  const observer = new MutationObserver(() => {
+                    const newButtons = iframeDoc.querySelectorAll('button, [role="button"], a[href*="cart"]');
+                    newButtons.forEach(button => {
+                      const buttonText = button.textContent.trim().toLowerCase();
+                      if (buttonText.includes('buy now') || buttonText.includes('buy')) {
+                        if (!button.dataset.stlInterceptorAdded) {
+                          button.dataset.stlInterceptorAdded = 'true';
+                          console.log('✅ Adding interceptor to dynamically added Buy Now button');
+                          button.addEventListener('click', async function(e) {
+                            console.log('🛒 Buy Now button clicked (dynamic) - generating STL...');
+                            if (window.viewer && window.generateAndUploadSTL) {
+                              try {
+                                await window.generateAndUploadSTL();
+                              } catch (error) {
+                                console.error('❌ Error generating STL:', error);
+                              }
+                            }
+                          }, true);
+                        }
+                      }
+                    });
+                  });
+                  
+                  observer.observe(iframeDoc.body, { childList: true, subtree: true });
+                  console.log('✅ MutationObserver set up for iframe', index + 1);
+                } else {
+                  console.log(`⚠️ Cannot access iframe ${index + 1} document (cross-origin or not loaded)`);
+                }
+              } catch (e) {
+                // Cross-origin restriction - try alternative method
+                console.log(`⚠️ Cannot access iframe ${index + 1} directly:`, e.message);
+              }
+            });
+            
+            // Alternative method: Monitor clicks on the product node itself
+            console.log('🔧 Setting up alternative click listener on product node');
+            productNode.addEventListener('click', async function(e) {
+              console.log('🔧 Click detected on product node');
+              console.log('🔧 Target:', e.target);
+              console.log('🔧 Target text:', e.target.textContent);
+              console.log('🔧 Target tagName:', e.target.tagName);
+              console.log('🔧 Target className:', e.target.className);
+              
+              // Check if click is on a button with "buy" text
+              const target = e.target;
+              const targetText = target.textContent?.toLowerCase() || '';
+              const closestButton = target.closest('button');
+              const closestButtonText = closestButton?.textContent?.toLowerCase() || '';
+              
+              console.log('🔧 Target text includes buy:', targetText.includes('buy'));
+              console.log('🔧 Closest button text includes buy:', closestButtonText.includes('buy'));
+              
+              if (target && (targetText.includes('buy') || closestButtonText.includes('buy'))) {
+                console.log('🛒 ===== Buy button clicked (alternative method) =====');
+                console.log('🛒 Checking window.viewer:', !!window.viewer);
+                console.log('🛒 Checking window.generateAndUploadSTL:', typeof window.generateAndUploadSTL);
+                
+                if (window.viewer && window.generateAndUploadSTL) {
+                  try {
+                    console.log('🛒 Calling generateAndUploadSTL...');
+                    await window.generateAndUploadSTL();
+                    console.log('✅ generateAndUploadSTL completed');
+                  } catch (error) {
+                    console.error('❌ Error generating STL:', error);
+                    console.error('❌ Error stack:', error.stack);
+                  }
+                } else {
+                  console.warn('⚠️ Viewer or generateAndUploadSTL not available');
+                }
+              }
+            }, true);
+            console.log('✅ Alternative click listener added');
+          }
+          
+          // Set up Buy Now interceptor - try multiple times with increasing delays
+          console.log('🔧 Scheduling setupBuyNowInterceptor...');
+          
+          // Try immediately
+          setupBuyNowInterceptor();
+          
+          // Try again after delays
+          [500, 1000, 2000, 3000, 5000].forEach(delay => {
+            setTimeout(() => {
+              console.log(`🔧 Retrying setupBuyNowInterceptor after ${delay}ms...`);
+              setupBuyNowInterceptor();
+            }, delay);
+          });
+          
+          // Also set up periodic checks to ensure interceptor is working (reduced to 20% frequency)
+          setInterval(() => {
+            const productNode = document.getElementById('product-component-1764405426589');
+            if (productNode) {
+              const iframes = productNode.querySelectorAll('iframe');
+              const buttons = productNode.querySelectorAll('button, a, [role="button"]');
+              console.log('🔍 Periodic check:', {
+                productNode: !!productNode,
+                iframes: iframes.length,
+                buttons: buttons.length,
+                viewer: !!window.viewer,
+                stlFunction: typeof window.generateAndUploadSTL
+              });
+              
+              // Log button details
+              buttons.forEach((btn, i) => {
+                console.log(`🔍 Button ${i + 1}:`, {
+                  text: btn.textContent?.trim().substring(0, 50),
+                  tagName: btn.tagName,
+                  className: btn.className,
+                  id: btn.id
+                });
+              });
+            }
+          }, 25000); // Reduced to 20% frequency (25 seconds instead of 5 seconds)
+          
+          // Log when viewer becomes available
+          const checkViewerReady = setInterval(() => {
+            if (window.viewer) {
+              console.log('✅ Viewer is now available');
+              console.log('✅ generateAndUploadSTL function:', typeof window.generateAndUploadSTL);
+              clearInterval(checkViewerReady);
+            }
+          }, 500);
+          
+          // Clear interval after 30 seconds
+          setTimeout(() => {
+            clearInterval(checkViewerReady);
+          }, 30000);
           
           // Hide Shopify cart toggle after component loads and continuously monitor
           function hideCartToggle() {
@@ -5250,6 +5504,106 @@
           
           // Also monitor continuously
           setInterval(hideCartToggle, 2000);
+          
+          // Monitor for Buy Now button clicks using document-level listener
+          console.log('🔧 Setting up document-level click listener...');
+          
+          // Use multiple event phases to catch everything
+          ['click', 'mousedown', 'mouseup'].forEach(eventType => {
+            document.addEventListener(eventType, async function(e) {
+              const target = e.target;
+              const buttonText = target.textContent?.trim().toLowerCase() || '';
+              const ariaLabel = target.getAttribute('aria-label')?.toLowerCase() || '';
+              const className = target.className?.toLowerCase() || '';
+              const id = target.id?.toLowerCase() || '';
+              
+              // Check if click is within the Shopify product component
+              const isInShopifyComponent = target.closest('#product-component-1764405426589') || 
+                                           target.closest('.shopify-buy-frame') ||
+                                           target.closest('[class*="shopify"]') ||
+                                           target.closest('[id*="product-component"]');
+              
+              // Log ALL clicks in the product area for debugging
+              if (isInShopifyComponent) {
+                console.log(`🔧 [${eventType}] Click detected within Shopify component`);
+                console.log('🔧 Target:', target);
+                console.log('🔧 Target tagName:', target.tagName);
+                console.log('🔧 Target id:', id);
+                console.log('🔧 Button text:', buttonText);
+                console.log('🔧 Aria label:', ariaLabel);
+                console.log('🔧 Class name:', className);
+                console.log('🔧 Target HTML:', target.outerHTML.substring(0, 200));
+                
+                // Check if this is a Buy Now button - be very permissive
+                const isBuyButton = (
+                  buttonText.includes('buy now') || 
+                  buttonText === 'buy' ||
+                  buttonText.includes('purchase') ||
+                  ariaLabel.includes('buy now') ||
+                  ariaLabel.includes('buy') ||
+                  ariaLabel.includes('purchase') ||
+                  className.includes('buy') ||
+                  className.includes('purchase') ||
+                  id.includes('buy') ||
+                  target.closest('[class*="buy"]') ||
+                  target.closest('[class*="purchase"]') ||
+                  target.closest('button')?.textContent?.toLowerCase().includes('buy') ||
+                  target.closest('a')?.textContent?.toLowerCase().includes('buy') ||
+                  (target.tagName === 'BUTTON' && isInShopifyComponent) ||
+                  (target.tagName === 'A' && isInShopifyComponent)
+                );
+                
+                console.log('🔧 Is Buy Button:', isBuyButton);
+                
+                if (isBuyButton || (eventType === 'click' && isInShopifyComponent && (target.tagName === 'BUTTON' || target.tagName === 'A'))) {
+                  console.log(`🛒 ===== Buy Now button detected (${eventType}, document-level) =====`);
+                  console.log('🛒 Checking window.viewer:', !!window.viewer);
+                  console.log('🛒 Checking window.generateAndUploadSTL:', typeof window.generateAndUploadSTL);
+                  
+                  // Generate and upload STL
+                  if (window.viewer && window.generateAndUploadSTL) {
+                    try {
+                      console.log('🛒 Calling generateAndUploadSTL...');
+                      // Don't delay - execute immediately
+                      const success = await window.generateAndUploadSTL();
+                      if (success) {
+                        console.log('✅ STL generated and uploaded before purchase');
+                      } else {
+                        console.warn('⚠️ STL generation returned false');
+                      }
+                    } catch (error) {
+                      console.error('❌ Error generating STL:', error);
+                      console.error('❌ Error stack:', error.stack);
+                    }
+                  } else {
+                    console.warn('⚠️ Viewer or generateAndUploadSTL not available');
+                    console.warn('⚠️ window.viewer:', window.viewer);
+                    console.warn('⚠️ window.generateAndUploadSTL:', window.generateAndUploadSTL);
+                  }
+                }
+              }
+            }, true); // Use capture phase
+          });
+          console.log('✅ Document-level click listeners added (click, mousedown, mouseup)');
+          
+          // Also monitor for navigation changes (Shopify might navigate to checkout)
+          let lastUrl = window.location.href;
+          setInterval(() => {
+            if (window.location.href !== lastUrl) {
+              console.log('🔧 URL changed - might be navigating to checkout');
+              console.log('🔧 Old URL:', lastUrl);
+              console.log('🔧 New URL:', window.location.href);
+              lastUrl = window.location.href;
+              
+              // If navigating to checkout, generate STL
+              if (window.location.href.includes('checkout') || window.location.href.includes('cart')) {
+                console.log('🛒 Detected checkout/cart navigation - generating STL...');
+                if (window.viewer && window.generateAndUploadSTL) {
+                  window.generateAndUploadSTL().catch(err => console.error('STL error:', err));
+                }
+              }
+            }
+          }, 100);
         });
       }
     })();

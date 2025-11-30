@@ -1225,7 +1225,7 @@ class HeightfieldViewer {
 
 
 
-        // Change Export STL button to Submit Order
+        // Change Export STL button to Submit Order (no longer generates STL)
         const submitOrderBtn = document.getElementById('export-stl');
         if (submitOrderBtn) {
             submitOrderBtn.textContent = 'Submit Order';
@@ -1237,17 +1237,93 @@ class HeightfieldViewer {
                 const email = prompt('Enter your email:');
                 if (!email) return showNotification('Email is required.', 'error');
                 
-                // Generate STL
-                const exporter = new STLExporter();
-                const group = new THREE.Group();
-                if (this.heightfield) group.add(this.heightfield.clone());
-                if (this.jumpring) group.add(this.jumpring.clone());
-                const stlString = exporter.parse(group);
-                
-                // Upload to S3
-                await submitOrderWithS3(name, email, stlString);
+                // Note: STL generation and upload now happens when Buy Now button is clicked
+                showNotification('Please use the "Buy Now" button to complete your order and generate the STL file.', 'info');
             });
         }
+        
+        // Function to generate and upload STL (called from Buy Now button)
+        // Store reference to 'this' to use in the function
+        const viewerInstance = this;
+        window.generateAndUploadSTL = async () => {
+            console.log('🔧 generateAndUploadSTL called');
+            console.log('🔧 Viewer instance:', viewerInstance);
+            console.log('🔧 window.viewer:', window.viewer);
+            console.log('🔧 Has heightfield:', !!viewerInstance.heightfield);
+            console.log('🔧 Has jumpring:', !!viewerInstance.jumpring);
+            
+            if (!viewerInstance.heightfield) {
+                console.error('❌ No heightfield to export');
+                console.error('❌ Heightfield check failed - viewerInstance.heightfield is:', viewerInstance.heightfield);
+                showNotification('No 3D model available to export.', 'error');
+                return false;
+            }
+            
+            try {
+                // Generate STL
+                console.log('📦 Step 1: Generating STL file...');
+                const exporter = new STLExporter();
+                console.log('📦 STLExporter created');
+                
+                const group = new THREE.Group();
+                console.log('📦 Group created');
+                
+                if (viewerInstance.heightfield) {
+                    console.log('📦 Cloning heightfield...');
+                    group.add(viewerInstance.heightfield.clone());
+                    console.log('📦 Heightfield cloned and added to group');
+                }
+                if (viewerInstance.jumpring) {
+                    console.log('📦 Cloning jumpring...');
+                    group.add(viewerInstance.jumpring.clone());
+                    console.log('📦 Jumpring cloned and added to group');
+                }
+                
+                console.log('📦 Group children count:', group.children.length);
+                console.log('📦 Parsing STL...');
+                const stlString = exporter.parse(group);
+                console.log('✅ STL string generated, length:', stlString.length);
+                
+                // Get user info from form or use defaults
+                const name = 'Customer'; // Could be extracted from Shopify checkout
+                const email = 'customer@example.com'; // Could be extracted from Shopify checkout
+                console.log('📦 User info:', { name, email });
+                
+                // Upload to S3
+                console.log('📤 Step 2: Uploading STL to S3...');
+                await submitOrderWithS3(name, email, stlString);
+                console.log('✅ STL upload completed successfully');
+                return true;
+            } catch (error) {
+                console.error('❌ Error in generateAndUploadSTL:', error);
+                console.error('❌ Error stack:', error.stack);
+                showNotification('Error generating STL file: ' + error.message, 'error');
+                return false;
+            }
+        };
+        
+        console.log('✅ generateAndUploadSTL function created and assigned to window');
+        console.log('✅ Function available:', typeof window.generateAndUploadSTL);
+        
+        // Test function to manually trigger STL generation (for debugging)
+        window.testSTLGeneration = async () => {
+            console.log('🧪 Testing STL generation...');
+            if (window.generateAndUploadSTL) {
+                try {
+                    const result = await window.generateAndUploadSTL();
+                    console.log('🧪 Test result:', result);
+                    return result;
+                } catch (error) {
+                    console.error('🧪 Test failed:', error);
+                    return false;
+                }
+            } else {
+                console.error('🧪 generateAndUploadSTL function not found');
+                return false;
+            }
+        };
+        
+        console.log('✅ Test function window.testSTLGeneration created');
 
         // Debug Export STL button
         const debugExportStlBtn = document.getElementById('debug-export-stl-btn');
