@@ -1,3 +1,41 @@
+/**
+ * Invert relief depth: invert the stored heightfield image (black <-> white) and rebuild the mesh.
+ */
+function invertReliefDepth(viewerInstance) {
+    if (!viewerInstance || !viewerInstance.heightfieldData || typeof viewerInstance.createHeightfieldMesh !== 'function') {
+        console.error('No heightfield data to invert');
+        return;
+    }
+
+    const src = viewerInstance.heightfieldData;
+    if (!src.data || !src.width || !src.height) {
+        console.error('Invalid heightfield data');
+        return;
+    }
+
+    const inverted = new Uint8ClampedArray(src.data.length);
+    for (let i = 0; i < src.data.length; i += 4) {
+        inverted[i] = 255 - src.data[i];
+        inverted[i + 1] = 255 - src.data[i + 1];
+        inverted[i + 2] = 255 - src.data[i + 2];
+        inverted[i + 3] = src.data[i + 3]; // preserve alpha
+    }
+
+    const invertedHF = {
+        width: src.width,
+        height: src.height,
+        data: inverted,
+        aspectRatio: src.aspectRatio
+    };
+
+    viewerInstance.heightfieldData = invertedHF;
+    viewerInstance.createHeightfieldMesh(invertedHF);
+    if (viewerInstance.jumpring && typeof viewerInstance.updateJumpring === 'function') {
+        viewerInstance.updateJumpring();
+    }
+}
+// UI flag to show/hide invert design button and wire handler
+const ENABLE_INVERT_DESIGN_BUTTON = true;
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
@@ -5690,4 +5728,18 @@ if (typeof uploadDalleImageToS3 === 'function') {
 } else {
     console.error('❌ uploadDalleImageToS3 not defined');
 }
+
+// Wire invert design button (Three.js scene overlay)
+document.addEventListener('DOMContentLoaded', () => {
+    const invertBtn = document.getElementById('invert-relief-btn');
+    if (!invertBtn) return;
+    invertBtn.style.display = ENABLE_INVERT_DESIGN_BUTTON ? 'block' : 'none';
+    invertBtn.addEventListener('click', () => {
+        if (window.viewer) {
+            invertReliefDepth(window.viewer);
+        } else {
+            console.warn('⚠️ Invert requested but viewer not ready');
+        }
+    });
+});
 
