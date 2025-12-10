@@ -58,7 +58,7 @@
         }
         
         .navbar-brand img {
-            height: 32px;
+            height: 56px;
             width: auto;
         }
         
@@ -77,7 +77,7 @@
         .navbar-nav a {
             font-family: 'Inter', 'JetBrains Mono', 'Courier New', monospace;
             font-weight: 600;
-            font-size: 0.9em;
+            font-size: 1.125em;
             color: #4b5563;
             text-decoration: none;
             padding: 6px 0;
@@ -120,7 +120,7 @@
             }
             
             .navbar-brand img {
-                height: 28px;
+                height: 49px;
             }
             
             .navbar-nav {
@@ -128,7 +128,7 @@
             }
             
             .navbar-nav a {
-                font-size: 0.88em;
+                font-size: 1.1em;
             }
             
             body {
@@ -208,6 +208,20 @@
             100% {
                 box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25), 0 0 22px 6px rgba(255, 255, 255, 0.5);
             }
+        }
+
+        /* Hide debug export buttons but keep layout container */
+        #debug-export-stl-btn,
+        #export-pendant-only-btn {
+            display: none !important;
+        }
+
+        /* Hide scrollbar handle for testimonials scroller */
+        #testimonials-container {
+            scrollbar-width: none;
+        }
+        #testimonials-container::-webkit-scrollbar {
+            display: none;
         }
         
         .upload-container {
@@ -2849,7 +2863,9 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; height: 100%; padding: 40px; max-width: 80%; margin: 0 auto;">
                 <!-- Left: Text Content -->
                 <div style="text-align: left; margin-top: -35px;">
-                    <h1 class="hero-title" style="font-size: 4.5em; max-width: 500px; text-align: left;">Image Keepsake Studio</h1>
+                    <h1 class="hero-title" style="font-size: 4.5em; max-width: 500px; text-align: left;">
+                        <img src="/imageKeepsakeStudioLogo.png" alt="Image Keepsake Studio" style="width: 360px; max-width: 100%; height: auto;">
+                    </h1>
                     <p class="hero-subtitle" style="font-size: 1.8em; max-width: 450px; text-align: left;">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you wherever you go, furever 🐶❤️</p>
                     <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; justify-content: start; max-width: 500px;">
@@ -2878,8 +2894,10 @@
                 <!-- Right: Sample Image -->
                 <div style="text-align: center; margin-top: -10px;">
                     <div style="position: relative; display: inline-block;">
-                        <img src="/samplePendant.png" alt="Sample Pendant" style="width: 400px; height: 400px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3);">
-                        <div style="position: absolute; top: 10px; right: 10px; background: #ff6b6b; color: white; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">Sample</div>
+                        <img src="/sleddingScene_before.png" alt="Winter sledding scene" style="width: 300px; height: 300px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3);">
+                    </div>
+                    <div style="position: relative; display: inline-block; margin-top: 20px;">
+                        <img src="/samplePendant.png" alt="Sample Pendant Alternate View" style="width: 300px; height: 300px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3);">
                     </div>
                     <button class="hero-upload-btn" onclick="scrollToSection('scene-container')">
                         Upload Photo
@@ -4876,7 +4894,7 @@
             if (!testimonialsContainer) return;
 
             // Config
-            const pixelsPerMs = 0.11; // slightly slower scroll
+            const pixelsPerMs = 0.083; // ~25% slower
             let isPaused = false;
             let rafId = null;
             let lastTs = null;
@@ -4998,7 +5016,9 @@
             ":focus": {
               "background-color": "#4e63a4"
             },
-            "border-radius": "31px"
+            "border-radius": "31px",
+            "width": "100%",
+            "padding": "16px 0"
           },
           "price": {
             "font-size": "18px"
@@ -5019,7 +5039,7 @@
         },
         "width": "100%",
         "text": {
-          "button": "Buy now"
+          "button": "Buy Now"
         }
       },
       "productSet": {
