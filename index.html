@@ -3100,7 +3100,7 @@
                             <img class="hero-sample-image" src="/samplePendant.png" alt="Sample Pendant Alternate View" loading="lazy" decoding="async">
                         </div>
                     </div>
-                    <button class="hero-upload-btn" onclick="scrollToSection('scene-container')">
+                    <button class="hero-upload-btn" onclick="openUploadFromHero(); return false;">
                         Upload Photo
                     </button>
                 </div>
@@ -3108,6 +3108,21 @@
 
             </div>
         </div>
+
+        <script>
+            function openUploadFromHero() {
+                try {
+                    scrollToSection('scene-container');
+                } catch (e) {
+                    console.warn('scrollToSection unavailable', e);
+                }
+                const fileInput = document.getElementById('file-input');
+                if (fileInput) {
+                    // Small delay to allow scroll and avoid blocked click
+                    setTimeout(() => fileInput.click(), 120);
+                }
+            }
+        </script>
 
         <!-- Three.js Scene Section -->
         <div id="scene-container" class="scene-container">
