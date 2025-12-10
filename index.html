@@ -2920,14 +2920,14 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .hero-cta-stack {
             width: min(620px, 100%);
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
             margin: 0 auto;
         }
@@ -3000,6 +3000,9 @@
         }
 
         @media (max-width: 768px) {
+            .hero-container {
+                padding: 4px 0 8px 0 !important;
+            }
             .hero-grid {
                 padding: 8px 6px !important;
                 gap: clamp(8px, 1.8vw, 14px);
