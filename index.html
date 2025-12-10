@@ -2211,6 +2211,7 @@
             .product-gallery-section {
                 flex: 0 0 60vh;
                 height: 60vh;
+                order: 2;
             }
             
             .product-details-section {
@@ -2218,6 +2219,7 @@
                 overflow-y: auto;
                 background: #ffffff;
                 border-top: 1px solid #e2e8f0;
+                order: 1;
             }
             
             .desktop-only {
@@ -2932,6 +2934,34 @@
             margin: 0 auto;
         }
 
+        /* Mobile persistent add-photo button */
+        .mobile-add-photo-fab {
+            position: fixed;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            border-radius: 999px;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+            z-index: 11000;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        @media (min-width: 769px) {
+            .mobile-add-photo-fab {
+                display: none !important;
+            }
+        }
+
         .hero-highlights {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -3080,6 +3110,11 @@
         </ul>
     </nav>
 
+    <!-- Mobile persistent add-photo button -->
+    <button id="mobile-add-photo-fab" class="mobile-add-photo-fab" onclick="openUploadFromHero(); return false;" aria-label="Add a photo" style="display:none;">
+        📷 Add a Photo
+    </button>
+
     <!-- Main Site Container -->
     <div id="main-site-container" style="width: 100%; min-height: 100vh; position: relative; margin: 0; padding: 0; overflow-x: hidden;">
         
@@ -3148,6 +3183,32 @@
                     setTimeout(() => fileInput.click(), 120);
                 }
             }
+
+            function updateMobileAddPhotoFab(hasImage) {
+                const fab = document.getElementById('mobile-add-photo-fab');
+                if (!fab) return;
+                const isMobile = window.matchMedia('(max-width: 768px)').matches;
+                fab.style.display = !hasImage && isMobile ? 'flex' : 'none';
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const fileInput = document.getElementById('file-input');
+                if (fileInput) {
+                    fileInput.addEventListener('change', () => {
+                        const hasImage = fileInput.files && fileInput.files.length > 0;
+                        updateMobileAddPhotoFab(hasImage);
+                    });
+                }
+
+                // Initial state: assume no image selected yet
+                updateMobileAddPhotoFab(false);
+
+                // Re-evaluate on resize/orientation change
+                window.addEventListener('resize', () => {
+                    const hasImage = fileInput && fileInput.files && fileInput.files.length > 0;
+                    updateMobileAddPhotoFab(hasImage);
+                });
+            });
         </script>
 
         <!-- Three.js Scene Section -->
