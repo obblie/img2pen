@@ -2882,8 +2882,8 @@
            Responsive refinements
            ============================ */
         :root {
-            --section-padding: clamp(16px, 4vw, 40px);
-            --section-max-width: 1180px;
+            --section-padding: clamp(12px, 3vw, 28px);
+            --section-max-width: 1080px;
         }
 
         body, html {
@@ -2906,7 +2906,7 @@
         .hero-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: clamp(24px, 4vw, 60px);
+            gap: clamp(16px, 3vw, 40px);
             align-items: center;
             padding: var(--section-padding);
             max-width: var(--section-max-width);
@@ -2927,7 +2927,7 @@
             width: min(620px, 100%);
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
             align-items: center;
             margin: 0 auto;
         }
@@ -2947,8 +2947,16 @@
             justify-content: center;
         }
 
+        .hero-media-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
         .hero-sample-image {
-            width: min(300px, 46vw);
+            width: min(260px, 42vw);
             height: auto;
             aspect-ratio: 1 / 1;
             object-fit: cover;
@@ -2980,25 +2988,47 @@
                 justify-content: center;
             }
             .hero-title {
-                font-size: clamp(2.6rem, 5vw, 3.6rem);
+                font-size: clamp(2.4rem, 4.5vw, 3.2rem);
             }
             .hero-subtitle {
-                font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+                font-size: clamp(1rem, 2.2vw, 1.3rem);
             }
             .hero-logo {
-                margin-top: 28px;
-                margin-bottom: 12px;
+                margin-top: 18px;
+                margin-bottom: 8px;
             }
         }
 
         @media (max-width: 768px) {
             .hero-grid {
-                padding: var(--section-padding);
-                gap: clamp(16px, 3vw, 32px);
+                padding: 8px 6px !important;
+                gap: clamp(8px, 1.8vw, 14px);
+                max-width: 100% !important;
             }
             .hero-image-row {
                 flex-direction: row;
                 flex-wrap: nowrap;
+                gap: 4px !important;
+            }
+            .hero-media-col {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 6px !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .hero-media-col .hero-image-row {
+                order: 1 !important;
+                width: 100% !important;
+                justify-content: center !important;
+            }
+            .hero-media-col .hero-upload-btn {
+                order: 2 !important;
+                width: min(220px, 90vw);
+                align-self: center !important;
+                margin: 0 !important;
             }
             .hero-highlights {
                 grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -3013,7 +3043,7 @@
                 font-weight: 500 !important;
             }
             .hero-sample-image {
-                width: min(220px, 48vw);
+                width: min(200px, 44vw);
             }
             .navbar-brand img {
                 height: 44px;
@@ -3084,7 +3114,7 @@
                 </div>
                 
                 <!-- Right: Sample Images -->
-                <div style="text-align: center; margin-top: -10px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                <div class="hero-media-col" style="text-align: center; margin-top: -10px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
                     <div class="hero-image-row">
                         <div style="position: relative; display: inline-block;">
                             <img class="hero-sample-image" src="/sleddingScene_before.png" alt="Winter sledding scene" loading="lazy" decoding="async">
