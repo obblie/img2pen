@@ -1,4 +1,4 @@
-/**
+    /**
  * Invert relief depth: invert the stored heightfield image (black <-> white) and rebuild the mesh.
  */
 function invertReliefDepth(viewerInstance) {
@@ -838,6 +838,7 @@ class HeightfieldViewer {
         
         // Store default camera position for reset functionality
         this.defaultCameraPosition = new THREE.Vector3(26.4, 16, 37.6);
+        const baseCameraDistance = this.defaultCameraPosition.length();
 
         // Setup controls
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -847,7 +848,10 @@ class HeightfieldViewer {
         // Lock the pendant in place - disable panning but allow rotation
         this.controls.enablePan = false;      // Disable panning (two-finger drag)
         this.controls.enableRotate = true;    // Enable rotation (single-finger drag)
-        this.controls.enableZoom = false;     // Zoom locked - users cannot zoom in/out
+        this.controls.enableZoom = true;      // Allow zoom
+        // Allow zooming in up to ~50% closer than the default camera distance
+        this.controls.minDistance = baseCameraDistance * 0.5;
+        this.controls.maxDistance = baseCameraDistance * 2.0;
 
         // Use Poly Haven HDRI for environment map
         const rgbeLoader = new RGBELoader();
@@ -3116,6 +3120,13 @@ class HeightfieldViewer {
                 this.redLayer.rotation.y = this.heightfield.rotation.y;
             }
         }
+
+        // Hide the platform if the camera goes below it to avoid clipping
+        if (this.platform) {
+            const platformY = this.platform.position.y;
+            this.platform.visible = this.camera.position.y >= platformY;
+        }
+
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
         // Sync view cube orientation with main camera, only if cube is defined
