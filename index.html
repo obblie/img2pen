@@ -1587,29 +1587,22 @@
                 justify-content: center !important;
             }
             
-            /* Keep hero images side-by-side on small mobile */
+            /* Stack images + button vertically; keep images row inside */
             .hero-container > div > div:last-child {
+                display: flex !important;
+                flex-direction: column !important;
+                flex-wrap: nowrap !important;
+                gap: 12px !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            .hero-image-row {
                 display: flex !important;
                 flex-direction: row !important;
                 flex-wrap: nowrap !important;
                 gap: 8px !important;
                 align-items: center !important;
                 justify-content: center !important;
-            }
-            .hero-container > div > div:last-child > div {
-                margin-top: 0 !important;
-            }
-            .hero-container > div > div:last-child > div:nth-child(1),
-            .hero-container > div > div:last-child > div:nth-child(3) {
-                flex: 0 0 auto !important;
-                order: 1 !important;
-            }
-            .hero-container > div > div:last-child > div:nth-child(2) {
-                order: 2 !important;
-                width: auto !important;
-                text-align: center !important;
-                margin: 0 6px !important;
-                white-space: nowrap !important;
             }
             
             .hero-upload-btn {
@@ -3101,7 +3094,7 @@
                         </div>
                     </div>
                     <button class="hero-upload-btn" onclick="openUploadFromHero(); return false;">
-                        Upload Photo
+                        Get Started
                     </button>
                 </div>
                 
