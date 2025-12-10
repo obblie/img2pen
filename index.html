@@ -184,6 +184,7 @@
             cursor: pointer;
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
             transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+            animation: none;
         }
         
         .hero-upload-btn:hover {
@@ -191,7 +192,7 @@
             box-shadow: 0 18px 38px rgba(0, 0, 0, 0.22);
             background: #f4f6fb;
             color: #0b1220;
-            animation: hero-upload-glow 1.2s ease-in-out infinite alternate;
+            animation: hero-upload-glow 1.2s ease-in-out infinite alternate, hero-upload-breathe 2.4s ease-in-out infinite;
         }
         
         .hero-upload-btn:active {
@@ -210,10 +211,32 @@
             }
         }
 
+        @keyframes hero-upload-breathe {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+            }
+            50% {
+                transform: scale(1.08);
+                box-shadow: 0 22px 50px rgba(0, 0, 0, 0.28), 0 0 20px rgba(255, 255, 255, 0.28);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+            }
+        }
+
         /* Hide debug export buttons but keep layout container */
         #debug-export-stl-btn,
         #export-pendant-only-btn {
             display: none !important;
+        }
+
+        /* Hide debug helper text and container */
+        .debug-section,
+        .debug-help-text {
+            display: none !important;
+            visibility: hidden !important;
         }
 
         /* Hide scrollbar handle for testimonials scroller */
@@ -1323,11 +1346,13 @@
             
             /* Mobile Hero Section - Photo first, then text */
             .hero-container > div > div:first-child {
-                order: 2 !important;
+                order: 1 !important; /* logo/text first on mobile */
             }
             
             .hero-container > div > div:last-child {
-                order: 1 !important;
+                order: 2 !important; /* photos after text on mobile */
+                justify-content: center !important;
+                align-items: center !important;
             }
             
             .hero-container h1 {
@@ -1480,11 +1505,12 @@
             
             /* Mobile sample image */
             .hero-container img {
-                width: 250px !important;
-                height: 250px !important;
+                width: 300px !important;
+                height: 300px !important;
+                max-width: 45vw !important;
+                max-height: 45vw !important;
                 display: block !important;
                 margin: 0 auto !important;
-                max-width: 100% !important;
                 object-fit: cover !important;
             }
             
@@ -1559,6 +1585,37 @@
                 flex-direction: column !important;
                 align-items: center !important;
                 justify-content: center !important;
+            }
+            
+            /* Keep hero images side-by-side on small mobile */
+            .hero-container > div > div:last-child {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                gap: 8px !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            .hero-container > div > div:last-child > div {
+                margin-top: 0 !important;
+            }
+            .hero-container > div > div:last-child > div:nth-child(1),
+            .hero-container > div > div:last-child > div:nth-child(3) {
+                flex: 0 0 auto !important;
+                order: 1 !important;
+            }
+            .hero-container > div > div:last-child > div:nth-child(2) {
+                order: 2 !important;
+                width: auto !important;
+                text-align: center !important;
+                margin: 0 6px !important;
+                white-space: nowrap !important;
+            }
+            
+            .hero-upload-btn {
+                max-width: 260px;
+                padding: 14px 18px;
+                font-size: 1em;
             }
             
             .upload-container {
@@ -2827,6 +2884,148 @@
             opacity: 0 !important;
             pointer-events: none !important;
         }
+
+        /* ============================
+           Responsive refinements
+           ============================ */
+        :root {
+            --section-padding: clamp(16px, 4vw, 40px);
+            --section-max-width: 1180px;
+        }
+
+        body, html {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+        }
+
+        #main-site-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+        }
+
+        .hero-container {
+            min-height: auto !important;
+            padding: var(--section-padding) 0 !important;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: clamp(24px, 4vw, 60px);
+            align-items: center;
+            padding: var(--section-padding);
+            max-width: var(--section-max-width);
+            width: 100%;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .hero-text-col {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .hero-cta-stack {
+            width: min(620px, 100%);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
+            margin: 0 auto;
+        }
+
+        .hero-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            width: 100%;
+        }
+
+        .hero-image-row {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-sample-image {
+            width: min(300px, 46vw);
+            height: auto;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border: 4px solid rgba(255,255,255,0.3);
+        }
+
+        .hero-image-caption {
+            margin: 0;
+            color: #ffffff;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.95em;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 1024px) {
+            .navbar {
+                grid-template-columns: 1fr;
+                justify-items: center;
+                padding: 12px 18px;
+            }
+            .navbar-nav {
+                justify-content: center;
+            }
+            .hero-title {
+                font-size: clamp(2.6rem, 5vw, 3.6rem);
+            }
+            .hero-subtitle {
+                font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+            }
+            .hero-logo {
+                margin-top: 28px;
+                margin-bottom: 12px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero-grid {
+                padding: var(--section-padding);
+                gap: clamp(16px, 3vw, 32px);
+            }
+            .hero-image-row {
+                flex-direction: row;
+                flex-wrap: nowrap;
+            }
+            .hero-highlights {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 8px;
+            }
+            .hero-highlights > div {
+                padding: 8px 10px !important;
+                border-radius: 14px !important;
+            }
+            .hero-highlights > div span {
+                font-size: 0.9em !important;
+                font-weight: 500 !important;
+            }
+            .hero-sample-image {
+                width: min(220px, 48vw);
+            }
+            .navbar-brand img {
+                height: 44px;
+            }
+        }
     </style>
     <!-- Cropper.js CSS -->
     <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
@@ -2856,19 +3055,19 @@
     </nav>
 
     <!-- Main Site Container -->
-    <div id="main-site-container" style="width: 100vw; min-height: 100vh; position: relative; margin: 0; padding: 0; overflow-x: hidden;">
+    <div id="main-site-container" style="width: 100%; min-height: 100vh; position: relative; margin: 0; padding: 0; overflow-x: hidden;">
         
         <!-- Hero Section -->
         <div id="hero-container" class="hero-container">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; height: 100%; padding: 40px; max-width: 80%; margin: 0 auto;">
+            <div class="hero-grid">
                 <!-- Left: Text Content -->
-                <div style="text-align: left; margin-top: -35px;">
-                    <h1 class="hero-title" style="font-size: 4.5em; max-width: 500px; text-align: left;">
-                        <img src="/imageKeepsakeStudioLogo.png" alt="Image Keepsake Studio" style="width: 360px; max-width: 100%; height: auto;">
+                <div class="hero-text-col">
+                    <h1 class="hero-title" style="max-width: 520px; text-align: center; margin: 0 auto;">
+                        <img class="hero-logo" src="/imageKeepsakeStudioLogo.png" alt="Image Keepsake Studio" style="width: 360px; max-width: 100%; height: auto; display: block; margin: 0 auto;" loading="lazy" decoding="async">
                     </h1>
-                    <p class="hero-subtitle" style="font-size: 1.8em; max-width: 450px; text-align: left;">Transform your cherished memories into stunning, wearable jewelry. Take your pet with you wherever you go, furever 🐶❤️</p>
-                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; justify-content: start; max-width: 500px;">
+                    <p class="hero-subtitle" style="max-width: 550px; text-align: center; margin: 12px auto 0;">Transform your cherished memories into stunning, wearable jewelry. Make <span style="background: #ffffff; color: #000000; padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">once in a lifetime</span> last <em>forever.</em></p>
+                    <div class="hero-cta-stack">
+                        <div class="hero-highlights">
                             <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
                                 <span style="font-weight: 600; color: white; font-size: 1.1em;">✨ High Quality</span>
                             </div>
@@ -2891,13 +3090,15 @@
                     </div>
                 </div>
                 
-                <!-- Right: Sample Image -->
-                <div style="text-align: center; margin-top: -10px;">
-                    <div style="position: relative; display: inline-block;">
-                        <img src="/sleddingScene_before.png" alt="Winter sledding scene" style="width: 300px; height: 300px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3);">
-                    </div>
-                    <div style="position: relative; display: inline-block; margin-top: 20px;">
-                        <img src="/samplePendant.png" alt="Sample Pendant Alternate View" style="width: 300px; height: 300px; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 4px solid rgba(255,255,255,0.3);">
+                <!-- Right: Sample Images -->
+                <div style="text-align: center; margin-top: -10px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <div class="hero-image-row">
+                        <div style="position: relative; display: inline-block;">
+                            <img class="hero-sample-image" src="/sleddingScene_before.png" alt="Winter sledding scene" loading="lazy" decoding="async">
+                        </div>
+                        <div style="position: relative; display: inline-block;">
+                            <img class="hero-sample-image" src="/samplePendant.png" alt="Sample Pendant Alternate View" loading="lazy" decoding="async">
+                        </div>
                     </div>
                     <button class="hero-upload-btn" onclick="scrollToSection('scene-container')">
                         Upload Photo
