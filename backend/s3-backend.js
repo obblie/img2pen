@@ -55,7 +55,7 @@ app.get('/health', (req, res) => {
 // Generate signed URL for STL file upload
 app.post('/api/get-upload-url', async (req, res) => {
     try {
-        const { name, email, fileType = 'application/octet-stream' } = req.body;
+        const { name, email, orderId, fileType = 'application/octet-stream' } = req.body;
         
         if (!name || !email) {
             console.log('[UPLOAD-URL] Missing required fields:', { name: !!name, email: !!email });
@@ -65,10 +65,14 @@ app.post('/api/get-upload-url', async (req, res) => {
         // Generate unique filename
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const guid = uuidv4();
-        const filename = `models/${timestamp}-${guid}.stl`;
+        const orderSlug = orderId
+            ? String(orderId).replace(/[^a-zA-Z0-9-_]/g, '').slice(0, 64)
+            : 'no-order-id';
+        const filename = `models/${orderSlug}-${timestamp}-${guid}.stl`;
 
         console.log(`[UPLOAD-URL] Generating signed URL for: ${filename}`);
         console.log(`[UPLOAD-URL] User: ${name} <${email}>`);
+        console.log(`[UPLOAD-URL] Order ID: ${orderId || 'N/A'}`);
 
         // Generate pre-signed URL for PUT operation
         const signedUrl = s3.getSignedUrl('putObject', {

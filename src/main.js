@@ -1682,12 +1682,7 @@ class HeightfieldViewer {
             this.createHeightfieldMesh(heightfieldData);
             
             // Hide demo message when user uploads their own image (not for initial load)
-            if (!autoCrop) {
-                const demoMessage = document.getElementById('demo-message');
-                if (demoMessage) {
-                    demoMessage.style.display = 'none';
-                }
-            }
+            // Leave best-practices badge visible until user explicitly dismisses
         }
         // Show the canvas container when image is processed
         const canvasContainer = document.getElementById('canvas-container');
@@ -4845,11 +4840,7 @@ class HeightfieldViewer {
             rotation: 0
         };
         
-        // Hide demo message when scene is reset
-        const demoMessage = document.getElementById('demo-message');
-        if (demoMessage) {
-            demoMessage.style.display = 'none';
-        }
+        // Leave demo/best-practices badge visible until user dismisses
     }
     
     // Cleanup method for proper disposal
@@ -5046,6 +5037,43 @@ try {
 window.viewer.generateImageWithOpenAI = generateImageWithOpenAI;
 window.viewer.uploadDalleImageToS3 = uploadDalleImageToS3;
 
+// Demo/best-practices badge helpers
+const DEMO_MESSAGE_KEY = 'demoMessageSeen';
+
+const hideDemoMessage = () => {
+    const demoMessage = document.getElementById('demo-message');
+    if (demoMessage) {
+        demoMessage.style.display = 'none';
+        sessionStorage.setItem(DEMO_MESSAGE_KEY, 'true');
+    }
+};
+
+const showDemoMessageIfEligible = () => {
+    const demoMessage = document.getElementById('demo-message');
+    if (!demoMessage) return;
+    const demoSeen = sessionStorage.getItem(DEMO_MESSAGE_KEY) === 'true';
+    if (!demoSeen) {
+        demoMessage.style.display = 'block';
+        ensureDemoMessageClickable();
+    }
+};
+
+const ensureDemoMessageClickable = () => {
+    const demoMessage = document.getElementById('demo-message');
+    if (!demoMessage) return;
+    if (demoMessage.dataset.clickBound === 'true') return;
+    demoMessage.dataset.clickBound = 'true';
+    demoMessage.addEventListener('click', (event) => {
+        event.stopPropagation();
+        hideDemoMessage();
+    }, { once: true });
+};
+
+// Reset previous auto-dismiss state each load so badge appears until clicked
+sessionStorage.removeItem(DEMO_MESSAGE_KEY);
+// Attempt to show immediately in case default image load is slow
+setTimeout(showDemoMessageIfEligible, 0);
+
 // Load default image (pet.png) on page load - no delay
 if (window.viewer) {
     console.log('🖼️ Loading default image: pet.png');
@@ -5062,10 +5090,7 @@ if (window.viewer) {
             window.viewer.processImage(file, true, false, false); // true for auto-crop, false for no loading screen, false for no S3 upload
             
             // Show demo message for initial load
-            const demoMessage = document.getElementById('demo-message');
-            if (demoMessage) {
-                demoMessage.style.display = 'block';
-            }
+            showDemoMessageIfEligible();
             
             console.log('✅ Default image loaded successfully');
         })
@@ -5086,10 +5111,7 @@ if (window.viewer) {
                 .then(blob => {
                     const file = new File([blob], 'pet.png', { type: 'image/png' });
                     window.viewer.processImage(file, true, false, false);
-                    const demoMessage = document.getElementById('demo-message');
-                    if (demoMessage) {
-                        demoMessage.style.display = 'block';
-                    }
+                    showDemoMessageIfEligible();
                     console.log('✅ Default image loaded successfully');
                 })
                 .catch(error => {

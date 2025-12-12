@@ -137,7 +137,7 @@
         }
         
         .hero-container {
-            background: linear-gradient(135deg, #0f172a 0%, #1f2937 55%, #0b1220 100%);
+            background: #0f172a;
             display: block;
             width: 100vw;
             height: 100vh;
@@ -248,7 +248,7 @@
         }
         
         .upload-container {
-            background: linear-gradient(135deg, #0f172a 0%, #1f2937 55%, #0b1220 100%);
+            background: #0f172a;
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -261,7 +261,7 @@
         }
         
         .scene-container {
-            background: #f0f0f0;
+            background: #f0f0f0; /* light grey per request */
             display: block;
             width: 100vw;
             height: auto;
@@ -1232,7 +1232,7 @@
             .add-photo-section {
                 margin-top: 0 !important;
                 padding: 12px !important;
-                background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%) !important;
+                background: #10172b !important;
                 border-radius: 16px !important;
                 border: none !important;
                 text-align: center !important;
@@ -1242,8 +1242,8 @@
                 width: 100% !important;
                 height: 50px !important;
                 padding: 12px 16px !important;
-                background: rgba(255, 255, 255, 0.9) !important;
-                color: #4a5568 !important;
+                background: #1e2b45 !important;
+                color: #f9fafb !important;
                 border: none !important;
                 border-radius: 12px !important;
                 font-size: 0.9em !important;
@@ -1259,9 +1259,9 @@
             }
             
             .add-photo-button:hover {
-                background: rgba(255, 255, 255, 1) !important;
+                background: #16233a !important;
                 transform: translateY(-2px) !important;
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25) !important;
             }
             
             .photo-help-text {
@@ -1280,6 +1280,18 @@
             .action-buttons-container .imagine-section {
                 width: 50% !important;
                 min-width: 0 !important;
+            }
+            .imagine-section {
+                background: #0f172a !important;
+                border: none !important;
+            }
+            .imagine-button {
+                background: #0f172a !important;
+                color: #f9fafb !important;
+            }
+            .imagine-button:hover {
+                background: #111827 !important;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25) !important;
             }
             
             /* Mobile Hero Section - Fix grid layout */
@@ -2170,7 +2182,7 @@
             display: flex;
             width: 100%;
             height: auto;
-            min-height: 100vh;
+            min-height: auto;
             overflow: hidden;
         }
         
@@ -2244,6 +2256,7 @@
             flex-direction: column;
             background: #f8f9fa;
             position: relative;
+    min-height: 90vh;
         }
         
         .main-product-viewer {
@@ -2251,8 +2264,10 @@
             position: relative;
             background: transparent;
             overflow: hidden;
-            aspect-ratio: 1 / 1;
-            max-height: 85vh;
+    min-height: 80vh;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    max-height: none;
         }
         
         #canvas-container {
@@ -2409,13 +2424,13 @@
            ====================================== */
         
         .product-details-section {
-            padding: 24px;
+            padding: 16px 20px;
             color: #2d3748;
         }
         
         @media (max-width: 767px) {
             .product-details-section {
-                padding: 20px;
+                padding: 16px;
             }
         }
         
@@ -2470,7 +2485,7 @@
         .product-options {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 16px;
         }
         
         .option-group {
@@ -2617,6 +2632,24 @@
             width: 50%;
             min-width: 0;
         }
+
+        /* CTA row beneath scene + Shopify */
+        .post-layout-actions {
+            margin: 24px auto 0;
+            max-width: 1100px;
+            padding: 16px 20px;
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+
+        .post-layout-actions .add-photo-section,
+        .post-layout-actions .imagine-section {
+            flex: 1 1 320px;
+            min-width: 280px;
+        }
         
         /* ======================================
            ADD PHOTO SECTION
@@ -2625,7 +2658,7 @@
         .add-photo-section {
             margin-top: 24px;
             padding: 20px;
-            background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+    background: #10172b;
             border-radius: 16px;
             text-align: center;
         }
@@ -2633,8 +2666,8 @@
         .add-photo-button {
             width: 100%;
             height: 60px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #4a5568;
+    background: #1e2b45;
+            color: #f9fafb;
             border: none;
             border-radius: 12px;
             padding: 16px 24px;
@@ -2650,9 +2683,9 @@
         }
         
         .add-photo-button:hover {
-            background: rgba(255, 255, 255, 1);
+    background: #16233a;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
         }
         
         .add-photo-button:active {
@@ -2694,7 +2727,7 @@
         .imagine-section {
             margin-top: 24px;
             padding: 20px;
-            background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+            background: #10172b;
             border-radius: 16px;
             text-align: center;
         }
@@ -2702,8 +2735,8 @@
         .imagine-button {
             width: 100%;
             height: 60px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #4a5568;
+            background: #1e2b45;
+            color: #f9fafb;
             border: none;
             border-radius: 12px;
             padding: 16px 24px;
@@ -2719,9 +2752,9 @@
         }
         
         .imagine-button:hover {
-            background: rgba(255, 255, 255, 1);
+            background: #16233a;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
         }
         
         .imagine-help-text {
@@ -2893,6 +2926,7 @@
         :root {
             --section-padding: clamp(12px, 3vw, 28px);
             --section-max-width: 1080px;
+            --brand-navy: #0f172a;
         }
 
         body, html {
@@ -2905,6 +2939,13 @@
             width: 100% !important;
             max-width: 100% !important;
             overflow-x: hidden !important;
+        }
+
+        /* Normalize all previous accent blues to the hero navy */
+        [style*="#1d4ed8"] {
+            background-color: var(--brand-navy) !important;
+            border-color: var(--brand-navy) !important;
+            color: #f9fafb !important;
         }
 
         .hero-container {
@@ -2953,7 +2994,7 @@
             padding: 12px 18px;
             border-radius: 999px;
             border: 2px solid rgba(0, 0, 0, 0.1);
-            background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+            background: #1d4ed8;
             color: #ffffff;
             font-weight: 700;
             font-size: 15px;
@@ -3262,7 +3303,7 @@
                             </button>
                             
                             <!-- Demo Message -->
-                            <div id="demo-message" style="position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); background: rgba(220, 53, 69, 0.9); color: #ffffff; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1001; pointer-events: none; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.3); text-align: center; max-width: 400px; display: none;">
+                            <div id="demo-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(220, 53, 69, 0.9); color: #ffffff; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1100; pointer-events: auto; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.3); text-align: center; max-width: 400px; display: none;">
                                 <div style="margin-bottom: 4px;"><strong>Best Practices</strong></div>
                                 <div style="font-size: 12px; opacity: 0.9; line-height: 1.3;">
                                     For best results, use an evenly and well-lit image.<br>
@@ -3273,7 +3314,9 @@
                             <style>
                                 @media (max-width: 768px) {
                                     #demo-message {
-                                        bottom: 40px !important;
+                                        top: 50% !important;
+                                        left: 50% !important;
+                                        transform: translate(-50%, -50%) !important;
                                         padding: 8px 12px !important;
                                         font-size: 11px !important;
                                         max-width: 280px !important;
@@ -3307,42 +3350,6 @@
                             <div id='product-component-1764405426589'></div>
                         </div>
                         
-                        <!-- Action Buttons Container -->
-                        <div class="action-buttons-container">
-                            <!-- Add Photo Section -->
-                            <div class="add-photo-section">
-                                <button class="add-photo-button" id="add-photo-btn">
-                                    <span class="button-icon">📷</span>
-                                    <span class="button-text">Add a Photo</span>
-                                </button>
-                                <p class="photo-help-text">Precious Moments Made Eternal</p>
-                            </div>
-                            
-                            <!-- Imagine Section -->
-                            <div class="imagine-section">
-                                <button class="imagine-button" id="imagine-btn">
-                                    <span class="button-icon">🦄</span>
-                                    <span class="button-text">Imagine with AI</span>
-                                </button>
-                                <p class="imagine-help-text">Dream It, Wear It</p>
-                                
-                                <!-- AI Prompt Input (Hidden by default) -->
-                                <div class="ai-prompt-container" id="ai-prompt-container" style="display: none;">
-                                    <div class="prompt-input-group">
-                                        <textarea id="ai-prompt-input" placeholder="Describe what you want to create... (e.g., 'a majestic golden eagle in flight', 'abstract geometric patterns', 'a beautiful rose garden')" rows="3"></textarea>
-                                        <div class="prompt-buttons">
-                                            <button class="prompt-button primary" id="generate-ai-btn">
-                                                <span class="button-icon">🎨</span>
-                                                Generate
-                                            </button>
-                                            <button class="prompt-button secondary" id="cancel-ai-btn">Cancel</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                        </div>
-                        
                         <!-- Debug Export STL Section -->
                         <div class="debug-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
                             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -3364,8 +3371,41 @@
                 </div>
             </div>
         </div>
-    </div>
 
+        <!-- CTA row below scene + Shopify -->
+        <div class="post-layout-actions">
+            <div class="add-photo-section">
+                <button class="add-photo-button" id="add-photo-btn">
+                    <span class="button-icon">📷</span>
+                    <span class="button-text">Add a Photo</span>
+                </button>
+                <p class="photo-help-text">Precious Moments Made Eternal</p>
+            </div>
+
+            <div class="imagine-section">
+                <button class="imagine-button" id="imagine-btn">
+                    <span class="button-icon">🦄</span>
+                    <span class="button-text">Imagine with AI</span>
+                </button>
+                <p class="imagine-help-text">Dream It, Wear It</p>
+
+                <!-- AI Prompt Input (Hidden by default) -->
+                <div class="ai-prompt-container" id="ai-prompt-container" style="display: none;">
+                    <div class="prompt-input-group">
+                        <textarea id="ai-prompt-input" placeholder="Describe what you want to create... (e.g., 'a majestic golden eagle in flight', 'abstract geometric patterns', 'a beautiful rose garden')" rows="3"></textarea>
+                        <div class="prompt-buttons">
+                            <button class="prompt-button primary" id="generate-ai-btn">
+                                <span class="button-icon">🎨</span>
+                                Generate
+                            </button>
+                            <button class="prompt-button secondary" id="cancel-ai-btn">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Upload Section -->
     <div id="upload-container" class="upload-container">
         <div id="drop-zone" style="padding: 20px 24px; width: 100%; max-width: 1100px; min-height: 80vh; margin: 0 auto; display: flex; flex-direction: column; box-sizing: border-box;">
@@ -3383,17 +3423,17 @@
             <div style="text-align: center; margin: 0 auto 20px auto; padding: 16px 16px 20px 16px; width: 100%; max-width: 960px; background: #0b1220; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); box-sizing: border-box;">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
                     <div style="text-align: center;">
-                        <div style="width: 40px; height: 40px; background: #1d4ed8; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: white; font-weight: bold; font-size: 1em;">1</div>
+                        <div style="width: 40px; height: 40px; background: #1e2b45; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: white; font-weight: bold; font-size: 1em;">1</div>
                         <h4 style="color: #f9fafb; font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Upload or Generate</h4>
                         <p style="color: #e5e7eb; font-size: 0.82em;">Choose your photo or describe what you want</p>
                     </div>
                     <div style="text-align: center;">
-                        <div style="width: 40px; height: 40px; background: #1d4ed8; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: white; font-weight: bold; font-size: 1em;">2</div>
+                        <div style="width: 40px; height: 40px; background: #1e2b45; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: white; font-weight: bold; font-size: 1em;">2</div>
                         <h4 style="color: #f9fafb; font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Customize</h4>
                         <p style="color: #e5e7eb; font-size: 0.82em;">Adjust settings and preview your design</p>
                     </div>
                     <div style="text-align: center;">
-                        <div style="width: 40px; height: 40px; background: #1d4ed8; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: white; font-weight: bold; font-size: 1em;">3</div>
+                        <div style="width: 40px; height: 40px; background: #1e2b45; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: white; font-weight: bold; font-size: 1em;">3</div>
                         <h4 style="color: #f9fafb; font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Order</h4>
                         <p style="color: #e5e7eb; font-size: 0.82em;">Place your order and wait 📦</p>
                     </div>
@@ -3407,20 +3447,20 @@
                 <div id="faq-list" style="display: flex; flex-direction: column; gap: 10px;">
                     <div style="background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; text-align: left;">
                         <button class="faq-toggle" style="width: 100%; background: none; border: none; color: #f9fafb; font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                            <span>What image formats are supported?</span>
+                            <span>What metals do you offer?</span>
                             <span aria-hidden="true">+</span>
                         </button>
                         <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: #e5e7eb; font-size: 0.95em; line-height: 1.5;">
-                            We support JPG, PNG, and BMP uploads. For best results, use a well-lit, high-resolution photo.
+                            We currently offer .925 sterling silver and 14k yellow gold. If you have a specific metal in mind, please contact us and we will do our best to accommodate your request.
                         </div>
                     </div>
                     <div style="background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; text-align: left;">
                         <button class="faq-toggle" style="width: 100%; background: none; border: none; color: #f9fafb; font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                            <span>How long does production and shipping take?</span>
+                            <span>How long will it take to receive my order?</span>
                             <span aria-hidden="true">+</span>
                         </button>
                         <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: #e5e7eb; font-size: 0.95em; line-height: 1.5;">
-                            Typical production is 5–7 business days, with shipping times depending on your location. You’ll receive tracking once it ships.
+                            As each order is custom made-to-order, production time varies with average pieces shipping within 7 business days, with shipping times depending on your location. You’ll receive tracking information once your package has shipped.
                         </div>
                     </div>
                     <div style="background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; text-align: left;">
@@ -3441,6 +3481,24 @@
                             We recommend clear, well-lit images. If we see issues, we’ll reach out with suggestions before production.
                         </div>
                     </div>
+                    <div style="background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; text-align: left;">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: #f9fafb; font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                            <span>What is your return policy?</span>
+                            <span aria-hidden="true">+</span>
+                        </button>
+                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: #e5e7eb; font-size: 0.95em; line-height: 1.5;">
+                            We accept returns on a case by case basis for items that do not meet your expectations. Please contact us within 72 hours of receiving your Image Keepsake and we will work with you to resolve the issue.
+                        </div>
+                    </div>
+                    <div style="background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; text-align: left;">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: #f9fafb; font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                            <span>Do you offer design services?</span>
+                            <span aria-hidden="true">+</span>
+                        </button>
+                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: #e5e7eb; font-size: 0.95em; line-height: 1.5;">
+                            We do not formally offer design services, but we are happy to help you create a custom design for your Image Keepsake. Please contact us and we will work with you to create a custom design that makes you happy :).
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -3459,7 +3517,7 @@
                 <!-- Testimonial 1 -->
                 <div style="min-width: 280px; flex: 0 0 280px; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; flex-shrink: 0;">
                     <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em; margin-right: 15px;">S</div>
+                        <div style="width: 50px; height: 50px; background: #1d4ed8; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em; margin-right: 15px;">S</div>
                         <div>
                             <h4 style="color: #2d3748; font-weight: 600; margin: 0; font-size: 1.1em;">Sarah M.</h4>
                             <div style="color: #fbbf24; font-size: 1.1em;">★★★★★</div>
@@ -3471,7 +3529,7 @@
                 <!-- Testimonial 2 -->
                 <div style="min-width: 280px; flex: 0 0 280px; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; flex-shrink: 0;">
                     <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em; margin-right: 15px;">M</div>
+                        <div style="width: 50px; height: 50px; background: #1d4ed8; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em; margin-right: 15px;">M</div>
                         <div>
                             <h4 style="color: #2d3748; font-weight: 600; margin: 0; font-size: 1.1em;">Mike R.</h4>
                             <div style="color: #fbbf24; font-size: 1.1em;">★★★★★</div>
@@ -3483,7 +3541,7 @@
                 <!-- Testimonial 3 -->
                 <div style="min-width: 280px; flex: 0 0 280px; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; flex-shrink: 0;">
                     <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em; margin-right: 15px;">J</div>
+                        <div style="width: 50px; height: 50px; background: #1d4ed8; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em; margin-right: 15px;">J</div>
                         <div>
                             <h4 style="color: #2d3748; font-weight: 600; margin: 0; font-size: 1.1em;">Jennifer L.</h4>
                             <div style="color: #fbbf24; font-size: 1.1em;">★★★★★</div>
@@ -3495,7 +3553,7 @@
                 <!-- Testimonial 4 -->
                 <div style="min-width: 300px; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; flex-shrink: 0;">
                     <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em; margin-right: 15px;">D</div>
+                        <div style="width: 50px; height: 50px; background: #1d4ed8; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em; margin-right: 15px;">D</div>
                         <div>
                             <h4 style="color: #2d3748; font-weight: 600; margin: 0; font-size: 1.1em;">David K.</h4>
                             <div style="color: #fbbf24; font-size: 1.1em;">★★★★★</div>
@@ -3507,7 +3565,7 @@
                 <!-- Testimonial 5 -->
                 <div style="min-width: 300px; background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; flex-shrink: 0;">
                     <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em; margin-right: 15px;">E</div>
+                        <div style="width: 50px; height: 50px; background: #e53e3e; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2em; margin-right: 15px;">E</div>
                         <div>
                             <h4 style="color: #2d3748; font-weight: 600; margin: 0; font-size: 1.1em;">Emma T.</h4>
                             <div style="color: #fbbf24; font-size: 1.1em;">★★★★★</div>
@@ -3563,7 +3621,7 @@
             </div>
             
             <div style="display:flex;gap:10px;justify-content:center;">
-                <button id="generate-ai-btn-modal" style="background:linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);color:white;border:none;padding:12px 24px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;">
+                <button id="generate-ai-btn-modal" style="background:#1d4ed8;color:white;border:none;padding:12px 24px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;">
                     <span style="margin-right:8px;">🎨</span>Generate
                 </button>
                 <button id="cancel-ai-btn-modal" style="background:#f5f5f5;color:#666;border:2px solid #e0e0e0;padding:12px 24px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;">
@@ -5755,6 +5813,26 @@
                     btn.style.minWidth = '160px';
                     btn.style.fontWeight = '700';
                     btn.style.letterSpacing = '0.01em';
+                    btn.style.fontSize = '14px';
+                    btn.style.lineHeight = '1.15';
+                    btn.style.background = '#1e2b45';
+                    btn.style.color = '#f9fafb';
+                    btn.style.border = '2px solid #10172b';
+                    btn.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.35)';
+                    btn.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease';
+                    btn.style.display = 'inline-block';
+                    btn.onmouseenter = () => {
+                      btn.style.transform = 'translateY(-2px)';
+                      btn.style.boxShadow = '0 10px 24px rgba(0, 0, 0, 0.45)';
+                      btn.style.background = '#16233a';
+                      btn.style.borderColor = '#10172b';
+                    };
+                    btn.onmouseleave = () => {
+                      btn.style.transform = 'translateY(0)';
+                      btn.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.35)';
+                      btn.style.background = '#1e2b45';
+                      btn.style.borderColor = '#10172b';
+                    };
                   };
                   // Look for Buy Now button
                   const buyNowButtons = iframeDoc.querySelectorAll('button, [role="button"], a[href*="cart"]');
