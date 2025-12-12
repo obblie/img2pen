@@ -5054,6 +5054,7 @@ const showDemoMessageIfEligible = () => {
     const demoSeen = sessionStorage.getItem(DEMO_MESSAGE_KEY) === 'true';
     if (!demoSeen) {
         demoMessage.style.display = 'block';
+        triggerDemoBreathe();
         ensureDemoMessageClickable();
     }
 };
@@ -5067,6 +5068,17 @@ const ensureDemoMessageClickable = () => {
         event.stopPropagation();
         hideDemoMessage();
     }, { once: true });
+};
+
+const triggerDemoBreathe = () => {
+    const demoMessage = document.getElementById('demo-message');
+    if (!demoMessage) return;
+    if (demoMessage.dataset.breatheDone === 'true') return;
+    demoMessage.dataset.breatheDone = 'true';
+    demoMessage.classList.remove('demo-breathe');
+    // force reflow to restart animation if needed
+    void demoMessage.offsetWidth;
+    demoMessage.classList.add('demo-breathe');
 };
 
 // Reset previous auto-dismiss state each load so badge appears until clicked
