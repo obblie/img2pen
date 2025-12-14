@@ -1776,9 +1776,6 @@ class HeightfieldViewer {
         } else {
             console.warn('UI menu element not found, skipping positioning');
         }
-        // Scroll to the scene container
-        document.getElementById('scene-container').scrollIntoView({ behavior: 'smooth' });
-        
         // Hide loading overlay immediately after processing completes
         if (showLoading) {
             hideLoadingOverlay();
