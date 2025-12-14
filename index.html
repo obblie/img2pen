@@ -19,6 +19,10 @@
             --highlight: #E8D9C8;        /* complementary bright accent */
         }
         
+        html {
+            background: var(--bg-parchment);
+        }
+        
         body {
             margin: 0;
             padding: 0;
@@ -278,7 +282,7 @@
             width: 100vw;
             height: auto;
             min-height: 100vh;
-            margin: 90px 0 0 0;
+            margin: 0;
             padding: 40px;
             box-sizing: border-box;
             position: relative;
@@ -3071,6 +3075,44 @@
             text-decoration: none;
         }
 
+        /* Social footer */
+        .social-footer {
+            margin: 0 auto;
+            padding: 22px 16px 32px;
+            width: 100%;
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            color: var(--ink);
+            border-top: 1px solid rgba(43,43,43,0.12);
+            background: var(--bg-stone);
+            box-sizing: border-box;
+        }
+
+        .social-footer a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: var(--bg-stone);
+            border: 1px solid rgba(43,43,43,0.12);
+            color: var(--ink);
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .social-footer a:hover {
+            background: var(--oxblood);
+            border-color: var(--oxblood);
+            color: var(--bg-parchment);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.16);
+        }
+
         @media (min-width: 769px) {
             .mobile-add-photo-fab {
                 display: none !important;
@@ -3342,9 +3384,10 @@
                 const faqList = document.getElementById('faq-list');
                 const faqSubtext = document.getElementById('faq-subtext');
                 const faqContainer = document.getElementById('faq-container');
+                const faqToggleAllBtn = document.getElementById('faq-toggle-all');
                 const addPhotoBtn = document.getElementById('add-photo-btn');
                 const imagineBtn = document.getElementById('imagine-btn');
-            const themeSelector = document.getElementById('theme-selector');
+                const themeSelector = document.getElementById('theme-selector');
                 let faqCollapsed = false;
             const THEME_KEY = 'iks-theme';
             const getVar = (name, fallback) => {
@@ -3491,6 +3534,10 @@
                     if (faqList) faqList.style.display = listDisplay;
                     if (faqSubtext) faqSubtext.style.display = faqCollapsed ? 'none' : 'block';
                     if (faqContainer) faqContainer.setAttribute('aria-expanded', faqCollapsed ? 'false' : 'true');
+                    if (faqToggleAllBtn) {
+                        faqToggleAllBtn.textContent = faqCollapsed ? '+' : '–';
+                        faqToggleAllBtn.setAttribute('aria-expanded', faqCollapsed ? 'false' : 'true');
+                    }
                 };
 
                 // Gentle CTA pulse (once)
@@ -3527,11 +3574,8 @@
                     });
                 });
                 
-                if (faqContainer) {
-                    faqContainer.style.cursor = 'pointer';
-                    faqContainer.addEventListener('click', (e) => {
-                        // Don't toggle container when clicking individual FAQ toggles
-                        if (e.target.closest('.faq-toggle')) return;
+                if (faqToggleAllBtn) {
+                    faqToggleAllBtn.addEventListener('click', () => {
                         faqCollapsed = !faqCollapsed;
                         updateFaqVisibility();
                     });
@@ -3703,7 +3747,10 @@
             
             <!-- FAQ Section (Process Panel) -->
             <div id="faq-container" style="text-align: center; margin: 0 auto 24px auto; padding: 18px 18px; width: 100%; max-width: 960px; background: var(--bg-stone); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.08);">
-                <h3 style="color: var(--ink); font-weight: 800; font-size: 1.6em; margin: 0 0 12px 0;">FAQ</h3>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 10px;">
+                    <h3 style="color: var(--ink); font-weight: 800; font-size: 1.6em; margin: 0;">FAQ</h3>
+                    <button id="faq-toggle-all" aria-label="Toggle FAQ" style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--ink); background: var(--bg-parchment); color: var(--ink); font-weight: 800; font-size: 1.1em; cursor: pointer; transition: all 0.2s ease; padding: 0;">–</button>
+                </div>
                 <p id="faq-subtext" style="color: rgba(43,43,43,0.8); font-size: 0.95em; margin: 0 0 14px 0;">Answers to the most common questions.</p>
                 <div id="faq-list" style="display: flex; flex-direction: column; gap: 10px;">
                     <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
@@ -6450,7 +6497,20 @@
                 });
             }
         }
-    </script>
+</script>
+
+<!-- Social Footer -->
+<div class="social-footer">
+    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+        <img src="/fblogo.png" alt="Facebook" style="height: 20px; width: 20px; object-fit: contain;">
+    </a>
+    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+        <img src="/iglogo.png" alt="Instagram" style="height: 20px; width: 20px; object-fit: contain;">
+    </a>
+    <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+        <img src="/tiktoklogo.png" alt="TikTok" style="height: 20px; width: 20px; object-fit: contain;">
+    </a>
+</div>
 
 </body>
 </html>
