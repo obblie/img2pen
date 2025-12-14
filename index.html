@@ -4,16 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Keepsake Studio - Create 3D Jewelry from Your Photos</title>
-    <link rel="icon" type="image/png" href="/imageKeepsakeStudioLogo.png">
+    <link rel="icon" type="image/png" href="/IKSlogo_transparentbg.png">
     <!-- Tailwind CDN removed for production safety. Use built CSS or PostCSS/CLI if needed. -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
+        
+        :root {
+            --bg-parchment: #F3EFE8;
+            --bg-stone: #D8D1C7;
+            --ink: #2B2B2B;
+            --oxblood: #9C8F82;          /* primary accent (muted studio green) */
+            --oxblood-strong: #7C6F64;   /* darker accent for hover/emphasis */
+            --bronze: #B8874B;
+            --highlight: #E8D9C8;        /* complementary bright accent */
+        }
         
         body {
             margin: 0;
             padding: 0;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f9fa;
+            background: var(--bg-parchment);
+            color: var(--ink);
             overflow-x: hidden;
             overflow-y: auto;
             width: 100vw;
@@ -137,7 +148,7 @@
         }
         
         .hero-container {
-            background: #0f172a;
+            background: var(--bg-parchment);
             display: block;
             width: 100vw;
             height: 100vh;
@@ -151,7 +162,7 @@
             font-size: 3.5em;
             margin-bottom: 20px;
             line-height: 1.1;
-            color: white;
+            color: var(--ink);
             max-width: 400px;
             word-wrap: break-word;
             text-align: center !important;
@@ -162,7 +173,7 @@
             margin-bottom: 30px;
             opacity: 0.9;
             line-height: 1.6;
-            color: white;
+            color: var(--ink);
             max-width: 350px;
             word-wrap: break-word;
             text-align: center !important;
@@ -175,23 +186,24 @@
             margin: 18px auto 0;
             padding: 16px 28px;
             border-radius: 14px;
-            border: none;
-            background: #ffffff;
-            color: #0f172a;
+            border: 1px solid var(--oxblood);
+            background: var(--oxblood);
+            color: var(--bg-parchment);
             font-weight: 700;
             font-size: 1.05em;
             letter-spacing: 0.01em;
             cursor: pointer;
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.16);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
             animation: none;
         }
         
         .hero-upload-btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 18px 38px rgba(0, 0, 0, 0.22);
-            background: #f4f6fb;
-            color: #0b1220;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+            background: var(--oxblood-strong);
+            border-color: var(--oxblood-strong);
+            color: var(--bg-parchment);
             animation: hero-upload-glow 1.2s ease-in-out infinite alternate, hero-upload-breathe 2.4s ease-in-out infinite;
         }
         
@@ -248,7 +260,7 @@
         }
         
         .upload-container {
-            background: #0f172a;
+            background: var(--bg-parchment);
             display: flex;
             justify-content: center;
             align-items: flex-start;
@@ -261,7 +273,7 @@
         }
         
         .scene-container {
-            background: #f0f0f0; /* light grey per request */
+            background: var(--bg-parchment);
             display: block;
             width: 100vw;
             height: auto;
@@ -1234,25 +1246,26 @@
             .add-photo-section {
                 margin-top: 0 !important;
                 padding: 8px !important;
-                background: #10172b !important;
+                background: var(--bg-stone) !important;
+                color: var(--ink) !important;
                 border-radius: 10px !important;
-                border: none !important;
+                border: 1px solid rgba(43, 43, 43, 0.12) !important;
                 text-align: center !important;
-                box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
+                box-shadow: 0 8px 16px rgba(0,0,0,0.12) !important;
             }
             
             .add-photo-button {
                 width: 100% !important;
                 height: 44px !important;
                 padding: 10px 12px !important;
-                background: #1e2b45 !important;
-                color: #f9fafb !important;
-                border: none !important;
+                background: var(--oxblood) !important;
+                color: var(--bg-parchment) !important;
+                border: 1px solid var(--oxblood) !important;
                 border-radius: 10px !important;
                 font-size: 0.9em !important;
                 font-weight: 600 !important;
                 cursor: pointer !important;
-                transition: all 0.3s ease !important;
+                transition: all 0.25s ease !important;
                 min-height: 40px !important;
                 display: flex !important;
                 align-items: center !important;
@@ -1262,13 +1275,13 @@
             }
             
             .add-photo-button:hover {
-                background: #16233a !important;
+                background: var(--oxblood-strong) !important;
                 transform: translateY(-2px) !important;
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25) !important;
+                box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16) !important;
             }
             
             .photo-help-text {
-                color: rgba(255, 255, 255, 0.9) !important;
+                color: var(--ink) !important;
                 margin: 8px 0 0 0 !important;
                 font-size: 0.8em !important;
                 line-height: 1.4 !important;
@@ -1285,16 +1298,18 @@
                 min-width: 0 !important;
             }
             .imagine-section {
-                background: #0f172a !important;
-                border: none !important;
+                background: var(--bg-stone) !important;
+                color: var(--ink) !important;
+                border: 1px solid rgba(43,43,43,0.12) !important;
             }
             .imagine-button {
-                background: #0f172a !important;
-                color: #f9fafb !important;
+                background: var(--oxblood) !important;
+                color: var(--bg-parchment) !important;
+                border: 1px solid var(--oxblood) !important;
             }
             .imagine-button:hover {
-                background: #111827 !important;
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25) !important;
+            background: var(--oxblood-strong) !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16) !important;
             }
             
             /* Mobile Hero Section - Fix grid layout */
@@ -1579,6 +1594,7 @@
             .hero-container p,
             .hero-container .hero-subtitle {
                 text-align: center !important;
+                color: var(--ink) !important;
             }
             
             /* Mobile hero container improvements */
@@ -2661,6 +2677,11 @@
             min-width: 200px;
             max-width: 260px;
             pointer-events: auto; /* re-enable on interactive cards */
+            background: var(--bg-stone);
+            color: var(--ink);
+            border: 1px solid rgba(43,43,43,0.12);
+            border-radius: 12px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.18);
         }
         
         /* ======================================
@@ -2670,24 +2691,26 @@
         .add-photo-section {
             margin-top: 24px;
             padding: 14px;
-    background: #10172b;
+            background: var(--bg-stone);
+            color: var(--ink);
             border-radius: 12px;
             text-align: center;
-            box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+            border: 1px solid rgba(43,43,43,0.12);
         }
         
         .add-photo-button {
             width: 100%;
             height: 52px;
-            background: #1e2b45;
-            color: #f9fafb;
-            border: none;
+            background: var(--oxblood);
+            color: var(--bg-parchment);
+            border: 1px solid var(--oxblood);
             border-radius: 10px;
             padding: 12px 16px;
             font-size: 1em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2696,9 +2719,9 @@
         }
         
         .add-photo-button:hover {
-    background: #16233a;
+    background: var(--oxblood-strong);
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
         }
         
         .add-photo-button:active {
@@ -2715,7 +2738,7 @@
         }
         
         .photo-help-text {
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--ink);
             margin: 12px 0 0 0;
             font-size: 0.9em;
             line-height: 1.4;
@@ -2740,24 +2763,26 @@
         .imagine-section {
             margin-top: 24px;
             padding: 14px;
-            background: #10172b;
+            background: var(--bg-stone);
+            color: var(--ink);
             border-radius: 12px;
             text-align: center;
-            box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+            border: 1px solid rgba(43,43,43,0.12);
         }
         
         .imagine-button {
             width: 100%;
             height: 52px;
-            background: #1e2b45;
-            color: #f9fafb;
-            border: none;
+            background: var(--oxblood);
+            color: var(--bg-parchment);
+            border: 1px solid var(--oxblood);
             border-radius: 10px;
             padding: 12px 16px;
             font-size: 1em;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2790,13 +2815,13 @@
         }
         
         .imagine-button:hover {
-            background: #16233a;
+            background: var(--oxblood-strong);
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.16);
         }
         
         .imagine-help-text {
-            color: rgba(255, 255, 255, 0.9);
+            color: var(--ink);
             margin: 12px 0 0 0;
             font-size: 0.9em;
             line-height: 1.4;
@@ -2848,22 +2873,25 @@
         }
         
         .prompt-button.primary {
-            background: #1d4ed8;
-            color: white;
+            background: var(--oxblood);
+            color: var(--bg-parchment);
+            border: 1px solid var(--oxblood);
         }
         
         .prompt-button.primary:hover {
-            background: #153e9a;
+            background: var(--oxblood-strong);
+            border-color: #5b1919;
             transform: translateY(-1px);
         }
         
         .prompt-button.secondary {
-            background: #e2e8f0;
-            color: #4a5568;
+            background: var(--bg-stone);
+            color: var(--ink);
+            border: 1px solid rgba(43,43,43,0.16);
         }
         
         .prompt-button.secondary:hover {
-            background: #cbd5e0;
+            background: #ccc5ba;
         }
         
         @media (max-width: 767px) {
@@ -2892,6 +2920,7 @@
             .photo-help-text {
                 font-size: 0.8em;
                 margin: 8px 0 0 0;
+                color: var(--ink);
             }
             
             .imagine-section {
@@ -2964,7 +2993,7 @@
         :root {
             --section-padding: clamp(12px, 3vw, 28px);
             --section-max-width: 1080px;
-            --brand-navy: #0f172a;
+            --brand-navy: var(--oxblood);
         }
 
         body, html {
@@ -2979,7 +3008,7 @@
             overflow-x: hidden !important;
         }
 
-        /* Normalize all previous accent blues to the hero navy */
+        /* Normalize old accent blues to primary accent */
         [style*="#1d4ed8"] {
             background-color: var(--brand-navy) !important;
             border-color: var(--brand-navy) !important;
@@ -3031,9 +3060,9 @@
             justify-content: center;
             padding: 12px 18px;
             border-radius: 999px;
-            border: 2px solid rgba(0, 0, 0, 0.1);
-            background: #1d4ed8;
-            color: #ffffff;
+            border: 1px solid var(--oxblood);
+            background: var(--oxblood);
+            color: var(--bg-parchment);
             font-weight: 700;
             font-size: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.18);
@@ -3186,7 +3215,7 @@
     <!-- Navigation Bar -->
     <nav class="navbar" id="navbar">
         <a href="#" class="navbar-brand" onclick="event.preventDefault(); scrollToSection('hero-container'); return false;">
-            <img src="/imageKeepsakeStudioLogo.png" alt="Image Keepsake Studio Logo">
+            <img src="/IKSlogo_transparentbg.png" alt="Image Keepsake Studio Logo">
             <span>Image Keepsake Studio</span>
         </a>
         <ul class="navbar-nav">
@@ -3210,28 +3239,41 @@
                 <!-- Left: Text Content -->
                 <div class="hero-text-col">
                     <h1 class="hero-title" style="max-width: 520px; text-align: center; margin: 0 auto;">
-                        <img class="hero-logo" src="/imageKeepsakeStudioLogo.png" alt="Image Keepsake Studio" style="width: 360px; max-width: 100%; height: auto; display: block; margin: 0 auto;" loading="lazy" decoding="async">
+                        <img class="hero-logo" src="/IKSlogo_transparentbg.png" alt="Image Keepsake Studio" style="width: 360px; max-width: 100%; height: auto; display: block; margin: 0 auto;" loading="lazy" decoding="async">
                     </h1>
-                    <p class="hero-subtitle" style="max-width: 550px; text-align: center; margin: 12px auto 0;">Upload your cherished memories and transform them into stunning, wearable jewelry. Make <span style="background: #ffffff; color: #000000; padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">once in a lifetime</span> last <em>forever.</em></p>
+                    <p class="hero-subtitle" style="max-width: 550px; text-align: center; margin: 12px auto 0;">Upload your cherished memories and transform them into stunning, wearable jewelry. Make <span style="background: var(--highlight); color: var(--ink); padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">once in a lifetime</span> last <em>forever.</em></p>
+                    <div style="margin: 16px auto 8px; text-align: center;">
+                        <label for="theme-selector" style="font-weight: 700; color: var(--ink); margin-right: 8px;">Theme</label>
+                        <select id="theme-selector" style="padding: 10px 12px; border: 1px solid rgba(43,43,43,0.2); border-radius: 10px; background: var(--bg-stone); color: var(--ink); font-weight: 600; min-width: 220px; box-shadow: 0 6px 14px rgba(0,0,0,0.08);">
+                            <option value="studio-moss">Studio Moss (Current)</option>
+                            <option value="heritage-navy">Heritage Navy (Previous)</option>
+                            <option value="rose-gold">Rose Gold & Ivory</option>
+                            <option value="emerald-gold">Emerald & Gold</option>
+                            <option value="onyx-gold">Onyx & Gold</option>
+                            <option value="pearl-champagne">Pearl & Champagne</option>
+                            <option value="sapphire-silver">Sapphire & Silver</option>
+                            <option value="charcoal-sand">Charcoal & Sand</option>
+                        </select>
+                    </div>
                     <div class="hero-cta-stack">
                         <div class="hero-highlights">
-                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 1.1em;">✨ High Quality Craftsmanship</span>
+                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
+                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">✨ High Quality Craftsmanship</span>
                             </div>
-                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 1.1em;">🚀 Fast Delivery</span>
+                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
+                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🚀 Fast Delivery</span>
                             </div>
-                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 1.1em;">🥹 Precious Results</span>
+                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
+                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🥹 Precious Results</span>
                             </div>
-                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 1.1em;">🎨 Custom Design</span>
+                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
+                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🎨 Custom Design</span>
                             </div>
-                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 1.1em;">🔒 Secure Payment</span>
+                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
+                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🔒 Secure Payment</span>
                             </div>
-                            <div style="background: rgba(255,255,255,0.2); padding: 12px 16px; border-radius: 20px; backdrop-filter: blur(10px); text-align: center;">
-                                <span style="font-weight: 600; color: white; font-size: 1.1em;">🌟 5-Star Reviews</span>
+                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
+                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🌟 5-Star Reviews</span>
                             </div>
                         </div>
                     </div>
@@ -3248,7 +3290,7 @@
                         </div>
                     </div>
                     <button class="hero-upload-btn" onclick="openUploadFromHero(); return false;">
-                        Get Started Now
+                        Upload a Photo to Get Started
                     </button>
                 </div>
         </div>
@@ -3302,7 +3344,147 @@
                 const faqContainer = document.getElementById('faq-container');
                 const addPhotoBtn = document.getElementById('add-photo-btn');
                 const imagineBtn = document.getElementById('imagine-btn');
+            const themeSelector = document.getElementById('theme-selector');
                 let faqCollapsed = false;
+            const THEME_KEY = 'iks-theme';
+            const getVar = (name, fallback) => {
+                const val = getComputedStyle(document.documentElement).getPropertyValue(name)?.trim();
+                return val || fallback;
+            };
+            const restyleBuyNowButtons = () => {
+                const accent = getVar('--oxblood', '#9C8F82');
+                const accentStrong = getVar('--oxblood-strong', '#7C6F64');
+                const paper = getVar('--bg-parchment', '#F3EFE8');
+                document.querySelectorAll('iframe').forEach(iframe => {
+                    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+                    if (!doc) return;
+                    const btns = doc.querySelectorAll('button, [role="button"], a[href*="cart"]');
+                    btns.forEach(button => {
+                        const text = button.textContent?.trim().toLowerCase() || '';
+                        const aria = button.getAttribute('aria-label')?.toLowerCase() || '';
+                        if (!text.includes('buy') && !aria.includes('buy')) return;
+                        button.style.borderRadius = '10px';
+                        button.style.padding = '12px 16px';
+                        button.style.minHeight = '48px';
+                        button.style.minWidth = '160px';
+                        button.style.fontWeight = '700';
+                        button.style.letterSpacing = '0.01em';
+                        button.style.fontSize = '14px';
+                        button.style.lineHeight = '1.15';
+                        button.style.background = accent;
+                        button.style.color = paper;
+                        button.style.border = `1px solid ${accent}`;
+                        button.style.boxShadow = '0 8px 18px rgba(0, 0, 0, 0.18)';
+                        button.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease';
+                        button.style.display = 'inline-block';
+                        button.onmouseenter = () => {
+                            button.style.transform = 'translateY(-2px)';
+                            button.style.boxShadow = '0 10px 22px rgba(0, 0, 0, 0.24)';
+                            button.style.background = accentStrong;
+                            button.style.borderColor = accentStrong;
+                        };
+                        button.onmouseleave = () => {
+                            button.style.transform = 'translateY(0)';
+                            button.style.boxShadow = '0 8px 18px rgba(0, 0, 0, 0.18)';
+                            button.style.background = accent;
+                            button.style.borderColor = accent;
+                        };
+                    });
+                });
+            };
+            const THEMES = {
+                'studio-moss': {
+                    '--bg-parchment': '#F3EFE8',
+                    '--bg-stone': '#D8D1C7',
+                    '--ink': '#2B2B2B',
+                    '--oxblood': '#9C8F82',
+                    '--oxblood-strong': '#7C6F64',
+                    '--bronze': '#B8874B',
+                    '--highlight': '#E8D9C8'
+                },
+                'heritage-navy': {
+                    '--bg-parchment': '#f8f9fa',
+                    '--bg-stone': '#e5e7eb',
+                    '--ink': '#0b1220',
+                    '--oxblood': '#1e2b45',          // navy accent
+                    '--oxblood-strong': '#10172b',    // deeper navy
+                    '--bronze': '#b8a07d',
+                    '--highlight': '#D1B277'
+                },
+                'rose-gold': {
+                    '--bg-parchment': '#F7F2EC',
+                    '--bg-stone': '#E6DBCF',
+                    '--ink': '#2B2B2B',
+                    '--oxblood': '#C98C7B',
+                    '--oxblood-strong': '#B27665',
+                    '--bronze': '#D9B08C',
+                    '--highlight': '#F7E1D8'
+                },
+                'emerald-gold': {
+                    '--bg-parchment': '#F2F0EA',
+                    '--bg-stone': '#DCD4C7',
+                    '--ink': '#233129',
+                    '--oxblood': '#3C6E58',
+                    '--oxblood-strong': '#2F5A47',
+                    '--bronze': '#B08C52',
+                    '--highlight': '#D7E5D7'
+                },
+                'onyx-gold': {
+                    '--bg-parchment': '#F4F1EB',
+                    '--bg-stone': '#DBD4C8',
+                    '--ink': '#1F1F1F',
+                    '--oxblood': '#3A3A3A',
+                    '--oxblood-strong': '#2E2E2E',
+                    '--bronze': '#C4A46A',
+                    '--highlight': '#E7D8B7'
+                },
+                'pearl-champagne': {
+                    '--bg-parchment': '#F8F5F0',
+                    '--bg-stone': '#E4DBCE',
+                    '--ink': '#2F2A28',
+                    '--oxblood': '#C4AFA0',
+                    '--oxblood-strong': '#AE9A8C',
+                    '--bronze': '#C6A66C',
+                    '--highlight': '#F2E3D0'
+                },
+                'sapphire-silver': {
+                    '--bg-parchment': '#F2F4F7',
+                    '--bg-stone': '#DFE3EA',
+                    '--ink': '#1F2733',
+                    '--oxblood': '#3F5E93',
+                    '--oxblood-strong': '#324C77',
+                    '--bronze': '#B7B7C2',
+                    '--highlight': '#D8E6FF'
+                },
+                'charcoal-sand': {
+                    '--bg-parchment': '#F5F1EB',
+                    '--bg-stone': '#E2D6C7',
+                    '--ink': '#2B2B2B',
+                    '--oxblood': '#6B6256',
+                    '--oxblood-strong': '#574F44',
+                    '--bronze': '#AF9874',
+                    '--highlight': '#E6D9C8'
+                }
+            };
+            
+            const applyTheme = (name) => {
+                const theme = THEMES[name] || THEMES['studio-moss'];
+                Object.entries(theme).forEach(([key, value]) => {
+                    document.documentElement.style.setProperty(key, value);
+                });
+                if (themeSelector) themeSelector.value = name;
+                localStorage.setItem(THEME_KEY, name);
+                restyleBuyNowButtons();
+            };
+            
+            const savedTheme = localStorage.getItem(THEME_KEY) || 'studio-moss';
+            applyTheme(savedTheme);
+            
+            if (themeSelector) {
+                themeSelector.addEventListener('change', (e) => {
+                    applyTheme(e.target.value);
+                });
+            }
                 
                 const updateFaqVisibility = () => {
                     const listDisplay = faqCollapsed ? 'none' : 'flex';
@@ -3382,12 +3564,11 @@
                             </button>
                             
                             <!-- Demo Message -->
-                            <div id="demo-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e2b45; color: #ffffff; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1100; pointer-events: auto; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 2px solid #10172b; text-align: center; max-width: 400px; display: none;">
+                            <div id="demo-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-stone); color: var(--ink); padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1100; pointer-events: auto; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: none; text-align: center; max-width: 400px; display: none;">
                                 <div style="margin-bottom: 4px;"><strong>WELCOME</strong></div>
                                 <div style="font-size: 12px; opacity: 0.9; line-height: 1.3;">
                                     This is our interactive pendant designer. Upload a photo or use our AI generator below to get started.
-
-                                    Click this message to continue.
+                                    <p>Click this message to continue.</p>
                                 </div>
                             </div>
                             
@@ -3494,88 +3675,88 @@
             <div style="flex: 2; width: 100%; overflow-y: visible; overflow-x: visible;">
                 <div style="width: 100%;">
                 <!-- Section Title -->
-                <div style="text-align: center; margin: 0 auto 20px auto; width: 100%; max-width: 960px; background: #0b1220; padding: 18px 18px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); box-sizing: border-box;">
-                    <h2 style="color: #f9fafb; font-weight: 800; font-size: 2em; margin-bottom: 10px;">How It Works</h2>
-                    <p style="color: #e5e7eb; font-size: 1em;">Upload a photo or describe what you want to create</p>
+                <div style="text-align: center; margin: 0 auto 20px auto; width: 100%; max-width: 960px; background: var(--bg-stone); padding: 18px 18px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.08);">
+                    <h2 style="color: var(--ink); font-weight: 800; font-size: 2em; margin-bottom: 10px;">How It Works</h2>
+                    <p style="color: rgba(43,43,43,0.8); font-size: 1em;">Upload a photo or describe what you want to create</p>
                 </div>
                 
                 <!-- How it works section -->
-            <div style="text-align: center; margin: 0 auto 20px auto; padding: 16px 16px 20px 16px; width: 100%; max-width: 960px; background: #0b1220; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); box-sizing: border-box;">
+            <div style="text-align: center; margin: 0 auto 20px auto; padding: 16px 16px 20px 16px; width: 100%; max-width: 960px; background: var(--bg-stone); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.08);">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
                     <div style="text-align: center;">
-                        <div style="width: 40px; height: 40px; background: #1e2b45; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: white; font-weight: bold; font-size: 1em;">1</div>
-                        <h4 style="color: #f9fafb; font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Upload or Generate</h4>
-                        <p style="color: #e5e7eb; font-size: 0.82em;">Choose your photo or describe what you want</p>
+                        <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">1</div>
+                        <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Upload or Generate</h4>
+                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Choose your photo or describe what you want</p>
                     </div>
                     <div style="text-align: center;">
-                        <div style="width: 40px; height: 40px; background: #1e2b45; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: white; font-weight: bold; font-size: 1em;">2</div>
-                        <h4 style="color: #f9fafb; font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Crop</h4>
-                        <p style="color: #e5e7eb; font-size: 0.82em;">Crop your image to fit the shape of your pendant</p>
+                        <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">2</div>
+                        <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Crop</h4>
+                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Crop your image to fit the shape of your pendant</p>
                     </div>
                     <div style="text-align: center;">
-                        <div style="width: 40px; height: 40px; background: #1e2b45; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: white; font-weight: bold; font-size: 1em;">3</div>
-                        <h4 style="color: #f9fafb; font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Order</h4>
-                        <p style="color: #e5e7eb; font-size: 0.82em;">Place your order and wait 📦</p>
+                        <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">3</div>
+                        <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Order</h4>
+                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Place your order and wait 📦</p>
                     </div>
                 </div>
             </div>
             
             <!-- FAQ Section (Process Panel) -->
-            <div id="faq-container" style="text-align: center; margin: 0 auto 24px auto; padding: 18px 18px; width: 100%; max-width: 960px; background: #0b1220; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); box-sizing: border-box;">
-                <h3 style="color: #f9fafb; font-weight: 800; font-size: 1.6em; margin: 0 0 12px 0;">FAQ</h3>
-                <p id="faq-subtext" style="color: #e5e7eb; font-size: 0.95em; margin: 0 0 14px 0;">Answers to the most common questions.</p>
+            <div id="faq-container" style="text-align: center; margin: 0 auto 24px auto; padding: 18px 18px; width: 100%; max-width: 960px; background: var(--bg-stone); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.08);">
+                <h3 style="color: var(--ink); font-weight: 800; font-size: 1.6em; margin: 0 0 12px 0;">FAQ</h3>
+                <p id="faq-subtext" style="color: rgba(43,43,43,0.8); font-size: 0.95em; margin: 0 0 14px 0;">Answers to the most common questions.</p>
                 <div id="faq-list" style="display: flex; flex-direction: column; gap: 10px;">
-                    <div style="background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: #f9fafb; font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                             <span>What metals do you offer?</span>
                             <span aria-hidden="true">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: #e5e7eb; font-size: 0.95em; line-height: 1.5;">
+                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
                             We currently offer .925 sterling silver and 14k yellow gold. If you have a specific metal in mind, please contact us and we will do our best to accommodate your request.
                         </div>
                     </div>
-                    <div style="background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: #f9fafb; font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                             <span>How long will it take to receive my order?</span>
                             <span aria-hidden="true">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: #e5e7eb; font-size: 0.95em; line-height: 1.5;">
+                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
                             As each order is custom made-to-order, production time varies with average pieces shipping within 7 business days, with shipping times depending on your location. You’ll receive tracking information once your package has shipped.
                         </div>
                     </div>
-                    <div style="background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: #f9fafb; font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                             <span>Can I preview the design before ordering?</span>
                             <span aria-hidden="true">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: #e5e7eb; font-size: 0.95em; line-height: 1.5;">
+                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
                             Yes. You can adjust and preview the 3D model in the studio before adding it to your cart.
                         </div>
                     </div>
-                    <div style="background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: #f9fafb; font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                             <span>What if my photo isn’t perfect?</span>
                             <span aria-hidden="true">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: #e5e7eb; font-size: 0.95em; line-height: 1.5;">
+                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
                             We recommend clear, well-lit images. If we see issues, we’ll reach out with suggestions before production.
                         </div>
                     </div>
-                    <div style="background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: #f9fafb; font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                             <span>What is your return policy?</span>
                             <span aria-hidden="true">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: #e5e7eb; font-size: 0.95em; line-height: 1.5;">
+                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
                             We accept returns on a case by case basis for items that do not meet your expectations. Please contact us within 72 hours of receiving your Image Keepsake and we will work with you to resolve the issue.
                         </div>
                     </div>
-                    <div style="background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: #f9fafb; font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
+                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
                             <span>Do you offer design services?</span>
                             <span aria-hidden="true">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: #e5e7eb; font-size: 0.95em; line-height: 1.5;">
+                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
                             We do not formally offer design services, but we are happy to help you create a custom design for your Image Keepsake. Please contact us and we will work with you to create a custom design that makes you happy :).
                         </div>
                     </div>
@@ -5887,6 +6068,13 @@
                   // Helper to match Buy Now button style with squarer rounding
                   const styleBuyNowButton = (btn) => {
                     if (!btn) return;
+                    const getVar = (name, fallback) => {
+                      const val = getComputedStyle(document.documentElement).getPropertyValue(name)?.trim();
+                      return val || fallback;
+                    };
+                    const accent = getVar('--oxblood', '#9C8F82');
+                    const accentStrong = getVar('--oxblood-strong', '#7C6F64');
+                    const paper = getVar('--bg-parchment', '#F3EFE8');
                     btn.style.borderRadius = '10px';
                     btn.style.padding = '12px 16px';
                     btn.style.minHeight = '48px';
@@ -5895,23 +6083,23 @@
                     btn.style.letterSpacing = '0.01em';
                     btn.style.fontSize = '14px';
                     btn.style.lineHeight = '1.15';
-                    btn.style.background = '#1e2b45';
-                    btn.style.color = '#f9fafb';
-                    btn.style.border = '2px solid #10172b';
-                    btn.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.35)';
+                    btn.style.background = accent;
+                    btn.style.color = paper;
+                    btn.style.border = `1px solid ${accent}`;
+                    btn.style.boxShadow = '0 8px 18px rgba(0, 0, 0, 0.18)';
                     btn.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease';
                     btn.style.display = 'inline-block';
                     btn.onmouseenter = () => {
                       btn.style.transform = 'translateY(-2px)';
-                      btn.style.boxShadow = '0 10px 24px rgba(0, 0, 0, 0.45)';
-                      btn.style.background = '#16233a';
-                      btn.style.borderColor = '#10172b';
+                      btn.style.boxShadow = '0 10px 22px rgba(0, 0, 0, 0.24)';
+                      btn.style.background = accentStrong;
+                      btn.style.borderColor = accentStrong;
                     };
                     btn.onmouseleave = () => {
                       btn.style.transform = 'translateY(0)';
-                      btn.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.35)';
-                      btn.style.background = '#1e2b45';
-                      btn.style.borderColor = '#10172b';
+                      btn.style.boxShadow = '0 8px 18px rgba(0, 0, 0, 0.18)';
+                      btn.style.background = accent;
+                      btn.style.borderColor = accent;
                     };
                   };
                   // Look for Buy Now button
