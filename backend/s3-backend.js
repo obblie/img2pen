@@ -204,13 +204,23 @@ app.get('/api/list-uploads', async (req, res) => {
 // Generate signed URL for image upload
 app.post('/api/get-image-upload-url', async (req, res) => {
     try {
-        const { fileType = 'image/jpeg' } = req.body;
+        const { fileType = 'image/jpeg', directory = 'images', customFilename } = req.body;
 
-        // Generate unique filename for image
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const guid = uuidv4();
-        const extension = fileType.split('/')[1] || 'jpg';
-        const filename = `images/${timestamp}-${guid}.${extension}`;
+        console.log(`[IMAGE-URL] Request received:`, { fileType, directory, customFilename: customFilename || 'not provided' });
+
+        let filename;
+        if (customFilename) {
+            // Use custom filename if provided
+            const extension = fileType.split('/')[1] || 'jpg';
+            filename = `${directory}/${customFilename}.${extension}`;
+            console.log(`[IMAGE-URL] Using custom filename: ${filename}`);
+        } else {
+            // Generate unique filename for image
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const guid = uuidv4();
+            const extension = fileType.split('/')[1] || 'jpg';
+            filename = `${directory}/${timestamp}-${guid}.${extension}`;
+        }
 
         console.log(`[IMAGE-URL] Generating signed URL for image: ${filename}`);
 
@@ -247,13 +257,23 @@ app.post('/api/get-image-upload-url', async (req, res) => {
 // Generate signed URL for DALL-E generated image upload
 app.post('/api/get-dalle-upload-url', async (req, res) => {
     try {
-        const { fileType = 'image/png', prompt } = req.body;
+        const { fileType = 'image/png', prompt, customFilename } = req.body;
 
-        // Generate unique filename for DALL-E image
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const guid = uuidv4();
-        const extension = fileType.split('/')[1] || 'png';
-        const filename = `dalleGenerations/${timestamp}-${guid}.${extension}`;
+        console.log(`[DALLE-URL] Request received:`, { fileType, customFilename: customFilename || 'not provided' });
+
+        let filename;
+        if (customFilename) {
+            // Use custom filename if provided
+            const extension = fileType.split('/')[1] || 'png';
+            filename = `dalleGenerations/${customFilename}.${extension}`;
+            console.log(`[DALLE-URL] Using custom filename: ${filename}`);
+        } else {
+            // Generate unique filename for DALL-E image
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const guid = uuidv4();
+            const extension = fileType.split('/')[1] || 'png';
+            filename = `dalleGenerations/${timestamp}-${guid}.${extension}`;
+        }
 
         console.log(`[DALLE-URL] Generating signed URL for DALL-E image: ${filename}`);
         console.log(`[DALLE-URL] Prompt: ${prompt?.substring(0, 100)}...`);
@@ -287,6 +307,49 @@ app.post('/api/get-dalle-upload-url', async (req, res) => {
     } catch (error) {
         console.error('[DALLE-URL] ❌ Error generating DALL-E upload URL:', error);
         res.status(500).json({ error: 'Failed to generate DALL-E upload URL' });
+    }
+});
+
+// Generate signed URL for cropped image upload
+app.post('/api/get-cropped-image-upload-url', async (req, res) => {
+    try {
+        const { fileType = 'image/jpeg' } = req.body;
+
+        // Generate unique filename for cropped image
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const guid = uuidv4();
+        const extension = fileType.split('/')[1] || 'jpg';
+        const filename = `croppedImages/${timestamp}-${guid}.${extension}`;
+
+        console.log(`[CROPPED-URL] Generating signed URL for cropped image: ${filename}`);
+
+        // Generate pre-signed URL for PUT operation (without metadata to avoid signature issues)
+        const signedUrl = s3.getSignedUrl('putObject', {
+            Bucket: BUCKET_NAME,
+            Key: filename,
+            ContentType: fileType,
+            Expires: 300, // 5 minutes for images
+            // Note: Removed Metadata to avoid 403 signature issues
+        });
+
+        console.log(`[CROPPED-URL] ✅ Signed URL generated for ${filename}`);
+        
+        res.json({
+            success: true,
+            uploadUrl: signedUrl,
+            filename: filename,
+            guid: guid,
+            timestamp: timestamp,
+            expiresIn: 300, // 5 minutes
+            metadata: {
+                'upload-timestamp': timestamp,
+                'file-type': 'cropped-image'
+            }
+        });
+
+    } catch (error) {
+        console.error('[CROPPED-URL] ❌ Error generating cropped image upload URL:', error);
+        res.status(500).json({ error: 'Failed to generate cropped image upload URL' });
     }
 });
 
