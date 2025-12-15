@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Keepsake Studio - Create 3D Jewelry from Your Photos</title>
-    <link rel="icon" type="image/png" href="/IKSlogo_transparentbg.png">
+    <link rel="icon" type="image/x-icon" href="/IKSfav.ico">
     <!-- Tailwind CDN removed for production safety. Use built CSS or PostCSS/CLI if needed. -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
@@ -3082,11 +3082,12 @@
             width: 100%;
             max-width: 100%;
             display: flex;
-            justify-content: center;
-            gap: 16px;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
             flex-wrap: wrap;
             color: var(--ink);
-            border-top: 1px solid rgba(43,43,43,0.12);
+            border-top: none;
             background: var(--bg-stone);
             box-sizing: border-box;
         }
@@ -3095,10 +3096,10 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 14px;
+            padding: 12px 16px;
             border-radius: 12px;
             background: var(--bg-stone);
-            border: 1px solid rgba(43,43,43,0.12);
+            border: none;
             color: var(--ink);
             font-weight: 700;
             text-decoration: none;
@@ -3106,11 +3107,11 @@
         }
 
         .social-footer a:hover {
-            background: var(--oxblood);
-            border-color: var(--oxblood);
-            color: var(--bg-parchment);
-            transform: translateY(-1px);
-            box-shadow: 0 8px 18px rgba(0,0,0,0.16);
+            background: var(--bg-stone);
+            border-color: rgba(43,43,43,0.12);
+            color: var(--ink);
+            transform: none;
+            box-shadow: none;
         }
 
         @media (min-width: 769px) {
@@ -3300,7 +3301,7 @@
                     <div class="hero-cta-stack">
                         <div class="hero-highlights">
                             <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
-                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">✨ High Quality Craftsmanship</span>
+                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">✨ Quality Craftsmanship</span>
                             </div>
                             <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
                                 <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🚀 Fast Delivery</span>
@@ -5526,53 +5527,83 @@
                     
                     try {
                         // Find the original prompt elements immediately (don't wait for viewer)
-                        const promptInput = document.getElementById('prompt-input');
-                        const promptSubmitBtn = document.getElementById('prompt-submit');
+                        const promptInput = document.getElementById('ai-prompt-input');
+                        const promptSubmitBtn = document.getElementById('generate-ai-btn');
                         
                         console.log('🔍 Looking for original UI elements:', {
                             promptInput: !!promptInput,
                             promptSubmitBtn: !!promptSubmitBtn
                         });
                         
-                        if (promptInput && promptSubmitBtn) {
-                            console.log('✅ Found original AI generation elements');
-                            
-                            // Set the prompt in the original input
-                            promptInput.value = prompt;
-                            console.log('📝 Set prompt in original input:', prompt);
-                            
-                            // Close modal first
-                            aiPromptModal.style.display = 'none';
-                            document.body.style.overflow = '';
-                            aiPromptInput.value = '';
-                            
-                            // Trigger the original AI generation
-                            console.log('🎨 Triggering original AI generation button click...');
-                            promptSubmitBtn.click();
-                            
-                            console.log('✅ AI generation triggered successfully');
-                            
-                        } else {
-                            // If we can't find the elements, try again immediately
-                            console.log('⏳ Original elements not found, retrying immediately...');
-                            await new Promise(resolve => setTimeout(resolve, 10));
-                            
-                            const retryPromptInput = document.getElementById('prompt-input');
-                            const retryPromptSubmitBtn = document.getElementById('prompt-submit');
-                            
-                            if (retryPromptInput && retryPromptSubmitBtn) {
-                                console.log('✅ Found elements on retry');
-                                retryPromptInput.value = prompt;
-                                
-                                // Close modal
-                                aiPromptModal.style.display = 'none';
-                                document.body.style.overflow = '';
-                                aiPromptInput.value = '';
-                                
-                                retryPromptSubmitBtn.click();
-                            } else {
-                                throw new Error('Could not find original AI generation elements (prompt-input, prompt-submit)');
+                        // Close modal first
+                        aiPromptModal.style.display = 'none';
+                        document.body.style.overflow = '';
+                        aiPromptInput.value = '';
+                        
+                        // Directly call the AI generation function and handle the returned image
+                        let imageDataUrl = null;
+                        if (window.viewer && typeof window.viewer.generateImageWithOpenAI === 'function') {
+                            console.log('🎨 Calling generateImageWithOpenAI directly...');
+                            try {
+                                imageDataUrl = await window.viewer.generateImageWithOpenAI(prompt);
+                                console.log('✅ AI generation completed successfully, imageDataUrl length:', imageDataUrl ? imageDataUrl.length : 'null');
+                            } catch (genError) {
+                                console.error('❌ Error in generateImageWithOpenAI:', genError);
+                                throw genError;
                             }
+                        } else if (window.generateImageWithOpenAI && typeof window.generateImageWithOpenAI === 'function') {
+                            console.log('🎨 Calling window.generateImageWithOpenAI directly...');
+                            try {
+                                imageDataUrl = await window.generateImageWithOpenAI(prompt);
+                                console.log('✅ AI generation completed successfully, imageDataUrl length:', imageDataUrl ? imageDataUrl.length : 'null');
+                            } catch (genError) {
+                                console.error('❌ Error in generateImageWithOpenAI:', genError);
+                                throw genError;
+                            }
+                        } else {
+                            throw new Error('AI generation function not available. Please ensure the viewer is initialized.');
+                        }
+                        
+                        // If we got an image, show the cropper modal
+                        if (imageDataUrl) {
+                            console.log('📷 About to show cropper modal with generated image');
+                            
+                            // Upload to S3 in the background (non-blocking)
+                            fetch(imageDataUrl).then(response => response.blob()).then(imageBlob => {
+                                if (window.uploadDalleImageToS3 && typeof window.uploadDalleImageToS3 === 'function') {
+                                    window.uploadDalleImageToS3(imageBlob, prompt).then(uploadResult => {
+                                        console.log('✅ Background DALL-E image upload completed:', uploadResult);
+                                    }).catch(error => {
+                                        console.error('❌ Background DALL-E image upload failed:', error);
+                                    });
+                                }
+                            }).catch(error => {
+                                console.error('❌ Failed to convert image data URL to blob:', error);
+                            });
+                            
+                            // Determine crop shape based on current object type
+                            const currentObjectType = window.viewer && window.viewer.currentObjectType ? window.viewer.currentObjectType : null;
+                            const cropShape = (currentObjectType === 'circular-pendant' || currentObjectType === 'circular-stud') ? 'circle' : 'rect';
+                            console.log('🎯 Crop shape determined:', cropShape, 'from object type:', currentObjectType);
+                            
+                            // Show cropper modal
+                            if (window.showCropperModal && typeof window.showCropperModal === 'function') {
+                                window.showCropperModal(imageDataUrl, (croppedBlob) => {
+                                    console.log('✂️ Cropper callback triggered with blob size:', croppedBlob.size);
+                                    if (window.viewer && typeof window.viewer.processImage === 'function') {
+                                        window.viewer.processImage(croppedBlob);
+                                    } else {
+                                        console.error('❌ viewer.processImage not available');
+                                        alert('Failed to process image. Please refresh the page and try again.');
+                                    }
+                                }, null, cropShape);
+                            } else {
+                                console.error('❌ showCropperModal not available');
+                                alert('Failed to show image cropper. Please refresh the page and try again.');
+                            }
+                        } else {
+                            console.error('❌ Image generation returned null/empty data URL');
+                            alert('Failed to generate image. Please try again.');
                         }
                         
                     } catch (error) {
@@ -6501,15 +6532,20 @@
 
 <!-- Social Footer -->
 <div class="social-footer">
-    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-        <img src="/fblogo.png" alt="Facebook" style="height: 20px; width: 20px; object-fit: contain;">
-    </a>
-    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-        <img src="/iglogo.png" alt="Instagram" style="height: 20px; width: 20px; object-fit: contain;">
-    </a>
-    <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
-        <img src="/tiktoklogo.png" alt="TikTok" style="height: 20px; width: 20px; object-fit: contain;">
-    </a>
+    <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <img src="/fblogo.png" alt="Facebook" style="height: 56px; width: 56px; object-fit: contain;">
+        </a>
+        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <img src="/iglogo.png" alt="Instagram" style="height: 56px; width: 56px; object-fit: contain;">
+        </a>
+        <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+            <img src="/tiktoklogo.png" alt="TikTok" style="height: 56px; width: 56px; object-fit: contain;">
+        </a>
+    </div>
+    <span style="width: 100%; text-align: center; color: var(--ink); font-size: 0.9em;">
+        © 2026 Image Keepsake Studio. All rights reserved.
+    </span>
 </div>
 
 </body>

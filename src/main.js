@@ -5771,6 +5771,13 @@ if (typeof uploadDalleImageToS3 === 'function') {
     console.error('❌ uploadDalleImageToS3 not defined');
 }
 
+if (typeof showCropperModal === 'function') {
+    window.showCropperModal = showCropperModal;
+    console.log('✅ showCropperModal assigned to window');
+} else {
+    console.error('❌ showCropperModal not defined');
+}
+
 // Wire invert design button (Three.js scene overlay)
 document.addEventListener('DOMContentLoaded', () => {
     const invertBtn = document.getElementById('invert-relief-btn');
