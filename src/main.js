@@ -740,9 +740,14 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     if (!variantId) {
         console.log('⚠️ No variant ID provided, trying Storefront API...');
         try {
-            variantId = await getVariantIdFromStorefrontAPI();
+            variantId = await Promise.race([
+                getVariantIdFromStorefrontAPI(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Storefront API timeout')), 3000))
+            ]);
+            console.log('✅ Storefront API returned variant ID:', variantId);
         } catch (error) {
             console.error('❌ Error calling Storefront API:', error);
+            variantId = null;
         }
         
         if (!variantId) {
