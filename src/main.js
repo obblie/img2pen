@@ -548,6 +548,62 @@ window.getCheckoutUrlWithAttributes = function(baseUrl) {
     }
 };
 
+// Function to add attributes to Shopify cart using Cart API
+async function addAttributesToShopifyCart() {
+    try {
+        const orderId = sessionStorage.getItem('stlOrderId');
+        const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
+        const sessionUUID = getSessionUUID();
+        
+        if (!orderId && !sessionUUID) {
+            console.log('⚠️ No attributes to add to cart');
+            return;
+        }
+        
+        // Build attributes object
+        const attributes = {};
+        if (orderId) {
+            attributes['STL Order ID'] = orderId;
+        }
+        if (sessionUUID) {
+            attributes['Session UUID'] = sessionUUID;
+        }
+        if (croppedImageGuid) {
+            attributes['Cropped Image GUID'] = croppedImageGuid;
+        }
+        
+        console.log('🛒 Adding attributes to Shopify cart:', attributes);
+        
+        // Use Shopify Cart API to update cart attributes
+        const response = await fetch('https://z0u750-mb.myshopify.com/cart/update.js', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include', // Important: include cookies for cart token
+            body: JSON.stringify({
+                attributes: attributes
+            })
+        });
+        
+        if (response.ok) {
+            const cartData = await response.json();
+            console.log('✅ Successfully added attributes to cart:', cartData);
+            return cartData;
+        } else {
+            const errorText = await response.text();
+            console.error('❌ Failed to add attributes to cart:', response.status, errorText);
+            throw new Error(`Cart API error: ${response.status}`);
+        }
+    } catch (error) {
+        console.error('❌ Error adding attributes to cart:', error);
+        throw error;
+    }
+}
+
+// Expose function globally
+window.addAttributesToShopifyCart = addAttributesToShopifyCart;
+
 // Function to add STL ID to Shopify cart after item is added
 function addStlIdToShopifyCartAfterAdd(stlId) {
     console.log('🛒 Attempting to add STL ID to cart after item added:', stlId);
@@ -567,6 +623,13 @@ function addStlIdToShopifyCartAfterAdd(stlId) {
     // Store for backend webhook processing
     localStorage.setItem('pendingOrderStlId', JSON.stringify(orderMetadata));
     console.log('✅ Order metadata stored for webhook:', orderMetadata);
+    
+    // Also try to add attributes to cart via Cart API
+    setTimeout(() => {
+        addAttributesToShopifyCart().catch(err => {
+            console.warn('⚠️ Could not add attributes via Cart API (non-blocking):', err);
+        });
+    }, 100);
 }
 
 async function uploadImageToS3(file) {

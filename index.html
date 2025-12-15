@@ -6084,6 +6084,16 @@
                       window.generateStlOrderId();
                     }
                     
+                    // Add attributes to cart via Cart API (non-blocking)
+                    if (typeof window.addAttributesToShopifyCart === 'function') {
+                      console.log('🛒 Adding attributes to cart via Cart API...');
+                      setTimeout(() => {
+                        window.addAttributesToShopifyCart().catch(err => {
+                          console.warn('⚠️ Could not add attributes via Cart API (non-blocking):', err);
+                        });
+                      }, 200); // Small delay to ensure cart is created
+                    }
+                    
                     // Trigger STL generation in background - don't block checkout
                     if (window.viewer && window.generateAndUploadSTL) {
                       console.log('🛒 Triggering STL generation in background from cart:add event...');
@@ -6109,6 +6119,14 @@
                     
                     if (!orderId && typeof window.generateStlOrderId === 'function') {
                       window.generateStlOrderId();
+                    }
+                    
+                    // Try to add attributes to cart one more time before checkout
+                    if (typeof window.addAttributesToShopifyCart === 'function') {
+                      console.log('🛒 Adding attributes to cart before checkout...');
+                      window.addAttributesToShopifyCart().catch(err => {
+                        console.warn('⚠️ Could not add attributes before checkout:', err);
+                      });
                     }
                     
                     // Try to modify checkout URL if event provides access
