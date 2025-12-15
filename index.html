@@ -2289,7 +2289,7 @@
             overflow: hidden;
     min-height: 80vh;
     height: 100%;
-    aspect-ratio: 1 / 1;
+            aspect-ratio: 1 / 1;
     max-height: none;
         }
         
@@ -3389,7 +3389,7 @@
                 const addPhotoBtn = document.getElementById('add-photo-btn');
                 const imagineBtn = document.getElementById('imagine-btn');
                 const themeSelector = document.getElementById('theme-selector');
-                let faqCollapsed = false;
+                let faqCollapsed = true;
             const THEME_KEY = 'iks-theme';
             const getVar = (name, fallback) => {
                 const val = getComputedStyle(document.documentElement).getPropertyValue(name)?.trim();
@@ -3638,41 +3638,41 @@
                                     }
                                 }
                             </style>
-
+                        
                             <!-- CTA row floating over scene -->
                             <div class="post-layout-actions">
-                                <div class="add-photo-section">
-                                    <button class="add-photo-button" id="add-photo-btn">
-                                        <span class="button-icon">📷</span>
-                                        <span class="button-text">Add a Photo</span>
-                                    </button>
-                                    <p class="photo-help-text">Precious Moments Made Eternal</p>
-                                </div>
-
-                                <div class="imagine-section">
-                                    <button class="imagine-button" id="imagine-btn">
-                                        <span class="button-icon">🦄</span>
-                                        <span class="button-text">Imagine with AI</span>
-                                    </button>
-                                    <p class="imagine-help-text">Dream It, Wear It</p>
-
-                                    <!-- AI Prompt Input (Hidden by default) -->
-                                    <div class="ai-prompt-container" id="ai-prompt-container" style="display: none;">
-                                        <div class="prompt-input-group">
-                                            <textarea id="ai-prompt-input" placeholder="Describe what you want to create... (e.g., 'a majestic golden eagle in flight', 'abstract geometric patterns', 'a beautiful rose garden')" rows="3"></textarea>
-                                            <div class="prompt-buttons">
-                                                <button class="prompt-button primary" id="generate-ai-btn">
-                                                    <span class="button-icon">🎨</span>
-                                                    Generate
-                                                </button>
-                                                <button class="prompt-button secondary" id="cancel-ai-btn">Cancel</button>
+                            <div class="add-photo-section">
+                                <button class="add-photo-button" id="add-photo-btn">
+                                    <span class="button-icon">📷</span>
+                                    <span class="button-text">Add a Photo</span>
+                                </button>
+                                <p class="photo-help-text">Precious Moments Made Eternal</p>
+                            </div>
+                            
+                            <div class="imagine-section">
+                                <button class="imagine-button" id="imagine-btn">
+                                    <span class="button-icon">🦄</span>
+                                    <span class="button-text">Imagine with AI</span>
+                                </button>
+                                <p class="imagine-help-text">Dream It, Wear It</p>
+                                
+                                <!-- AI Prompt Input (Hidden by default) -->
+                                <div class="ai-prompt-container" id="ai-prompt-container" style="display: none;">
+                                    <div class="prompt-input-group">
+                                        <textarea id="ai-prompt-input" placeholder="Describe what you want to create... (e.g., 'a majestic golden eagle in flight', 'abstract geometric patterns', 'a beautiful rose garden')" rows="3"></textarea>
+                                        <div class="prompt-buttons">
+                                            <button class="prompt-button primary" id="generate-ai-btn">
+                                                <span class="button-icon">🎨</span>
+                                                Generate
+                                            </button>
+                                            <button class="prompt-button secondary" id="cancel-ai-btn">Cancel</button>
                                             </div>
+                                        </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        
+                            
                         <!-- Image Viewer Container -->
                         <div id="image-viewer-container" style="width: 100%; height: 100%; background: transparent; position: relative; display: none;">
                             <img id="main-image-viewer" src="" alt="Product View" style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
@@ -3709,10 +3709,10 @@
 
                 </div>
             </div>
-            </div>
         </div>
+    </div>
 
-        <!-- Upload Section -->
+    <!-- Upload Section -->
     <div id="upload-container" class="upload-container">
         <div id="drop-zone" style="padding: 20px 24px; width: 100%; max-width: 1100px; min-height: 80vh; margin: 0 auto; display: flex; flex-direction: column; box-sizing: border-box;">
             <input type="file" id="file-input" accept="image/*" style="display: none;">
@@ -5534,12 +5534,12 @@
                             promptInput: !!promptInput,
                             promptSubmitBtn: !!promptSubmitBtn
                         });
-                        
-                        // Close modal first
-                        aiPromptModal.style.display = 'none';
-                        document.body.style.overflow = '';
-                        aiPromptInput.value = '';
-                        
+                            
+                            // Close modal first
+                            aiPromptModal.style.display = 'none';
+                            document.body.style.overflow = '';
+                            aiPromptInput.value = '';
+                            
                         // Directly call the AI generation function and handle the returned image
                         let imageDataUrl = null;
                         if (window.viewer && typeof window.viewer.generateImageWithOpenAI === 'function') {
@@ -5568,31 +5568,52 @@
                         if (imageDataUrl) {
                             console.log('📷 About to show cropper modal with generated image');
                             
-                            // Upload to S3 in the background (non-blocking)
-                            fetch(imageDataUrl).then(response => response.blob()).then(imageBlob => {
+                            // Upload DALL-E image to S3 immediately
+                            console.log('📤 Uploading DALL-E image to S3 immediately...');
+                            fetch(imageDataUrl).then(response => response.blob()).then(async (imageBlob) => {
                                 if (window.uploadDalleImageToS3 && typeof window.uploadDalleImageToS3 === 'function') {
-                                    window.uploadDalleImageToS3(imageBlob, prompt).then(uploadResult => {
-                                        console.log('✅ Background DALL-E image upload completed:', uploadResult);
-                                    }).catch(error => {
-                                        console.error('❌ Background DALL-E image upload failed:', error);
-                                    });
+                                    try {
+                                        const uploadResult = await window.uploadDalleImageToS3(imageBlob, prompt);
+                                        console.log('✅ DALL-E image uploaded to S3:', uploadResult.filename);
+                                    } catch (error) {
+                                        console.error('❌ DALL-E image upload failed:', error);
+                                    }
                                 }
                             }).catch(error => {
-                                console.error('❌ Failed to convert image data URL to blob:', error);
+                                console.error('❌ Failed to convert DALL-E image to blob:', error);
                             });
                             
                             // Determine crop shape based on current object type
                             const currentObjectType = window.viewer && window.viewer.currentObjectType ? window.viewer.currentObjectType : null;
                             const cropShape = (currentObjectType === 'circular-pendant' || currentObjectType === 'circular-stud') ? 'circle' : 'rect';
                             console.log('🎯 Crop shape determined:', cropShape, 'from object type:', currentObjectType);
-                            
+                                
                             // Show cropper modal
                             if (window.showCropperModal && typeof window.showCropperModal === 'function') {
                                 window.showCropperModal(imageDataUrl, (croppedBlob) => {
                                     console.log('✂️ Cropper callback triggered with blob size:', croppedBlob.size);
+                                    
+                                    // Upload cropped image to S3 in the background (from DALL-E)
+                                    if (window.uploadCroppedImageToS3 && typeof window.uploadCroppedImageToS3 === 'function') {
+                                        window.uploadCroppedImageToS3(croppedBlob, true).then(uploadResult => {
+                                            console.log('✅ Cropped image uploaded to S3:', uploadResult.filename);
+                                            // Store cropped image GUID for Shopify order
+                                            if (uploadResult.guid) {
+                                                sessionStorage.setItem('croppedImageGuid', uploadResult.guid);
+                                                console.log('💾 Cropped image GUID stored:', uploadResult.guid);
+                                            }
+                                        }).catch(error => {
+                                            console.error('❌ Failed to upload cropped image to S3:', error);
+                                            // Don't block processing if upload fails
+                                        });
+                                    } else {
+                                        console.warn('⚠️ uploadCroppedImageToS3 not available, skipping S3 upload');
+                                    }
+                                    
+                                    // Process the image
                                     if (window.viewer && typeof window.viewer.processImage === 'function') {
                                         window.viewer.processImage(croppedBlob);
-                                    } else {
+                            } else {
                                         console.error('❌ viewer.processImage not available');
                                         alert('Failed to process image. Please refresh the page and try again.');
                                     }
@@ -6528,7 +6549,7 @@
                 });
             }
         }
-</script>
+    </script>
 
 <!-- Social Footer -->
 <div class="social-footer">

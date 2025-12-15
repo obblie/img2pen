@@ -35,7 +35,7 @@ function invertReliefDepth(viewerInstance) {
     }
 }
 // UI flag to show/hide invert design button and wire handler
-const ENABLE_INVERT_DESIGN_BUTTON = true;
+const ENABLE_INVERT_DESIGN_BUTTON = false;
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
@@ -160,6 +160,25 @@ console.log('🔧 Backend URL configured:', {
     isLocal: isLocalDevelopment,
     backendUrl: OPENAI_BACKEND_URL
 });
+
+// Generate or retrieve session UUID for file naming
+function getSessionUUID() {
+    let sessionUUID = sessionStorage.getItem('sessionUUID');
+    if (!sessionUUID) {
+        // Generate UUID v4
+        function uuidv4() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+        sessionUUID = uuidv4();
+        sessionStorage.setItem('sessionUUID', sessionUUID);
+        console.log('🆔 Generated session UUID:', sessionUUID);
+    }
+    return sessionUUID;
+}
 
 // Function to upload image to S3 (updated from GitHub)
 async function uploadImageToGitHub(file) {
@@ -357,10 +376,19 @@ function addStlIdToShopifyCheckout(stlId) {
         // Store for checkout interceptor
         sessionStorage.setItem('stlFileId', stlId);
         
+        // Get cropped image GUID if available
+        const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
+        
         // Add to checkout URL parameters
         const checkoutParams = new URLSearchParams({
             'attributes[STL Order ID]': stlId
         });
+        
+        // Add cropped image GUID if available
+        if (croppedImageGuid) {
+            checkoutParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
+            console.log('🖼️ Adding Cropped Image GUID to checkout:', croppedImageGuid);
+        }
         
         sessionStorage.setItem('shopifyCheckoutParams', checkoutParams.toString());
         console.log('✅ Checkout parameters stored:', checkoutParams.toString());
@@ -384,9 +412,14 @@ function interceptShopifyCheckout() {
     function addStlIdToCheckout(url) {
         if (url && (url.includes('checkout') || url.includes('cart'))) {
             const orderId = sessionStorage.getItem('stlOrderId');
+            const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
             if (orderId) {
                 const urlObj = new URL(url, window.location.origin);
                 urlObj.searchParams.set('attributes[STL Order ID]', orderId);
+                // Add cropped image GUID if available
+                if (croppedImageGuid) {
+                    urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
+                }
                 return urlObj.toString();
             }
         }
@@ -415,10 +448,16 @@ function interceptShopifyCheckout() {
         const currentUrl = window.location.href;
         if (currentUrl !== lastUrl && (currentUrl.includes('checkout') || currentUrl.includes('cart'))) {
             const orderId = sessionStorage.getItem('stlOrderId');
+            const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
             if (orderId && !currentUrl.includes('STL Order ID')) {
                 console.log('🛒 Intercepting checkout navigation, adding STL Order ID...');
                 const urlObj = new URL(currentUrl);
                 urlObj.searchParams.set('attributes[STL Order ID]', orderId);
+                // Add cropped image GUID if available
+                if (croppedImageGuid) {
+                    urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
+                    console.log('🖼️ Adding Cropped Image GUID to checkout URL');
+                }
                 window.location.href = urlObj.toString();
             }
         }
@@ -453,6 +492,9 @@ async function uploadImageToS3(file) {
     try {
         console.log('📋 Requesting signed URL for image upload...');
         
+        const sessionUUID = getSessionUUID();
+        const customFilename = `${sessionUUID}_uploadedImage`;
+        
         // Step 1: Get signed URL for image
         const urlResponse = await fetch(`${BACKEND_URL}/api/get-image-upload-url`, {
             method: 'POST',
@@ -460,7 +502,9 @@ async function uploadImageToS3(file) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                fileType: file.type
+                fileType: file.type,
+                directory: 'images',
+                customFilename: customFilename
             })
         });
 
@@ -833,11 +877,12 @@ class HeightfieldViewer {
         canvasContainer.appendChild(this.renderer.domElement);
 
         // Setup camera - angled view to show pendant standing upright on platform (20% closer)
-        this.camera.position.set(26.4, 16, 37.6);
+        // Positioned to show more of the face
+        this.camera.position.set(-22.37, 12.48, 37.75);
         this.camera.lookAt(0, 0, 0);
         
         // Store default camera position for reset functionality
-        this.defaultCameraPosition = new THREE.Vector3(26.4, 16, 37.6);
+        this.defaultCameraPosition = new THREE.Vector3(-22.37, 12.48, 37.75);
         const baseCameraDistance = this.defaultCameraPosition.length();
 
         // Setup controls
@@ -972,11 +1017,12 @@ class HeightfieldViewer {
             dropZone.classList.remove('dragover');
             const file = e.dataTransfer.files[0];
             if (file && file.type.startsWith('image/')) {
-                // Start S3 upload in background (non-blocking)
+                // Upload image to S3 immediately
+                console.log('📤 Uploading image to S3 immediately...');
                 uploadImageToS3(file).then(uploadResult => {
-                    console.log('✅ Background image upload completed:', uploadResult);
+                    console.log('✅ Image uploaded to S3:', uploadResult.filename);
                 }).catch(error => {
-                    console.error('❌ Background image upload failed:', error);
+                    console.error('❌ Image upload failed:', error);
                 });
                 
                 // Immediately proceed with local processing
@@ -984,6 +1030,19 @@ class HeightfieldViewer {
                 reader.onload = (ev) => {
                     this.originalImageDataUrl = ev.target.result;
                     showCropperModal(ev.target.result, (croppedBlob) => {
+                        // Upload cropped image to S3 in the background (from uploaded image)
+                        if (window.uploadCroppedImageToS3 && typeof window.uploadCroppedImageToS3 === 'function') {
+                            window.uploadCroppedImageToS3(croppedBlob, false).then(uploadResult => {
+                                console.log('✅ Cropped image uploaded to S3:', uploadResult.filename);
+                                // Store cropped image GUID for Shopify order
+                                if (uploadResult.guid) {
+                                    sessionStorage.setItem('croppedImageGuid', uploadResult.guid);
+                                    console.log('💾 Cropped image GUID stored:', uploadResult.guid);
+                                }
+                            }).catch(error => {
+                                console.error('❌ Failed to upload cropped image to S3:', error);
+                            });
+                        }
                         this.processImage(croppedBlob);
                     }, null, this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect');
                 };
@@ -998,11 +1057,12 @@ class HeightfieldViewer {
             console.log('Selected file:', file);
             if (file) {
                 console.log('File type:', file.type);
-                // Start S3 upload in background (non-blocking)
+                // Upload image to S3 immediately
+                console.log('📤 Uploading image to S3 immediately...');
                 uploadImageToS3(file).then(uploadResult => {
-                    console.log('✅ Background image upload completed:', uploadResult);
+                    console.log('✅ Image uploaded to S3:', uploadResult.filename);
                 }).catch(error => {
-                    console.error('❌ Background image upload failed:', error);
+                    console.error('❌ Image upload failed:', error);
                 });
                 
                 // Immediately proceed with local processing
@@ -1013,6 +1073,19 @@ class HeightfieldViewer {
                     console.log('About to show cropper modal');
                     showCropperModal(ev.target.result, (croppedBlob) => {
                         console.log('Cropper modal callback triggered');
+                        // Upload cropped image to S3 in the background
+                        if (window.uploadCroppedImageToS3 && typeof window.uploadCroppedImageToS3 === 'function') {
+                            window.uploadCroppedImageToS3(croppedBlob).then(uploadResult => {
+                                console.log('✅ Cropped image uploaded to S3:', uploadResult.filename);
+                                // Store cropped image GUID for Shopify order
+                                if (uploadResult.guid) {
+                                    sessionStorage.setItem('croppedImageGuid', uploadResult.guid);
+                                    console.log('💾 Cropped image GUID stored:', uploadResult.guid);
+                                }
+                            }).catch(error => {
+                                console.error('❌ Failed to upload cropped image to S3:', error);
+                            });
+                        }
                         this.processImage(croppedBlob);
                     }, null, this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect');
                 };
@@ -1078,13 +1151,17 @@ class HeightfieldViewer {
                     console.log('✅ Image generated, data URL length:', imageDataUrl ? imageDataUrl.length : 'null');
                     
                     if (imageDataUrl) {
-                        // Convert data URL to blob for S3 upload in background (non-blocking)
-                        fetch(imageDataUrl).then(response => response.blob()).then(imageBlob => {
-                            uploadDalleImageToS3(imageBlob, prompt).then(uploadResult => {
-                                console.log('✅ Background DALL-E image upload completed:', uploadResult);
-                            }).catch(error => {
-                                console.error('❌ Background DALL-E image upload failed:', error);
-                            });
+                        // Upload DALL-E image to S3 immediately (convert and upload right away)
+                        console.log('📤 Uploading DALL-E image to S3 immediately...');
+                        fetch(imageDataUrl).then(response => response.blob()).then(async (imageBlob) => {
+                            try {
+                                const uploadResult = await uploadDalleImageToS3(imageBlob, prompt);
+                                console.log('✅ DALL-E image uploaded to S3:', uploadResult.filename);
+                            } catch (error) {
+                                console.error('❌ DALL-E image upload failed:', error);
+                            }
+                        }).catch(error => {
+                            console.error('❌ Failed to convert DALL-E image to blob:', error);
                         });
                         
                         // Use the data URL directly for cropper
@@ -1092,6 +1169,14 @@ class HeightfieldViewer {
                         this.originalImageDataUrl = imageDataUrl;
                         showCropperModal(imageDataUrl, (croppedBlob) => {
                             console.log('✂️ Cropper callback triggered with blob size:', croppedBlob.size);
+                            // Upload cropped image to S3 in the background (from DALL-E)
+                            if (window.uploadCroppedImageToS3 && typeof window.uploadCroppedImageToS3 === 'function') {
+                                window.uploadCroppedImageToS3(croppedBlob, true).then(uploadResult => {
+                                    console.log('✅ Cropped image uploaded to S3:', uploadResult.filename);
+                                }).catch(error => {
+                                    console.error('❌ Failed to upload cropped image to S3:', error);
+                                });
+                            }
                             this.processImage(croppedBlob);
                         }, null, this.currentObjectType === 'circular-pendant' || this.currentObjectType === 'circular-stud' ? 'circle' : 'rect');
                         
@@ -1145,6 +1230,14 @@ class HeightfieldViewer {
                     showCropperModal(
                         this.originalImageDataUrl,
                         (croppedBlob) => {
+                            // Upload cropped image to S3 in the background (re-cropping existing image, default to uploaded)
+                            if (window.uploadCroppedImageToS3 && typeof window.uploadCroppedImageToS3 === 'function') {
+                                window.uploadCroppedImageToS3(croppedBlob, false).then(uploadResult => {
+                                    console.log('✅ Cropped image uploaded to S3:', uploadResult.filename);
+                                }).catch(error => {
+                                    console.error('❌ Failed to upload cropped image to S3:', error);
+                                });
+                            }
                             this.processImage(croppedBlob);
                         },
                         null,
@@ -1379,6 +1472,25 @@ class HeightfieldViewer {
             });
         }
         
+        // Helper method to capture current camera position and set as default
+        // Call from console: window.viewer.captureCurrentViewAsDefault()
+        this.captureCurrentViewAsDefault = () => {
+            const pos = this.camera.position;
+            const distance = pos.length();
+            console.log('📸 Current camera position:', {
+                x: pos.x.toFixed(2),
+                y: pos.y.toFixed(2),
+                z: pos.z.toFixed(2),
+                distance: distance.toFixed(2)
+            });
+            console.log('💾 Update defaultCameraPosition to:');
+            console.log(`this.defaultCameraPosition = new THREE.Vector3(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)});`);
+            
+            // Update the default position
+            this.defaultCameraPosition.copy(pos);
+            console.log('✅ Default camera position updated!');
+        };
+        
         // Screenshot button
         const screenshot = document.getElementById('screenshot');
         if (screenshot) {
@@ -1426,7 +1538,9 @@ class HeightfieldViewer {
         let stlGeneratedForSession = false;
         
         window.generateAndUploadSTL = async () => {
-            console.log('🔧 generateAndUploadSTL called');
+            console.log('🔧 generateAndUploadSTL called - STL generation disabled');
+            // STL generation disabled - using session-based file naming instead
+            return false;
             
             // Prevent duplicate calls
             if (isGeneratingSTL) {
@@ -5357,6 +5471,9 @@ async function uploadDalleImageToS3(imageBlob, prompt) {
     try {
         console.log('📋 Requesting signed URL for DALL-E image upload...');
         
+        const sessionUUID = getSessionUUID();
+        const customFilename = `${sessionUUID}_dallE`;
+        
         // Get signed upload URL for DALL-E images
         const uploadUrlResponse = await fetch(`${BACKEND_URL}/api/get-dalle-upload-url`, {
             method: 'POST',
@@ -5365,7 +5482,8 @@ async function uploadDalleImageToS3(imageBlob, prompt) {
             },
             body: JSON.stringify({
                 fileType: imageBlob.type,
-                prompt: prompt
+                prompt: prompt,
+                customFilename: customFilename
             })
         });
 
@@ -5401,6 +5519,65 @@ async function uploadDalleImageToS3(imageBlob, prompt) {
 
     } catch (error) {
         console.error('❌ DALL-E S3 image upload error:', error);
+        throw error;
+    }
+}
+
+// Function to upload cropped image to S3
+async function uploadCroppedImageToS3(imageBlob, isFromDallE = false) {
+    try {
+        console.log('📋 Requesting signed URL for cropped image upload...');
+        
+        const sessionUUID = getSessionUUID();
+        // Determine suffix based on source
+        const suffix = isFromDallE ? '_croppedDallE' : '_croppedUploadedImage';
+        const customFilename = `${sessionUUID}${suffix}`;
+        
+        // Get signed upload URL for cropped images using the same endpoint with directory parameter
+        const uploadUrlResponse = await fetch(`${BACKEND_URL}/api/get-image-upload-url`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                fileType: imageBlob.type || 'image/jpeg',
+                directory: 'croppedImages',
+                customFilename: customFilename
+            })
+        });
+
+        if (!uploadUrlResponse.ok) {
+            const errorText = await uploadUrlResponse.text();
+            throw new Error(`Failed to get upload URL: ${uploadUrlResponse.status} - ${errorText}`);
+        }
+
+        const uploadData = await uploadUrlResponse.json();
+        console.log('✅ Got signed URL for cropped image:', uploadData.filename);
+
+        // Upload the image to S3
+        console.log('📤 Uploading cropped image to S3...');
+        const uploadResponse = await fetch(uploadData.uploadUrl, {
+            method: 'PUT',
+            body: imageBlob,
+            headers: {
+                'Content-Type': imageBlob.type || 'image/jpeg'
+            }
+        });
+
+        if (!uploadResponse.ok) {
+            throw new Error(`S3 upload failed: ${uploadResponse.status}`);
+        }
+
+        console.log('✅ Cropped image uploaded successfully to S3:', uploadData.filename);
+        return {
+            success: true,
+            filename: uploadData.filename,
+            guid: uploadData.guid,
+            s3Key: uploadData.filename
+        };
+
+    } catch (error) {
+        console.error('❌ Cropped image S3 upload error:', error);
         throw error;
     }
 }
@@ -5769,6 +5946,13 @@ if (typeof uploadDalleImageToS3 === 'function') {
     console.log('✅ uploadDalleImageToS3 assigned to window');
 } else {
     console.error('❌ uploadDalleImageToS3 not defined');
+}
+
+if (typeof uploadCroppedImageToS3 === 'function') {
+    window.uploadCroppedImageToS3 = uploadCroppedImageToS3;
+    console.log('✅ uploadCroppedImageToS3 assigned to window');
+} else {
+    console.error('❌ uploadCroppedImageToS3 not defined');
 }
 
 if (typeof showCropperModal === 'function') {
