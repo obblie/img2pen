@@ -689,41 +689,71 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819') {
             id: `gid://shopify/Product/${productId}`
         };
         
-        const response = await fetch(`https://z0u750-mb.myshopify.com/api/2023-10/graphql.json`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Shopify-Storefront-Access-Token': '73a8e88f430939341abe6e2afdd62d90'
-            },
-            body: JSON.stringify({
-                query: query,
-                variables: variables
-            })
-        });
+        // Try the latest API version first, fallback to 2024-01 if needed
+        const apiVersions = ['2024-01', '2023-10'];
+        let lastError = null;
         
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Storefront API response not OK:', response.status, errorText);
-            return null;
+        for (const apiVersion of apiVersions) {
+            try {
+                console.log(`🔍 Trying Storefront API version: ${apiVersion}`);
+                const response = await fetch(`https://z0u750-mb.myshopify.com/api/${apiVersion}/graphql.json`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Shopify-Storefront-Access-Token': '73a8e88f430939341abe6e2afdd62d90'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        variables: variables
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`❌ Storefront API ${apiVersion} response not OK:`, response.status, errorText);
+                    lastError = new Error(`API ${apiVersion} returned ${response.status}`);
+                    continue; // Try next version
+                }
+                
+                const data = await response.json();
+                console.log(`🔍 Storefront API ${apiVersion} response:`, JSON.stringify(data, null, 2));
+                
+                if (data.errors) {
+                    console.error(`❌ Storefront API ${apiVersion} errors:`, data.errors);
+                    // Log the full error details for debugging
+                    data.errors.forEach(error => {
+                        console.error('❌ Error details:', {
+                            message: error.message,
+                            locations: error.locations,
+                            path: error.path,
+                            extensions: error.extensions
+                        });
+                    });
+                    lastError = new Error(data.errors[0]?.message || 'Unknown API error');
+                    continue; // Try next version
+                }
+                
+                // Success - process the data
+                if (data.data && data.data.product && data.data.product.variants && data.data.product.variants.edges.length > 0) {
+                    // Get the first variant (default variant)
+                    const variantId = data.data.product.variants.edges[0].node.legacyResourceId;
+                    console.log(`✅ Got variant ID from Storefront API ${apiVersion}:`, variantId);
+                    return variantId;
+                } else {
+                    console.warn(`⚠️ No variants found in Storefront API ${apiVersion} response`);
+                    lastError = new Error('No variants found');
+                    continue; // Try next version
+                }
+            } catch (error) {
+                console.error(`❌ Error with Storefront API ${apiVersion}:`, error);
+                lastError = error;
+                continue; // Try next version
+            }
         }
         
-        const data = await response.json();
-        console.log('🔍 Storefront API response:', data);
-        
-        if (data.errors) {
-            console.error('❌ Storefront API errors:', data.errors);
-            return null;
-        }
-        
-        if (data.data && data.data.product && data.data.product.variants && data.data.product.variants.edges.length > 0) {
-            // Get the first variant (default variant)
-            const variantId = data.data.product.variants.edges[0].node.legacyResourceId;
-            console.log('✅ Got variant ID from Storefront API:', variantId);
-            return variantId;
-        } else {
-            console.warn('⚠️ No variants found in Storefront API response');
-            return null;
-        }
+        // If we get here, all API versions failed
+        console.error('❌ All Storefront API versions failed. Last error:', lastError);
+        return null;
     } catch (error) {
         console.error('❌ Error fetching variant ID from Storefront API:', error);
         return null;
