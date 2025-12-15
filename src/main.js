@@ -493,7 +493,7 @@ async function uploadImageToS3(file) {
         console.log('📋 Requesting signed URL for image upload...');
         
         const sessionUUID = getSessionUUID();
-        const customFilename = `${sessionUUID}_uploadedImage`;
+        const filename = `${sessionUUID}_uploadedImage`;
         
         // Step 1: Get signed URL for image
         const urlResponse = await fetch(`${BACKEND_URL}/api/get-image-upload-url`, {
@@ -503,8 +503,8 @@ async function uploadImageToS3(file) {
             },
             body: JSON.stringify({
                 fileType: file.type,
-                directory: 'images',
-                customFilename: customFilename
+                directory: sessionUUID,  // Use UUID as directory
+                customFilename: filename  // Use UUID + suffix as filename
             })
         });
 
@@ -5472,7 +5472,7 @@ async function uploadDalleImageToS3(imageBlob, prompt) {
         console.log('📋 Requesting signed URL for DALL-E image upload...');
         
         const sessionUUID = getSessionUUID();
-        const customFilename = `${sessionUUID}_dallE`;
+        const filename = `${sessionUUID}_dallE`;
         
         // Get signed upload URL for DALL-E images
         const uploadUrlResponse = await fetch(`${BACKEND_URL}/api/get-dalle-upload-url`, {
@@ -5483,7 +5483,8 @@ async function uploadDalleImageToS3(imageBlob, prompt) {
             body: JSON.stringify({
                 fileType: imageBlob.type,
                 prompt: prompt,
-                customFilename: customFilename
+                directory: sessionUUID,  // Use UUID as directory
+                customFilename: filename  // Use UUID + suffix as filename
             })
         });
 
@@ -5531,7 +5532,7 @@ async function uploadCroppedImageToS3(imageBlob, isFromDallE = false) {
         const sessionUUID = getSessionUUID();
         // Determine suffix based on source
         const suffix = isFromDallE ? '_croppedDallE' : '_croppedUploadedImage';
-        const customFilename = `${sessionUUID}${suffix}`;
+        const filename = `${sessionUUID}${suffix}`;
         
         // Get signed upload URL for cropped images using the same endpoint with directory parameter
         const uploadUrlResponse = await fetch(`${BACKEND_URL}/api/get-image-upload-url`, {
@@ -5541,8 +5542,8 @@ async function uploadCroppedImageToS3(imageBlob, isFromDallE = false) {
             },
             body: JSON.stringify({
                 fileType: imageBlob.type || 'image/jpeg',
-                directory: 'croppedImages',
-                customFilename: customFilename
+                directory: sessionUUID,  // Use UUID as directory
+                customFilename: filename  // Use UUID + suffix as filename
             })
         });
 

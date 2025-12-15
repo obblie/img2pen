@@ -259,9 +259,9 @@ app.post('/api/get-image-upload-url', async (req, res) => {
 // Generate signed URL for DALL-E generated image upload
 app.post('/api/get-dalle-upload-url', async (req, res) => {
     try {
-        const { fileType = 'image/png', prompt, customFilename } = req.body;
+        const { fileType = 'image/png', prompt, customFilename, directory } = req.body;
 
-        console.log(`[DALLE-URL] Request received:`, { fileType, customFilename: customFilename || 'not provided' });
+        console.log(`[DALLE-URL] Request received:`, { fileType, directory: directory || 'not provided', customFilename: customFilename || 'not provided' });
 
         // Generate timestamp and guid for response (always needed)
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -271,7 +271,8 @@ app.post('/api/get-dalle-upload-url', async (req, res) => {
         if (customFilename) {
             // Use custom filename if provided
             const extension = fileType.split('/')[1] || 'png';
-            filename = `dalleGenerations/${customFilename}.${extension}`;
+            const dir = directory || 'dalleGenerations';  // Use provided directory or default
+            filename = `${dir}/${customFilename}.${extension}`;
             console.log(`[DALLE-URL] Using custom filename: ${filename}`);
         } else {
             // Generate unique filename for DALL-E image
