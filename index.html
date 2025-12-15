@@ -6321,30 +6321,60 @@
                           console.log('🆔 Order ID generated and added to checkout:', orderId);
                         }
                         
-                        // Get variant ID from Shopify component
-                        const shopifyComponent = window.shopifyProductComponent || component;
+                        // Get variant ID from the iframe select element
                         let variantId = null;
                         
-                        if (shopifyComponent && shopifyComponent.model) {
-                          const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
-                          if (selectedVariant) {
-                            variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
-                            console.log('✅ Got variant ID from component:', variantId);
-                          }
-                        }
-                        
-                        // If we couldn't get variant ID, try to get it from the iframe
-                        if (!variantId) {
-                          try {
-                            // Try to find variant ID in the iframe
-                            const variantSelect = iframeDoc.querySelector('select[name*="id"], select[id*="variant"]');
-                            if (variantSelect && variantSelect.value) {
-                              variantId = variantSelect.value;
-                              console.log('✅ Got variant ID from select:', variantId);
+                        try {
+                          // Try multiple selectors to find the variant select element
+                          const variantSelectors = [
+                            'select[name*="id"]',
+                            'select[id*="variant"]',
+                            'select[data-variant-id]',
+                            'select',
+                            'input[name*="id"]',
+                            'input[type="hidden"][name*="id"]'
+                          ];
+                          
+                          for (const selector of variantSelectors) {
+                            const element = iframeDoc.querySelector(selector);
+                            if (element) {
+                              const value = element.value || element.getAttribute('value') || element.getAttribute('data-variant-id');
+                              if (value && value !== '' && !isNaN(value)) {
+                                variantId = value;
+                                console.log(`✅ Got variant ID from ${selector}:`, variantId);
+                                break;
+                              }
                             }
-                          } catch (err) {
-                            console.warn('⚠️ Could not access iframe for variant ID:', err);
                           }
+                          
+                          // If still no variant ID, try to get it from the form
+                          if (!variantId) {
+                            const form = iframeDoc.querySelector('form');
+                            if (form) {
+                              const formData = new FormData(form);
+                              for (const [key, value] of formData.entries()) {
+                                if (key.includes('id') && value && !isNaN(value)) {
+                                  variantId = value;
+                                  console.log(`✅ Got variant ID from form field ${key}:`, variantId);
+                                  break;
+                                }
+                              }
+                            }
+                          }
+                          
+                          // Last resort: try to get it from the Shopify component
+                          if (!variantId) {
+                            const shopifyComponent = window.shopifyProductComponent || component;
+                            if (shopifyComponent && shopifyComponent.model) {
+                              const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
+                              if (selectedVariant) {
+                                variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
+                                console.log('✅ Got variant ID from component model:', variantId);
+                              }
+                            }
+                          }
+                        } catch (err) {
+                          console.warn('⚠️ Could not access iframe for variant ID:', err);
                         }
                         
                         if (variantId && typeof window.buildCartPermalinkWithAttributes === 'function') {
@@ -6396,27 +6426,60 @@
                               window.generateStlOrderId();
                             }
                             
-                            // Get variant ID from Shopify component
-                            const shopifyComponent = window.shopifyProductComponent || component;
+                            // Get variant ID from the iframe select element
                             let variantId = null;
                             
-                            if (shopifyComponent && shopifyComponent.model) {
-                              const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
-                              if (selectedVariant) {
-                                variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
-                              }
-                            }
-                            
-                            // Try to get variant ID from iframe
-                            if (!variantId) {
-                              try {
-                                const variantSelect = iframeDoc.querySelector('select[name*="id"], select[id*="variant"]');
-                                if (variantSelect && variantSelect.value) {
-                                  variantId = variantSelect.value;
+                            try {
+                              // Try multiple selectors to find the variant select element
+                              const variantSelectors = [
+                                'select[name*="id"]',
+                                'select[id*="variant"]',
+                                'select[data-variant-id]',
+                                'select',
+                                'input[name*="id"]',
+                                'input[type="hidden"][name*="id"]'
+                              ];
+                              
+                              for (const selector of variantSelectors) {
+                                const element = iframeDoc.querySelector(selector);
+                                if (element) {
+                                  const value = element.value || element.getAttribute('value') || element.getAttribute('data-variant-id');
+                                  if (value && value !== '' && !isNaN(value)) {
+                                    variantId = value;
+                                    console.log(`✅ Got variant ID from ${selector}:`, variantId);
+                                    break;
+                                  }
                                 }
-                              } catch (err) {
-                                console.warn('⚠️ Could not access iframe for variant ID:', err);
                               }
+                              
+                              // If still no variant ID, try to get it from the form
+                              if (!variantId) {
+                                const form = iframeDoc.querySelector('form');
+                                if (form) {
+                                  const formData = new FormData(form);
+                                  for (const [key, value] of formData.entries()) {
+                                    if (key.includes('id') && value && !isNaN(value)) {
+                                      variantId = value;
+                                      console.log(`✅ Got variant ID from form field ${key}:`, variantId);
+                                      break;
+                                    }
+                                  }
+                                }
+                              }
+                              
+                              // Last resort: try to get it from the Shopify component
+                              if (!variantId) {
+                                const shopifyComponent = window.shopifyProductComponent || component;
+                                if (shopifyComponent && shopifyComponent.model) {
+                                  const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
+                                  if (selectedVariant) {
+                                    variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
+                                    console.log('✅ Got variant ID from component model:', variantId);
+                                  }
+                                }
+                              }
+                            } catch (err) {
+                              console.warn('⚠️ Could not access iframe for variant ID:', err);
                             }
                             
                             if (variantId && typeof window.buildCartPermalinkWithAttributes === 'function') {
@@ -6650,41 +6713,75 @@
                     console.log('🆔 Order ID already exists:', sessionStorage.getItem('stlOrderId'));
                   }
                   
-                  // Get variant ID from Shopify component
-                  const shopifyComponent = window.shopifyProductComponent || component;
+                  // Get variant ID from the iframe select element
                   let variantId = null;
                   
-                  if (shopifyComponent && shopifyComponent.model) {
-                    const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
-                    if (selectedVariant) {
-                      variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
-                      console.log('✅ Got variant ID from component:', variantId);
-                    }
-                  }
-                  
-                  // Try to get variant ID from iframe
-                  if (!variantId) {
-                    try {
-                      const productNode = document.getElementById('product-component-1764405426589');
-                      const iframes = productNode ? productNode.querySelectorAll('iframe') : [];
-                      for (let iframe of iframes) {
-                        try {
-                          const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-                          if (iframeDoc) {
-                            const variantSelect = iframeDoc.querySelector('select[name*="id"], select[id*="variant"]');
-                            if (variantSelect && variantSelect.value) {
-                              variantId = variantSelect.value;
-                              console.log('✅ Got variant ID from iframe select:', variantId);
-                              break;
+                  try {
+                    const productNode = document.getElementById('product-component-1764405426589');
+                    const iframes = productNode ? productNode.querySelectorAll('iframe') : [];
+                    
+                    for (let iframe of iframes) {
+                      try {
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                        if (iframeDoc) {
+                          // Try multiple selectors to find the variant select element
+                          const variantSelectors = [
+                            'select[name*="id"]',
+                            'select[id*="variant"]',
+                            'select[data-variant-id]',
+                            'select',
+                            'input[name*="id"]',
+                            'input[type="hidden"][name*="id"]'
+                          ];
+                          
+                          for (const selector of variantSelectors) {
+                            const element = iframeDoc.querySelector(selector);
+                            if (element) {
+                              const value = element.value || element.getAttribute('value') || element.getAttribute('data-variant-id');
+                              if (value && value !== '' && !isNaN(value)) {
+                                variantId = value;
+                                console.log(`✅ Got variant ID from ${selector}:`, variantId);
+                                break;
+                              }
                             }
                           }
-                        } catch (err) {
-                          // Cross-origin, skip
+                          
+                          // If still no variant ID, try to get it from the form
+                          if (!variantId) {
+                            const form = iframeDoc.querySelector('form');
+                            if (form) {
+                              const formData = new FormData(form);
+                              for (const [key, value] of formData.entries()) {
+                                if (key.includes('id') && value && !isNaN(value)) {
+                                  variantId = value;
+                                  console.log(`✅ Got variant ID from form field ${key}:`, variantId);
+                                  break;
+                                }
+                              }
+                            }
+                          }
+                          
+                          if (variantId) break;
+                        }
+                      } catch (err) {
+                        // Cross-origin, skip
+                        console.warn('⚠️ Could not access iframe:', err);
+                      }
+                    }
+                    
+                    // Last resort: try to get it from the Shopify component
+                    if (!variantId) {
+                      const shopifyComponent = window.shopifyProductComponent || component;
+                      if (shopifyComponent && shopifyComponent.model) {
+                        const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
+                        if (selectedVariant) {
+                          variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
+                          console.log('✅ Got variant ID from component model:', variantId);
                         }
                       }
-                    } catch (err) {
-                      console.warn('⚠️ Could not access iframe for variant ID:', err);
                     }
+                  } catch (err) {
+                    console.warn('⚠️ Could not get variant ID:', err);
                   }
                   
                   if (variantId && typeof window.buildCartPermalinkWithAttributes === 'function') {
