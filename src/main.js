@@ -676,7 +676,6 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819') {
                         edges {
                             node {
                                 id
-                                legacyResourceId
                                 title
                             }
                         }
@@ -736,8 +735,10 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819') {
                 // Success - process the data
                 if (data.data && data.data.product && data.data.product.variants && data.data.product.variants.edges.length > 0) {
                     // Get the first variant (default variant)
-                    const variantId = data.data.product.variants.edges[0].node.legacyResourceId;
-                    console.log(`✅ Got variant ID from Storefront API ${apiVersion}:`, variantId);
+                    const variantGlobalId = data.data.product.variants.edges[0].node.id;
+                    // Extract numeric ID from global ID: gid://shopify/ProductVariant/123456789 -> 123456789
+                    const variantId = variantGlobalId.replace('gid://shopify/ProductVariant/', '');
+                    console.log(`✅ Got variant ID from Storefront API ${apiVersion}:`, variantId, '(extracted from global ID:', variantGlobalId + ')');
                     return variantId;
                 } else {
                     console.warn(`⚠️ No variants found in Storefront API ${apiVersion} response`);
