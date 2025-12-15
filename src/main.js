@@ -663,9 +663,42 @@ function redirectToCheckoutWithAttributes() {
     window.location.href = checkoutUrl.toString();
 }
 
+// Function to build cart permalink URL with attributes (Shopify recommended approach)
+function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
+    const orderId = sessionStorage.getItem('stlOrderId');
+    const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
+    const sessionUUID = getSessionUUID();
+    
+    if (!variantId) {
+        console.error('❌ Variant ID is required to build cart permalink');
+        return null;
+    }
+    
+    // Build cart permalink URL: /cart/VARIANT_ID:QUANTITY?attributes[key]=value&storefront=true
+    const cartUrl = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
+    
+    // Add attributes as URL parameters
+    if (orderId) {
+        cartUrl.searchParams.set('attributes[STL Order ID]', orderId);
+    }
+    if (sessionUUID) {
+        cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
+    }
+    if (croppedImageGuid) {
+        cartUrl.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
+    }
+    
+    // Add storefront=true to ensure customers land on cart page
+    cartUrl.searchParams.set('storefront', 'true');
+    
+    console.log('🛒 Built cart permalink with attributes:', cartUrl.toString());
+    return cartUrl.toString();
+}
+
 // Expose functions globally
 window.addAttributesToShopifyCart = addAttributesToShopifyCart;
 window.redirectToCheckoutWithAttributes = redirectToCheckoutWithAttributes;
+window.buildCartPermalinkWithAttributes = buildCartPermalinkWithAttributes;
 
 // Function to add STL ID to Shopify cart after item is added
 function addStlIdToShopifyCartAfterAdd(stlId) {

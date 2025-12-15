@@ -6311,25 +6311,65 @@
                         }
                         e.target.dataset.stlProcessed = 'true';
                         
+                        // Prevent default behavior - we'll redirect manually
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
                         // Generate Order ID IMMEDIATELY before checkout opens (only if not already generated)
                         if (typeof window.generateStlOrderId === 'function' && !sessionStorage.getItem('stlOrderId')) {
                           const orderId = window.generateStlOrderId();
                           console.log('🆔 Order ID generated and added to checkout:', orderId);
                         }
                         
+                        // Get variant ID from Shopify component
+                        const shopifyComponent = window.shopifyProductComponent || component;
+                        let variantId = null;
+                        
+                        if (shopifyComponent && shopifyComponent.model) {
+                          const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
+                          if (selectedVariant) {
+                            variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
+                            console.log('✅ Got variant ID from component:', variantId);
+                          }
+                        }
+                        
+                        // If we couldn't get variant ID, try to get it from the iframe
+                        if (!variantId) {
+                          try {
+                            // Try to find variant ID in the iframe
+                            const variantSelect = iframeDoc.querySelector('select[name*="id"], select[id*="variant"]');
+                            if (variantSelect && variantSelect.value) {
+                              variantId = variantSelect.value;
+                              console.log('✅ Got variant ID from select:', variantId);
+                            }
+                          } catch (err) {
+                            console.warn('⚠️ Could not access iframe for variant ID:', err);
+                          }
+                        }
+                        
+                        if (variantId && typeof window.buildCartPermalinkWithAttributes === 'function') {
+                          // Build cart permalink with attributes
+                          const cartUrl = window.buildCartPermalinkWithAttributes(variantId, 1);
+                          if (cartUrl) {
+                            console.log('🛒 Redirecting to cart permalink with attributes...');
+                            window.location.href = cartUrl;
+                            return;
+                          }
+                        }
+                        
+                        // Fallback: if we can't get variant ID, log error and let default behavior happen
+                        console.error('❌ Could not get variant ID, cannot build cart permalink');
+                        console.log('⚠️ Falling back to default behavior');
+                        
                         // Trigger STL generation in background - DO NOT BLOCK
                         if (window.viewer && window.generateAndUploadSTL) {
                           console.log('🛒 Triggering STL generation in background (non-blocking)...');
-                          // Fire and forget - use setTimeout to ensure checkout opens immediately
                           setTimeout(() => {
                             window.generateAndUploadSTL().catch(err => {
                               console.error('❌ STL error (non-blocking):', err);
                             });
                           }, 0);
                         }
-                        
-                        // DO NOT prevent default - let Shopify handle checkout immediately
-                        // DO NOT await - allow normal flow to continue
                       }, true); // Use capture phase to intercept early
                     }
                   });
@@ -6347,10 +6387,47 @@
                           button.addEventListener('click', function(e) {
                             console.log('🛒 Buy Now button clicked (dynamic) - generating Order ID...');
                             
+                            // Prevent default behavior
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
                             // Generate Order ID IMMEDIATELY
                             if (typeof window.generateStlOrderId === 'function') {
                               window.generateStlOrderId();
                             }
+                            
+                            // Get variant ID from Shopify component
+                            const shopifyComponent = window.shopifyProductComponent || component;
+                            let variantId = null;
+                            
+                            if (shopifyComponent && shopifyComponent.model) {
+                              const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
+                              if (selectedVariant) {
+                                variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
+                              }
+                            }
+                            
+                            // Try to get variant ID from iframe
+                            if (!variantId) {
+                              try {
+                                const variantSelect = iframeDoc.querySelector('select[name*="id"], select[id*="variant"]');
+                                if (variantSelect && variantSelect.value) {
+                                  variantId = variantSelect.value;
+                                }
+                              } catch (err) {
+                                console.warn('⚠️ Could not access iframe for variant ID:', err);
+                              }
+                            }
+                            
+                            if (variantId && typeof window.buildCartPermalinkWithAttributes === 'function') {
+                              const cartUrl = window.buildCartPermalinkWithAttributes(variantId, 1);
+                              if (cartUrl) {
+                                window.location.href = cartUrl;
+                                return;
+                              }
+                            }
+                            
+                            console.error('❌ Could not get variant ID, falling back to default behavior');
                             
                             // Fire and forget - don't block checkout
                             if (window.viewer && window.generateAndUploadSTL) {
@@ -6561,6 +6638,10 @@
                   // Mark as processed
                   e.target.dataset.stlProcessed = 'true';
                   
+                  // Prevent default behavior - we'll redirect manually
+                  e.preventDefault();
+                  e.stopPropagation();
+                  
                   // Generate Order ID IMMEDIATELY before checkout opens (only if not already generated)
                   if (typeof window.generateStlOrderId === 'function' && !sessionStorage.getItem('stlOrderId')) {
                     const orderId = window.generateStlOrderId();
@@ -6569,20 +6650,65 @@
                     console.log('🆔 Order ID already exists:', sessionStorage.getItem('stlOrderId'));
                   }
                   
+                  // Get variant ID from Shopify component
+                  const shopifyComponent = window.shopifyProductComponent || component;
+                  let variantId = null;
+                  
+                  if (shopifyComponent && shopifyComponent.model) {
+                    const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
+                    if (selectedVariant) {
+                      variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
+                      console.log('✅ Got variant ID from component:', variantId);
+                    }
+                  }
+                  
+                  // Try to get variant ID from iframe
+                  if (!variantId) {
+                    try {
+                      const productNode = document.getElementById('product-component-1764405426589');
+                      const iframes = productNode ? productNode.querySelectorAll('iframe') : [];
+                      for (let iframe of iframes) {
+                        try {
+                          const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                          if (iframeDoc) {
+                            const variantSelect = iframeDoc.querySelector('select[name*="id"], select[id*="variant"]');
+                            if (variantSelect && variantSelect.value) {
+                              variantId = variantSelect.value;
+                              console.log('✅ Got variant ID from iframe select:', variantId);
+                              break;
+                            }
+                          }
+                        } catch (err) {
+                          // Cross-origin, skip
+                        }
+                      }
+                    } catch (err) {
+                      console.warn('⚠️ Could not access iframe for variant ID:', err);
+                    }
+                  }
+                  
+                  if (variantId && typeof window.buildCartPermalinkWithAttributes === 'function') {
+                    // Build cart permalink with attributes
+                    const cartUrl = window.buildCartPermalinkWithAttributes(variantId, 1);
+                    if (cartUrl) {
+                      console.log('🛒 Redirecting to cart permalink with attributes...');
+                      window.location.href = cartUrl;
+                      return;
+                    }
+                  }
+                  
+                  // Fallback: if we can't get variant ID, log error
+                  console.error('❌ Could not get variant ID, cannot build cart permalink');
+                  
                   // Generate and upload STL in background - DO NOT BLOCK CHECKOUT
-                  // Use setTimeout to ensure checkout opens immediately
                   if (window.viewer && window.generateAndUploadSTL) {
                     console.log('🛒 Triggering STL generation in background (non-blocking)...');
-                    // Fire and forget - don't await, don't block
                     setTimeout(() => {
                       window.generateAndUploadSTL().catch(err => {
                         console.error('❌ STL generation error (non-blocking):', err);
                       });
                     }, 0);
                   }
-                  
-                  // DO NOT prevent default - let Shopify handle checkout immediately
-                  // DO NOT return false - allow normal flow
                 }
               }
             }, true); // Use capture phase
