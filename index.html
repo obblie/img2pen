@@ -6384,19 +6384,19 @@
                               console.log('🛒 Redirecting to cart permalink with attributes...');
                               window.location.href = cartUrl;
                             } else {
-                              console.error('❌ Could not build cart permalink, falling back to default behavior');
-                              // Let default behavior happen - remove preventDefault
-                              // Actually, we already prevented default, so we need to manually trigger
-                              // For now, just log the error
+                              console.error('❌ Could not build cart permalink - variant ID required');
+                              alert('Unable to add item to cart. Please try again or contact support.');
                             }
                           }).catch(err => {
                             console.error('❌ Error building cart permalink:', err);
+                            alert('Error adding item to cart. Please try again.');
                           });
                           return; // Don't continue with default behavior
                         }
                         
                         // Fallback: if function not available, log error
                         console.error('❌ buildCartPermalinkWithAttributes function not available');
+                        alert('Cart functionality not available. Please refresh the page.');
                         
                         // Trigger STL generation in background - DO NOT BLOCK
                         if (window.viewer && window.generateAndUploadSTL) {
@@ -6493,17 +6493,21 @@
                             if (typeof window.buildCartPermalinkWithAttributes === 'function') {
                               window.buildCartPermalinkWithAttributes(variantId, 1).then(cartUrl => {
                                 if (cartUrl) {
+                                  console.log('🛒 Redirecting to cart permalink with attributes...');
                                   window.location.href = cartUrl;
                                 } else {
-                                  console.error('❌ Could not build cart permalink');
+                                  console.error('❌ Could not build cart permalink - variant ID required');
+                                  alert('Unable to add item to cart. Please try again or contact support.');
                                 }
                               }).catch(err => {
                                 console.error('❌ Error building cart permalink:', err);
+                                alert('Error adding item to cart. Please try again.');
                               });
                               return;
                             }
                             
                             console.error('❌ buildCartPermalinkWithAttributes function not available');
+                            alert('Cart functionality not available. Please refresh the page.');
                             
                             // Fire and forget - don't block checkout
                             if (window.viewer && window.generateAndUploadSTL) {
@@ -6804,16 +6808,19 @@
                         console.log('🛒 Redirecting to cart permalink with attributes...');
                         window.location.href = cartUrl;
                       } else {
-                        console.error('❌ Could not build cart permalink');
+                        console.error('❌ Could not build cart permalink - variant ID required');
+                        alert('Unable to add item to cart. Please try again or contact support.');
                       }
                     }).catch(err => {
                       console.error('❌ Error building cart permalink:', err);
+                      alert('Error adding item to cart. Please try again.');
                     });
                     return; // Don't continue with default behavior
                   }
                   
                   // Fallback: if function not available, log error
                   console.error('❌ buildCartPermalinkWithAttributes function not available');
+                  alert('Cart functionality not available. Please refresh the page.');
                   
                   // Generate and upload STL in background - DO NOT BLOCK CHECKOUT
                   if (window.viewer && window.generateAndUploadSTL) {

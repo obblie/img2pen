@@ -737,61 +737,38 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     const sessionUUID = getSessionUUID();
     
     // If no variant ID provided, try to get it from Storefront API
+    // This is REQUIRED - we cannot add items to cart without a variant ID
     if (!variantId) {
         console.log('⚠️ No variant ID provided, trying Storefront API...');
         try {
             variantId = await Promise.race([
                 getVariantIdFromStorefrontAPI(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Storefront API timeout')), 3000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Storefront API timeout')), 5000))
             ]);
-            console.log('✅ Storefront API returned variant ID:', variantId);
+            if (variantId) {
+                console.log('✅ Storefront API returned variant ID:', variantId);
+            } else {
+                console.error('❌ Storefront API returned null variant ID');
+            }
         } catch (error) {
             console.error('❌ Error calling Storefront API:', error);
             variantId = null;
         }
         
+        // If we still don't have a variant ID, we cannot proceed
+        // The cart permalink format REQUIRES a variant ID to add items
         if (!variantId) {
-            console.warn('⚠️ Could not get variant ID from Storefront API, using fallback');
-            // Fallback: redirect to cart page without variant ID
-            // Shopify will show variant selection on cart page
-            const cartUrl = new URL('https://z0u750-mb.myshopify.com/cart');
-            
-            // Add attributes as URL parameters
-            if (orderId) {
-                cartUrl.searchParams.set('attributes[STL Order ID]', orderId);
-            }
-            if (sessionUUID) {
-                cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
-            }
-            if (croppedImageGuid) {
-                cartUrl.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
-            }
-            cartUrl.searchParams.set('storefront', 'true');
-            
-            console.log('🛒 Built cart URL without variant (will select on cart page):', cartUrl.toString());
-            return cartUrl.toString();
+            console.error('❌ CRITICAL: Cannot build cart permalink without variant ID. Item will not be added to cart.');
+            console.error('❌ Please check Storefront API configuration and product ID.');
+            // Return null to indicate failure - the caller should handle this
+            return null;
         }
     }
     
-    // If we still don't have a variant ID at this point, use fallback
+    // Final check - if we still don't have a variant ID, return null
     if (!variantId) {
-        console.warn('⚠️ No variant ID available, using fallback cart URL');
-        const cartUrl = new URL('https://z0u750-mb.myshopify.com/cart');
-        
-        // Add attributes as URL parameters
-        if (orderId) {
-            cartUrl.searchParams.set('attributes[STL Order ID]', orderId);
-        }
-        if (sessionUUID) {
-            cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
-        }
-        if (croppedImageGuid) {
-            cartUrl.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
-        }
-        cartUrl.searchParams.set('storefront', 'true');
-        
-        console.log('🛒 Built cart URL without variant (fallback):', cartUrl.toString());
-        return cartUrl.toString();
+        console.error('❌ CRITICAL: No variant ID available. Cannot add item to cart.');
+        return null;
     }
     
     // Build cart permalink URL: /cart/VARIANT_ID:QUANTITY?attributes[key]=value&storefront=true
