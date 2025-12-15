@@ -208,6 +208,10 @@ app.post('/api/get-image-upload-url', async (req, res) => {
 
         console.log(`[IMAGE-URL] Request received:`, { fileType, directory, customFilename: customFilename || 'not provided' });
 
+        // Generate timestamp and guid for response (always needed)
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const guid = uuidv4();
+
         let filename;
         if (customFilename) {
             // Use custom filename if provided
@@ -216,8 +220,6 @@ app.post('/api/get-image-upload-url', async (req, res) => {
             console.log(`[IMAGE-URL] Using custom filename: ${filename}`);
         } else {
             // Generate unique filename for image
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const guid = uuidv4();
             const extension = fileType.split('/')[1] || 'jpg';
             filename = `${directory}/${timestamp}-${guid}.${extension}`;
         }
@@ -261,6 +263,10 @@ app.post('/api/get-dalle-upload-url', async (req, res) => {
 
         console.log(`[DALLE-URL] Request received:`, { fileType, customFilename: customFilename || 'not provided' });
 
+        // Generate timestamp and guid for response (always needed)
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const guid = uuidv4();
+
         let filename;
         if (customFilename) {
             // Use custom filename if provided
@@ -269,8 +275,6 @@ app.post('/api/get-dalle-upload-url', async (req, res) => {
             console.log(`[DALLE-URL] Using custom filename: ${filename}`);
         } else {
             // Generate unique filename for DALL-E image
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const guid = uuidv4();
             const extension = fileType.split('/')[1] || 'png';
             filename = `dalleGenerations/${timestamp}-${guid}.${extension}`;
         }
