@@ -5794,7 +5794,7 @@
             "font-size": "15.299999999999999px"
           }
         },
-        "buttonDestination": "checkout",
+        "buttonDestination": "cart",
         "layout": "horizontal",
         "contents": {
           "img": false,
@@ -6084,12 +6084,23 @@
                       window.generateStlOrderId();
                     }
                     
-                    // Add attributes to cart via Cart API (non-blocking)
+                    // Add attributes to cart via Cart API and redirect to checkout
                     if (typeof window.addAttributesToShopifyCart === 'function') {
                       console.log('🛒 Adding attributes to cart via Cart API...');
                       setTimeout(() => {
-                        window.addAttributesToShopifyCart().catch(err => {
-                          console.warn('⚠️ Could not add attributes via Cart API (non-blocking):', err);
+                        window.addAttributesToShopifyCart().then(() => {
+                          // After adding attributes, redirect to checkout with attributes in URL
+                          if (typeof window.redirectToCheckoutWithAttributes === 'function') {
+                            setTimeout(() => {
+                              window.redirectToCheckoutWithAttributes();
+                            }, 300); // Small delay to ensure cart is updated
+                          }
+                        }).catch(err => {
+                          console.warn('⚠️ Could not add attributes via Cart API:', err);
+                          // Still try to redirect even if Cart API fails
+                          if (typeof window.redirectToCheckoutWithAttributes === 'function') {
+                            window.redirectToCheckoutWithAttributes();
+                          }
                         });
                       }, 200); // Small delay to ensure cart is created
                     }
