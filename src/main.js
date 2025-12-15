@@ -666,6 +666,29 @@ function redirectToCheckoutWithAttributes() {
 // Function to get variant ID from Shopify Storefront API (fallback)
 async function getVariantIdFromStorefrontAPI(productId = '10066983190819') {
     try {
+        console.log('🔍 Fetching variant ID from Storefront API for product:', productId);
+        
+        const query = `
+            query getProduct($id: ID!) {
+                product(id: $id) {
+                    id
+                    variants(first: 10) {
+                        edges {
+                            node {
+                                id
+                                legacyResourceId
+                                title
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+        
+        const variables = {
+            id: `gid://shopify/Product/${productId}`
+        };
+        
         const response = await fetch(`https://z0u750-mb.myshopify.com/api/2023-10/graphql.json`, {
             method: 'POST',
             headers: {
@@ -673,37 +696,38 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819') {
                 'X-Shopify-Storefront-Access-Token': '73a8e88f430939341abe6e2afdd62d90'
             },
             body: JSON.stringify({
-                query: `
-                    query getProduct($id: ID!) {
-                        product(id: $id) {
-                            id
-                            variants(first: 1) {
-                                edges {
-                                    node {
-                                        id
-                                        legacyResourceId
-                                    }
-                                }
-                            }
-                        }
-                    }
-                `,
-                variables: {
-                    id: `gid://shopify/Product/${productId}`
-                }
+                query: query,
+                variables: variables
             })
         });
         
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Storefront API response not OK:', response.status, errorText);
+            return null;
+        }
+        
         const data = await response.json();
-        if (data.data && data.data.product && data.data.product.variants.edges.length > 0) {
+        console.log('🔍 Storefront API response:', data);
+        
+        if (data.errors) {
+            console.error('❌ Storefront API errors:', data.errors);
+            return null;
+        }
+        
+        if (data.data && data.data.product && data.data.product.variants && data.data.product.variants.edges.length > 0) {
+            // Get the first variant (default variant)
             const variantId = data.data.product.variants.edges[0].node.legacyResourceId;
             console.log('✅ Got variant ID from Storefront API:', variantId);
             return variantId;
+        } else {
+            console.warn('⚠️ No variants found in Storefront API response');
+            return null;
         }
     } catch (error) {
         console.error('❌ Error fetching variant ID from Storefront API:', error);
+        return null;
     }
-    return null;
 }
 
 // Function to build cart permalink URL with attributes (Shopify recommended approach)
@@ -715,12 +739,54 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     // If no variant ID provided, try to get it from Storefront API
     if (!variantId) {
         console.log('⚠️ No variant ID provided, trying Storefront API...');
-        variantId = await getVariantIdFromStorefrontAPI();
+        try {
+            variantId = await getVariantIdFromStorefrontAPI();
+        } catch (error) {
+            console.error('❌ Error calling Storefront API:', error);
+        }
+        
+        if (!variantId) {
+            console.warn('⚠️ Could not get variant ID from Storefront API, using fallback');
+            // Fallback: redirect to cart page without variant ID
+            // Shopify will show variant selection on cart page
+            const cartUrl = new URL('https://z0u750-mb.myshopify.com/cart');
+            
+            // Add attributes as URL parameters
+            if (orderId) {
+                cartUrl.searchParams.set('attributes[STL Order ID]', orderId);
+            }
+            if (sessionUUID) {
+                cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
+            }
+            if (croppedImageGuid) {
+                cartUrl.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
+            }
+            cartUrl.searchParams.set('storefront', 'true');
+            
+            console.log('🛒 Built cart URL without variant (will select on cart page):', cartUrl.toString());
+            return cartUrl.toString();
+        }
     }
     
+    // If we still don't have a variant ID at this point, use fallback
     if (!variantId) {
-        console.error('❌ Variant ID is required to build cart permalink');
-        return null;
+        console.warn('⚠️ No variant ID available, using fallback cart URL');
+        const cartUrl = new URL('https://z0u750-mb.myshopify.com/cart');
+        
+        // Add attributes as URL parameters
+        if (orderId) {
+            cartUrl.searchParams.set('attributes[STL Order ID]', orderId);
+        }
+        if (sessionUUID) {
+            cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
+        }
+        if (croppedImageGuid) {
+            cartUrl.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
+        }
+        cartUrl.searchParams.set('storefront', 'true');
+        
+        console.log('🛒 Built cart URL without variant (fallback):', cartUrl.toString());
+        return cartUrl.toString();
     }
     
     // Build cart permalink URL: /cart/VARIANT_ID:QUANTITY?attributes[key]=value&storefront=true
