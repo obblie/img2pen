@@ -411,33 +411,54 @@ function addStlIdToShopifyCheckout(stlId) {
 function interceptShopifyCheckout() {
     console.log('🔧 Setting up Shopify checkout interceptor...');
     
+    // Helper function to add attributes to checkout URL
+    function addAttributesToCheckoutUrl(url) {
+        if (!url || (!url.includes('checkout') && !url.includes('cart'))) {
+            return url;
+        }
+        
+        try {
+            const orderId = sessionStorage.getItem('stlOrderId');
+            const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
+            const sessionUUID = getSessionUUID();
+            
+            if (!orderId && !sessionUUID) {
+                return url;
+            }
+            
+            const urlObj = new URL(url, window.location.origin);
+            
+            // Only add if not already present
+            if (orderId && !urlObj.searchParams.has('attributes[STL Order ID]')) {
+                urlObj.searchParams.set('attributes[STL Order ID]', orderId);
+                console.log('🛒 Adding STL Order ID to checkout URL:', orderId);
+            }
+            
+            if (sessionUUID && !urlObj.searchParams.has('attributes[Session UUID]')) {
+                urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
+                console.log('🆔 Adding Session UUID to checkout URL:', sessionUUID);
+            }
+            
+            if (croppedImageGuid && !urlObj.searchParams.has('attributes[Cropped Image GUID]')) {
+                urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
+                console.log('🖼️ Adding Cropped Image GUID to checkout URL:', croppedImageGuid);
+            }
+            
+            return urlObj.toString();
+        } catch (e) {
+            console.warn('⚠️ Error modifying checkout URL:', e);
+            return url;
+        }
+    }
+    
     // Monitor for navigation to checkout
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
     
-    function addStlIdToCheckout(url) {
-        if (url && (url.includes('checkout') || url.includes('cart'))) {
-            const orderId = sessionStorage.getItem('stlOrderId');
-            const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
-            const sessionUUID = getSessionUUID();
-            if (orderId) {
-                const urlObj = new URL(url, window.location.origin);
-                urlObj.searchParams.set('attributes[STL Order ID]', orderId);
-                urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
-                // Add cropped image GUID if available
-                if (croppedImageGuid) {
-                    urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
-                }
-                return urlObj.toString();
-            }
-        }
-        return url;
-    }
-    
     // Override pushState
     history.pushState = function(...args) {
         if (args[2]) {
-            args[2] = addStlIdToCheckout(args[2]);
+            args[2] = addAttributesToCheckoutUrl(args[2]);
         }
         return originalPushState.apply(history, args);
     };
@@ -445,9 +466,19 @@ function interceptShopifyCheckout() {
     // Override replaceState
     history.replaceState = function(...args) {
         if (args[2]) {
-            args[2] = addStlIdToCheckout(args[2]);
+            args[2] = addAttributesToCheckoutUrl(args[2]);
         }
         return originalReplaceState.apply(history, args);
+    };
+    
+    // Intercept window.open calls (for checkout windows)
+    const originalWindowOpen = window.open;
+    window.open = function(...args) {
+        if (args[0] && typeof args[0] === 'string') {
+            args[0] = addAttributesToCheckoutUrl(args[0]);
+            console.log('🛒 Intercepted window.open with checkout URL:', args[0]);
+        }
+        return originalWindowOpen.apply(window, args);
     };
     
     // Also intercept window.location changes
@@ -455,28 +486,67 @@ function interceptShopifyCheckout() {
     setInterval(() => {
         const currentUrl = window.location.href;
         if (currentUrl !== lastUrl && (currentUrl.includes('checkout') || currentUrl.includes('cart'))) {
-            const orderId = sessionStorage.getItem('stlOrderId');
-            const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
-            const sessionUUID = getSessionUUID();
-            if (orderId && !currentUrl.includes('STL Order ID')) {
-                console.log('🛒 Intercepting checkout navigation, adding STL Order ID...');
-                const urlObj = new URL(currentUrl);
-                urlObj.searchParams.set('attributes[STL Order ID]', orderId);
-                urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
-                // Add cropped image GUID if available
-                if (croppedImageGuid) {
-                    urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
-                    console.log('🖼️ Adding Cropped Image GUID to checkout URL');
-                }
-                console.log('🆔 Adding Session UUID to checkout URL:', sessionUUID);
-                window.location.href = urlObj.toString();
+            const modifiedUrl = addAttributesToCheckoutUrl(currentUrl);
+            if (modifiedUrl !== currentUrl && !currentUrl.includes('attributes[')) {
+                console.log('🛒 Intercepting checkout navigation, redirecting with attributes...');
+                console.log('🛒 Original URL:', currentUrl);
+                console.log('🛒 Modified URL:', modifiedUrl);
+                window.location.href = modifiedUrl;
+                return;
             }
         }
         lastUrl = currentUrl;
     }, 100);
     
+    // Monitor for iframes that might contain checkout
+    const observer = new MutationObserver(() => {
+        document.querySelectorAll('iframe').forEach(iframe => {
+            try {
+                if (iframe.src && (iframe.src.includes('checkout') || iframe.src.includes('cart'))) {
+                    const modifiedSrc = addAttributesToCheckoutUrl(iframe.src);
+                    if (modifiedSrc !== iframe.src) {
+                        console.log('🛒 Intercepted checkout iframe, modifying src...');
+                        iframe.src = modifiedSrc;
+                    }
+                }
+            } catch (e) {
+                // Cross-origin iframe, can't access
+            }
+        });
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+    
     console.log('✅ Checkout interceptor set up');
 }
+
+// Helper function to get checkout URL with all attributes (for debugging/testing)
+window.getCheckoutUrlWithAttributes = function(baseUrl) {
+    const orderId = sessionStorage.getItem('stlOrderId');
+    const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
+    const sessionUUID = getSessionUUID();
+    
+    if (!baseUrl) {
+        baseUrl = 'https://z0u750-mb.myshopify.com/cart';
+    }
+    
+    try {
+        const urlObj = new URL(baseUrl);
+        if (orderId) {
+            urlObj.searchParams.set('attributes[STL Order ID]', orderId);
+        }
+        if (sessionUUID) {
+            urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
+        }
+        if (croppedImageGuid) {
+            urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
+        }
+        return urlObj.toString();
+    } catch (e) {
+        console.error('Error creating checkout URL:', e);
+        return baseUrl;
+    }
+};
 
 // Function to add STL ID to Shopify cart after item is added
 function addStlIdToShopifyCartAfterAdd(stlId) {
