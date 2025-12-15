@@ -379,9 +379,13 @@ function addStlIdToShopifyCheckout(stlId) {
         // Get cropped image GUID if available
         const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
         
+        // Get session UUID
+        const sessionUUID = getSessionUUID();
+        
         // Add to checkout URL parameters
         const checkoutParams = new URLSearchParams({
-            'attributes[STL Order ID]': stlId
+            'attributes[STL Order ID]': stlId,
+            'attributes[Session UUID]': sessionUUID
         });
         
         // Add cropped image GUID if available
@@ -389,6 +393,8 @@ function addStlIdToShopifyCheckout(stlId) {
             checkoutParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
             console.log('🖼️ Adding Cropped Image GUID to checkout:', croppedImageGuid);
         }
+        
+        console.log('🆔 Adding Session UUID to checkout:', sessionUUID);
         
         sessionStorage.setItem('shopifyCheckoutParams', checkoutParams.toString());
         console.log('✅ Checkout parameters stored:', checkoutParams.toString());
@@ -413,9 +419,11 @@ function interceptShopifyCheckout() {
         if (url && (url.includes('checkout') || url.includes('cart'))) {
             const orderId = sessionStorage.getItem('stlOrderId');
             const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
+            const sessionUUID = getSessionUUID();
             if (orderId) {
                 const urlObj = new URL(url, window.location.origin);
                 urlObj.searchParams.set('attributes[STL Order ID]', orderId);
+                urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
                 // Add cropped image GUID if available
                 if (croppedImageGuid) {
                     urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
@@ -449,15 +457,18 @@ function interceptShopifyCheckout() {
         if (currentUrl !== lastUrl && (currentUrl.includes('checkout') || currentUrl.includes('cart'))) {
             const orderId = sessionStorage.getItem('stlOrderId');
             const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
+            const sessionUUID = getSessionUUID();
             if (orderId && !currentUrl.includes('STL Order ID')) {
                 console.log('🛒 Intercepting checkout navigation, adding STL Order ID...');
                 const urlObj = new URL(currentUrl);
                 urlObj.searchParams.set('attributes[STL Order ID]', orderId);
+                urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
                 // Add cropped image GUID if available
                 if (croppedImageGuid) {
                     urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
                     console.log('🖼️ Adding Cropped Image GUID to checkout URL');
                 }
+                console.log('🆔 Adding Session UUID to checkout URL:', sessionUUID);
                 window.location.href = urlObj.toString();
             }
         }
