@@ -663,11 +663,60 @@ function redirectToCheckoutWithAttributes() {
     window.location.href = checkoutUrl.toString();
 }
 
+// Function to get variant ID from Shopify Storefront API (fallback)
+async function getVariantIdFromStorefrontAPI(productId = '10066983190819') {
+    try {
+        const response = await fetch(`https://z0u750-mb.myshopify.com/api/2023-10/graphql.json`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Shopify-Storefront-Access-Token': '73a8e88f430939341abe6e2afdd62d90'
+            },
+            body: JSON.stringify({
+                query: `
+                    query getProduct($id: ID!) {
+                        product(id: $id) {
+                            id
+                            variants(first: 1) {
+                                edges {
+                                    node {
+                                        id
+                                        legacyResourceId
+                                    }
+                                }
+                            }
+                        }
+                    }
+                `,
+                variables: {
+                    id: `gid://shopify/Product/${productId}`
+                }
+            })
+        });
+        
+        const data = await response.json();
+        if (data.data && data.data.product && data.data.product.variants.edges.length > 0) {
+            const variantId = data.data.product.variants.edges[0].node.legacyResourceId;
+            console.log('✅ Got variant ID from Storefront API:', variantId);
+            return variantId;
+        }
+    } catch (error) {
+        console.error('❌ Error fetching variant ID from Storefront API:', error);
+    }
+    return null;
+}
+
 // Function to build cart permalink URL with attributes (Shopify recommended approach)
-function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
+async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     const orderId = sessionStorage.getItem('stlOrderId');
     const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
     const sessionUUID = getSessionUUID();
+    
+    // If no variant ID provided, try to get it from Storefront API
+    if (!variantId) {
+        console.log('⚠️ No variant ID provided, trying Storefront API...');
+        variantId = await getVariantIdFromStorefrontAPI();
+    }
     
     if (!variantId) {
         console.error('❌ Variant ID is required to build cart permalink');

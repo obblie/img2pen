@@ -6377,19 +6377,26 @@
                           console.warn('⚠️ Could not access iframe for variant ID:', err);
                         }
                         
-                        if (variantId && typeof window.buildCartPermalinkWithAttributes === 'function') {
-                          // Build cart permalink with attributes
-                          const cartUrl = window.buildCartPermalinkWithAttributes(variantId, 1);
-                          if (cartUrl) {
-                            console.log('🛒 Redirecting to cart permalink with attributes...');
-                            window.location.href = cartUrl;
-                            return;
-                          }
+                        // Build cart permalink with attributes (async function)
+                        if (typeof window.buildCartPermalinkWithAttributes === 'function') {
+                          window.buildCartPermalinkWithAttributes(variantId, 1).then(cartUrl => {
+                            if (cartUrl) {
+                              console.log('🛒 Redirecting to cart permalink with attributes...');
+                              window.location.href = cartUrl;
+                            } else {
+                              console.error('❌ Could not build cart permalink, falling back to default behavior');
+                              // Let default behavior happen - remove preventDefault
+                              // Actually, we already prevented default, so we need to manually trigger
+                              // For now, just log the error
+                            }
+                          }).catch(err => {
+                            console.error('❌ Error building cart permalink:', err);
+                          });
+                          return; // Don't continue with default behavior
                         }
                         
-                        // Fallback: if we can't get variant ID, log error and let default behavior happen
-                        console.error('❌ Could not get variant ID, cannot build cart permalink');
-                        console.log('⚠️ Falling back to default behavior');
+                        // Fallback: if function not available, log error
+                        console.error('❌ buildCartPermalinkWithAttributes function not available');
                         
                         // Trigger STL generation in background - DO NOT BLOCK
                         if (window.viewer && window.generateAndUploadSTL) {
@@ -6482,15 +6489,21 @@
                               console.warn('⚠️ Could not access iframe for variant ID:', err);
                             }
                             
-                            if (variantId && typeof window.buildCartPermalinkWithAttributes === 'function') {
-                              const cartUrl = window.buildCartPermalinkWithAttributes(variantId, 1);
-                              if (cartUrl) {
-                                window.location.href = cartUrl;
-                                return;
-                              }
+                            // Build cart permalink with attributes (async function)
+                            if (typeof window.buildCartPermalinkWithAttributes === 'function') {
+                              window.buildCartPermalinkWithAttributes(variantId, 1).then(cartUrl => {
+                                if (cartUrl) {
+                                  window.location.href = cartUrl;
+                                } else {
+                                  console.error('❌ Could not build cart permalink');
+                                }
+                              }).catch(err => {
+                                console.error('❌ Error building cart permalink:', err);
+                              });
+                              return;
                             }
                             
-                            console.error('❌ Could not get variant ID, falling back to default behavior');
+                            console.error('❌ buildCartPermalinkWithAttributes function not available');
                             
                             // Fire and forget - don't block checkout
                             if (window.viewer && window.generateAndUploadSTL) {
@@ -6784,18 +6797,23 @@
                     console.warn('⚠️ Could not get variant ID:', err);
                   }
                   
-                  if (variantId && typeof window.buildCartPermalinkWithAttributes === 'function') {
-                    // Build cart permalink with attributes
-                    const cartUrl = window.buildCartPermalinkWithAttributes(variantId, 1);
-                    if (cartUrl) {
-                      console.log('🛒 Redirecting to cart permalink with attributes...');
-                      window.location.href = cartUrl;
-                      return;
-                    }
+                  // Build cart permalink with attributes (async function)
+                  if (typeof window.buildCartPermalinkWithAttributes === 'function') {
+                    window.buildCartPermalinkWithAttributes(variantId, 1).then(cartUrl => {
+                      if (cartUrl) {
+                        console.log('🛒 Redirecting to cart permalink with attributes...');
+                        window.location.href = cartUrl;
+                      } else {
+                        console.error('❌ Could not build cart permalink');
+                      }
+                    }).catch(err => {
+                      console.error('❌ Error building cart permalink:', err);
+                    });
+                    return; // Don't continue with default behavior
                   }
                   
-                  // Fallback: if we can't get variant ID, log error
-                  console.error('❌ Could not get variant ID, cannot build cart permalink');
+                  // Fallback: if function not available, log error
+                  console.error('❌ buildCartPermalinkWithAttributes function not available');
                   
                   // Generate and upload STL in background - DO NOT BLOCK CHECKOUT
                   if (window.viewer && window.generateAndUploadSTL) {
