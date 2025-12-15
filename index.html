@@ -5794,7 +5794,7 @@
             "font-size": "15.299999999999999px"
           }
         },
-        "buttonDestination": "cart",
+        "buttonDestination": "checkout",
         "layout": "horizontal",
         "contents": {
           "img": false,
@@ -6160,14 +6160,35 @@
                       }
                     }
                     
-                    // Also set up a listener for when checkout window opens
+                    // Intercept checkout window opening and modify URL
                     setTimeout(() => {
-                      // Monitor for checkout URLs in new windows
-                      const checkForCheckoutWindows = () => {
-                        // This will be handled by the URL interceptor
-                        console.log('🛒 Checkout window opened, attributes should be added by interceptor');
+                      // The checkout interceptor should handle this, but also try direct interception
+                      console.log('🛒 Checkout event fired, attributes should be added by interceptor');
+                      
+                      // Try to intercept any new window opens
+                      const originalOpen = window.open;
+                      window.open = function(...args) {
+                        if (args[0] && typeof args[0] === 'string' && args[0].includes('checkout')) {
+                          const urlObj = new URL(args[0]);
+                          const orderId = sessionStorage.getItem('stlOrderId');
+                          const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
+                          const sessionUUID = typeof getSessionUUID === 'function' ? getSessionUUID() : sessionStorage.getItem('sessionUUID');
+                          
+                          if (orderId) {
+                            urlObj.searchParams.set('attributes[STL Order ID]', orderId);
+                          }
+                          if (sessionUUID) {
+                            urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
+                          }
+                          if (croppedImageGuid) {
+                            urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
+                          }
+                          
+                          args[0] = urlObj.toString();
+                          console.log('✅ Intercepted checkout window.open, modified URL:', args[0]);
+                        }
+                        return originalOpen.apply(window, args);
                       };
-                      checkForCheckoutWindows();
                     }, 100);
                   });
                   

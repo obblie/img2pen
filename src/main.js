@@ -407,9 +407,43 @@ function addStlIdToShopifyCheckout(stlId) {
     }
 }
 
+// Function to check if we're on cart page and redirect to checkout with attributes
+function checkCartPageAndRedirect() {
+    // Check if we're on the cart page and need to redirect
+    if (window.location.href.includes('/cart') && sessionStorage.getItem('redirectToCheckout') === 'true') {
+        console.log('🛒 On cart page, redirecting to checkout with attributes...');
+        sessionStorage.removeItem('redirectToCheckout');
+        
+        // Add attributes to cart first
+        if (typeof window.addAttributesToShopifyCart === 'function') {
+            window.addAttributesToShopifyCart().then(() => {
+                // Then redirect to checkout
+                setTimeout(() => {
+                    if (typeof window.redirectToCheckoutWithAttributes === 'function') {
+                        window.redirectToCheckoutWithAttributes();
+                    }
+                }, 300);
+            }).catch(err => {
+                console.warn('⚠️ Could not add attributes, redirecting anyway:', err);
+                if (typeof window.redirectToCheckoutWithAttributes === 'function') {
+                    window.redirectToCheckoutWithAttributes();
+                }
+            });
+        } else {
+            // Redirect even if Cart API fails
+            if (typeof window.redirectToCheckoutWithAttributes === 'function') {
+                window.redirectToCheckoutWithAttributes();
+            }
+        }
+    }
+}
+
 // Function to intercept Shopify checkout and add STL ID
 function interceptShopifyCheckout() {
     console.log('🔧 Setting up Shopify checkout interceptor...');
+    
+    // Check if we need to redirect from cart page
+    checkCartPageAndRedirect();
     
     // Helper function to add attributes to checkout URL
     function addAttributesToCheckoutUrl(url) {
