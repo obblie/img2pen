@@ -6124,13 +6124,7 @@
                     console.log('🛒 ===== Shopify checkout event detected! =====');
                     console.log('🛒 Checkout event details:', event);
                     
-                    const orderId = sessionStorage.getItem('stlOrderId');
-                    const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
                     const sessionUUID = typeof getSessionUUID === 'function' ? getSessionUUID() : sessionStorage.getItem('sessionUUID');
-                    
-                    if (!orderId && typeof window.generateStlOrderId === 'function') {
-                      window.generateStlOrderId();
-                    }
                     
                     // Try to add attributes to cart one more time before checkout
                     if (typeof window.addAttributesToShopifyCart === 'function') {
@@ -6144,14 +6138,8 @@
                     if (event && event.detail && event.detail.url) {
                       try {
                         const urlObj = new URL(event.detail.url);
-                        if (orderId) {
-                          urlObj.searchParams.set('attributes[STL Order ID]', orderId);
-                        }
                         if (sessionUUID) {
                           urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
-                        }
-                        if (croppedImageGuid) {
-                          urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
                         }
                         event.detail.url = urlObj.toString();
                         console.log('✅ Modified checkout URL with attributes:', event.detail.url);
@@ -6170,18 +6158,10 @@
                       window.open = function(...args) {
                         if (args[0] && typeof args[0] === 'string' && args[0].includes('checkout')) {
                           const urlObj = new URL(args[0]);
-                          const orderId = sessionStorage.getItem('stlOrderId');
-                          const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
                           const sessionUUID = typeof getSessionUUID === 'function' ? getSessionUUID() : sessionStorage.getItem('sessionUUID');
                           
-                          if (orderId) {
-                            urlObj.searchParams.set('attributes[STL Order ID]', orderId);
-                          }
                           if (sessionUUID) {
                             urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
-                          }
-                          if (croppedImageGuid) {
-                            urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
                           }
                           
                           args[0] = urlObj.toString();

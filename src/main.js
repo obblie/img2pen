@@ -370,29 +370,19 @@ window.generateStlOrderId = generateStlOrderId;
 
 // Function to add STL ID to Shopify checkout immediately
 function addStlIdToShopifyCheckout(stlId) {
-    console.log('🛒 Adding STL Order ID to Shopify checkout:', stlId);
+    console.log('🛒 Adding Session UUID to Shopify checkout');
     
     try {
         // Store for checkout interceptor
         sessionStorage.setItem('stlFileId', stlId);
         
-        // Get cropped image GUID if available
-        const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
-        
         // Get session UUID
         const sessionUUID = getSessionUUID();
         
-        // Add to checkout URL parameters
+        // Add to checkout URL parameters (only Session UUID)
         const checkoutParams = new URLSearchParams({
-            'attributes[STL Order ID]': stlId,
             'attributes[Session UUID]': sessionUUID
         });
-        
-        // Add cropped image GUID if available
-        if (croppedImageGuid) {
-            checkoutParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
-            console.log('🖼️ Adding Cropped Image GUID to checkout:', croppedImageGuid);
-        }
         
         console.log('🆔 Adding Session UUID to checkout:', sessionUUID);
         
@@ -452,30 +442,18 @@ function interceptShopifyCheckout() {
         }
         
         try {
-            const orderId = sessionStorage.getItem('stlOrderId');
-            const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
             const sessionUUID = getSessionUUID();
             
-            if (!orderId && !sessionUUID) {
+            if (!sessionUUID) {
                 return url;
             }
             
             const urlObj = new URL(url, window.location.origin);
             
-            // Only add if not already present
-            if (orderId && !urlObj.searchParams.has('attributes[STL Order ID]')) {
-                urlObj.searchParams.set('attributes[STL Order ID]', orderId);
-                console.log('🛒 Adding STL Order ID to checkout URL:', orderId);
-            }
-            
+            // Only add Session UUID if not already present
             if (sessionUUID && !urlObj.searchParams.has('attributes[Session UUID]')) {
                 urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
                 console.log('🆔 Adding Session UUID to checkout URL:', sessionUUID);
-            }
-            
-            if (croppedImageGuid && !urlObj.searchParams.has('attributes[Cropped Image GUID]')) {
-                urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
-                console.log('🖼️ Adding Cropped Image GUID to checkout URL:', croppedImageGuid);
             }
             
             return urlObj.toString();
@@ -556,8 +534,6 @@ function interceptShopifyCheckout() {
 
 // Helper function to get checkout URL with all attributes (for debugging/testing)
 window.getCheckoutUrlWithAttributes = function(baseUrl) {
-    const orderId = sessionStorage.getItem('stlOrderId');
-    const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
     const sessionUUID = getSessionUUID();
     
     if (!baseUrl) {
@@ -566,14 +542,8 @@ window.getCheckoutUrlWithAttributes = function(baseUrl) {
     
     try {
         const urlObj = new URL(baseUrl);
-        if (orderId) {
-            urlObj.searchParams.set('attributes[STL Order ID]', orderId);
-        }
         if (sessionUUID) {
             urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
-        }
-        if (croppedImageGuid) {
-            urlObj.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
         }
         return urlObj.toString();
     } catch (e) {
@@ -763,8 +733,6 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819') {
 
 // Function to build cart permalink URL with attributes (Shopify recommended approach)
 async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
-    const orderId = sessionStorage.getItem('stlOrderId');
-    const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
     const sessionUUID = getSessionUUID();
     
     // If no variant ID provided, try to get it from Storefront API
@@ -805,15 +773,9 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     // Build cart permalink URL: /cart/VARIANT_ID:QUANTITY?attributes[key]=value&storefront=true
     const cartUrl = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
     
-    // Add attributes as URL parameters
-    if (orderId) {
-        cartUrl.searchParams.set('attributes[STL Order ID]', orderId);
-    }
+    // Add attributes as URL parameters (only Session UUID)
     if (sessionUUID) {
         cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
-    }
-    if (croppedImageGuid) {
-        cartUrl.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
     }
     
     // Add storefront=true to ensure customers land on cart page
