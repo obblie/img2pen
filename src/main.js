@@ -498,12 +498,14 @@ function interceptShopifyCheckout() {
     setInterval(() => {
         const currentUrl = window.location.href;
         if (currentUrl !== lastUrl && (currentUrl.includes('checkout') || currentUrl.includes('cart'))) {
-            const modifiedUrl = addAttributesToCheckoutUrl(currentUrl);
-            if (modifiedUrl !== currentUrl && !currentUrl.includes('attributes[')) {
-                console.log('🛒 Intercepting checkout navigation, redirecting with attributes...');
+            const sessionUUID = getSessionUUID();
+            if (sessionUUID && !currentUrl.includes('attributes[Session UUID]')) {
+                console.log('🛒 Intercepting checkout navigation, redirecting with Session UUID...');
+                const urlObj = new URL(currentUrl);
+                urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
                 console.log('🛒 Original URL:', currentUrl);
-                console.log('🛒 Modified URL:', modifiedUrl);
-                window.location.href = modifiedUrl;
+                console.log('🛒 Modified URL:', urlObj.toString());
+                window.location.href = urlObj.toString();
                 return;
             }
         }
@@ -555,26 +557,17 @@ window.getCheckoutUrlWithAttributes = function(baseUrl) {
 // Function to add attributes to Shopify cart using Cart API
 async function addAttributesToShopifyCart() {
     try {
-        const orderId = sessionStorage.getItem('stlOrderId');
-        const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
         const sessionUUID = getSessionUUID();
         
-        if (!orderId && !sessionUUID) {
-            console.log('⚠️ No attributes to add to cart');
+        if (!sessionUUID) {
+            console.log('⚠️ No Session UUID to add to cart');
             return;
         }
         
-        // Build attributes object (Cart API format)
-        const attributes = {};
-        if (orderId) {
-            attributes['STL Order ID'] = orderId;
-        }
-        if (sessionUUID) {
-            attributes['Session UUID'] = sessionUUID;
-        }
-        if (croppedImageGuid) {
-            attributes['Cropped Image GUID'] = croppedImageGuid;
-        }
+        // Build attributes object (Cart API format) - only Session UUID
+        const attributes = {
+            'Session UUID': sessionUUID
+        };
         
         console.log('🛒 Adding attributes to Shopify cart:', attributes);
         
@@ -607,27 +600,17 @@ async function addAttributesToShopifyCart() {
 
 // Function to redirect to checkout with attributes in URL
 function redirectToCheckoutWithAttributes() {
-    const orderId = sessionStorage.getItem('stlOrderId');
-    const croppedImageGuid = sessionStorage.getItem('croppedImageGuid');
     const sessionUUID = getSessionUUID();
     
-    if (!orderId && !sessionUUID) {
-        console.log('⚠️ No attributes to add to checkout URL');
+    if (!sessionUUID) {
+        console.log('⚠️ No Session UUID to add to checkout URL');
         return;
     }
     
-    // Build checkout URL with attributes as URL parameters
+    // Build checkout URL with attributes as URL parameters (only Session UUID)
     const checkoutUrl = new URL('https://z0u750-mb.myshopify.com/checkout');
     
-    if (orderId) {
-        checkoutUrl.searchParams.set('attributes[STL Order ID]', orderId);
-    }
-    if (sessionUUID) {
-        checkoutUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
-    }
-    if (croppedImageGuid) {
-        checkoutUrl.searchParams.set('attributes[Cropped Image GUID]', croppedImageGuid);
-    }
+    checkoutUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
     
     console.log('🛒 Redirecting to checkout with attributes:', checkoutUrl.toString());
     window.location.href = checkoutUrl.toString();

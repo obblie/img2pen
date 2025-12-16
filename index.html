@@ -6079,10 +6079,7 @@
                     }
                     cartAddProcessed = true;
                     
-                    // Generate Order ID if not already generated
-                    if (typeof window.generateStlOrderId === 'function' && !sessionStorage.getItem('stlOrderId')) {
-                      window.generateStlOrderId();
-                    }
+                    // Session UUID is already generated and will be added to checkout
                     
                     // Add attributes to cart via Cart API and redirect to checkout
                     if (typeof window.addAttributesToShopifyCart === 'function') {
@@ -6183,10 +6180,7 @@
                     
                     console.log('🛒 ===== Shopify component click event =====');
                     
-                    // Generate Order ID if not already generated
-                    if (typeof window.generateStlOrderId === 'function' && !sessionStorage.getItem('stlOrderId')) {
-                      window.generateStlOrderId();
-                    }
+                    // Session UUID is already generated and will be added to checkout
                     
                     // Trigger STL generation in background - don't block
                     if (window.viewer && window.generateAndUploadSTL) {
@@ -6295,11 +6289,7 @@
                         e.preventDefault();
                         e.stopPropagation();
                         
-                        // Generate Order ID IMMEDIATELY before checkout opens (only if not already generated)
-                        if (typeof window.generateStlOrderId === 'function' && !sessionStorage.getItem('stlOrderId')) {
-                          const orderId = window.generateStlOrderId();
-                          console.log('🆔 Order ID generated and added to checkout:', orderId);
-                        }
+                        // Session UUID is already generated and will be added to checkout
                         
                         // Get variant ID from the iframe select element
                         let variantId = null;
@@ -6408,10 +6398,7 @@
                             e.preventDefault();
                             e.stopPropagation();
                             
-                            // Generate Order ID IMMEDIATELY
-                            if (typeof window.generateStlOrderId === 'function') {
-                              window.generateStlOrderId();
-                            }
+                            // Session UUID is already generated and will be added to checkout
                             
                             // Get variant ID from the iframe select element
                             let variantId = null;
@@ -6702,13 +6689,7 @@
                   e.preventDefault();
                   e.stopPropagation();
                   
-                  // Generate Order ID IMMEDIATELY before checkout opens (only if not already generated)
-                  if (typeof window.generateStlOrderId === 'function' && !sessionStorage.getItem('stlOrderId')) {
-                    const orderId = window.generateStlOrderId();
-                    console.log('🆔 Order ID generated and added to checkout:', orderId);
-                  } else if (sessionStorage.getItem('stlOrderId')) {
-                    console.log('🆔 Order ID already exists:', sessionStorage.getItem('stlOrderId'));
-                  }
+                  // Session UUID is already generated and will be added to checkout
                   
                   // Get variant ID from the iframe select element
                   let variantId = null;
