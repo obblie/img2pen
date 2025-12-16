@@ -498,14 +498,12 @@ function interceptShopifyCheckout() {
     setInterval(() => {
         const currentUrl = window.location.href;
         if (currentUrl !== lastUrl && (currentUrl.includes('checkout') || currentUrl.includes('cart'))) {
-            const sessionUUID = getSessionUUID();
-            if (sessionUUID && !currentUrl.includes('attributes[Session UUID]')) {
-                console.log('🛒 Intercepting checkout navigation, redirecting with Session UUID...');
-                const urlObj = new URL(currentUrl);
-                urlObj.searchParams.set('attributes[Session UUID]', sessionUUID);
+            const modifiedUrl = addAttributesToCheckoutUrl(currentUrl);
+            if (modifiedUrl !== currentUrl && !currentUrl.includes('attributes[')) {
+                console.log('🛒 Intercepting checkout navigation, redirecting with attributes...');
                 console.log('🛒 Original URL:', currentUrl);
-                console.log('🛒 Modified URL:', urlObj.toString());
-                window.location.href = urlObj.toString();
+                console.log('🛒 Modified URL:', modifiedUrl);
+                window.location.href = modifiedUrl;
                 return;
             }
         }
@@ -609,10 +607,9 @@ function redirectToCheckoutWithAttributes() {
     
     // Build checkout URL with attributes as URL parameters (only Session UUID)
     const checkoutUrl = new URL('https://z0u750-mb.myshopify.com/checkout');
-    
     checkoutUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
     
-    console.log('🛒 Redirecting to checkout with attributes:', checkoutUrl.toString());
+    console.log('🛒 Redirecting to checkout with Session UUID:', checkoutUrl.toString());
     window.location.href = checkoutUrl.toString();
 }
 
