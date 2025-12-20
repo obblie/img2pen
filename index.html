@@ -262,6 +262,22 @@
         #testimonials-container::-webkit-scrollbar {
             display: none;
         }
+
+        /* Normalize testimonial card sizing + wrapping (consistent layout per review) */
+        #testimonials-container > div {
+            flex: 0 0 280px !important;
+            min-width: 280px !important;
+            max-width: 280px !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        #testimonials-container > div p {
+            overflow-wrap: anywhere;
+            word-break: normal;
+            white-space: normal;
+        }
         
         .upload-container {
             background: var(--bg-parchment);
@@ -437,6 +453,10 @@
                 flex: 1;
                 position: relative;
                 min-height: 400px;
+                /* Buffer room on all sides for easier scrolling */
+                width: calc(100% - 24px) !important;
+                margin: 12px auto 28px auto !important;
+                box-sizing: border-box !important;
             }
         }
 
@@ -1316,6 +1336,28 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16) !important;
             }
             
+            /* Mobile: Reduce size of post-layout-actions buttons so they fit side by side */
+            .post-layout-actions .add-photo-section,
+            .post-layout-actions .imagine-section {
+                flex: 1 1 140px !important;
+                min-width: 120px !important;
+                max-width: 160px !important;
+                padding: 8px 10px !important;
+            }
+            
+            .post-layout-actions .add-photo-button,
+            .post-layout-actions .imagine-button {
+                height: 44px !important;
+                padding: 10px 12px !important;
+                font-size: 0.85em !important;
+            }
+            
+            .post-layout-actions .photo-help-text,
+            .post-layout-actions .imagine-help-text {
+                font-size: 0.75em !important;
+                margin: 6px 0 0 0 !important;
+            }
+            
             /* Mobile Hero Section - Fix grid layout */
             .hero-container > div {
                 display: grid !important;
@@ -1438,11 +1480,13 @@
             #canvas-container {
                 height: 400px !important;
                 min-height: 400px !important;
-                width: 100% !important;
+                /* Give buffer around canvas so scrolling is easier */
+                width: calc(100% - 24px) !important;
                 max-height: none !important;
                 border: 2px solid #ddd !important;
                 border-radius: 12px !important;
-                margin-bottom: 20px !important;
+                margin: 12px auto 28px auto !important;
+                box-sizing: border-box !important;
             }
             
             /* Add spacing between containers to prevent overlap */
@@ -2252,6 +2296,12 @@
                 height: 60vh;
                 order: 2;
             }
+
+            /* Give the 3D viewer "scroll buffer" on mobile (space around canvas) */
+            .main-product-viewer {
+                padding: 12px;
+                box-sizing: border-box;
+            }
             
             .product-details-section {
                 flex: 1;
@@ -2943,6 +2993,28 @@
                 margin: 8px 0 0 0;
             }
             
+            /* Mobile: Reduce size of post-layout-actions buttons so they fit side by side */
+            .post-layout-actions .add-photo-section,
+            .post-layout-actions .imagine-section {
+                flex: 1 1 140px !important;
+                min-width: 120px !important;
+                max-width: 160px !important;
+                padding: 8px 10px !important;
+            }
+            
+            .post-layout-actions .add-photo-button,
+            .post-layout-actions .imagine-button {
+                height: 44px !important;
+                padding: 10px 12px !important;
+                font-size: 0.85em !important;
+            }
+            
+            .post-layout-actions .photo-help-text,
+            .post-layout-actions .imagine-help-text {
+                font-size: 0.75em !important;
+                margin: 6px 0 0 0 !important;
+            }
+            
             .prompt-buttons {
                 flex-direction: column;
             }
@@ -3053,13 +3125,24 @@
             margin: 0 auto;
         }
 
-        /* Mobile persistent add-photo button */
-        .mobile-add-photo-fab {
+        /* Floating action buttons container */
+        .floating-action-buttons {
             position: fixed;
             bottom: 14px;
             left: 50%;
             transform: translateX(-50%);
             display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            z-index: 11000;
+            flex-wrap: wrap;
+        }
+
+        /* Mobile persistent add-photo button */
+        .mobile-add-photo-fab {
+            position: relative;
+            display: flex;
             align-items: center;
             justify-content: center;
             padding: 12px 18px;
@@ -3070,9 +3153,46 @@
             font-weight: 700;
             font-size: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.18);
-            z-index: 11000;
             cursor: pointer;
             text-decoration: none;
+            transition: all 0.25s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .mobile-add-photo-fab:hover {
+            background: var(--oxblood-strong);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.22);
+        }
+
+        /* Re-crop floating button - matches mobile FAB style */
+        .recrop-fab {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 18px;
+            border-radius: 999px;
+            border: 1px solid var(--oxblood);
+            background: var(--oxblood);
+            color: var(--bg-parchment);
+            font-weight: 700;
+            font-size: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .recrop-fab:hover {
+            background: var(--oxblood-strong);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.22);
         }
 
         /* Social footer */
@@ -3114,9 +3234,13 @@
             box-shadow: none;
         }
 
+        /* Desktop: Show floating buttons at bottom center */
         @media (min-width: 769px) {
-            .mobile-add-photo-fab {
-                display: none !important;
+            .floating-action-buttons {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
             }
         }
 
@@ -3268,10 +3392,18 @@
         </ul>
     </nav>
 
-    <!-- Mobile persistent add-photo button -->
-    <button id="mobile-add-photo-fab" class="mobile-add-photo-fab" onclick="openUploadFromHero(); return false;" aria-label="Add a photo" style="display:none;">
-        📷 Add a Photo
-    </button>
+    <!-- Floating action buttons container -->
+    <div class="floating-action-buttons" id="floating-action-buttons">
+        <!-- Mobile persistent add-photo/Buy Now button -->
+        <button id="mobile-add-photo-fab" class="mobile-add-photo-fab" aria-label="Add a photo">
+            📷 Add a Photo
+        </button>
+        
+        <!-- Re-crop floating button -->
+        <button id="recrop-fab" class="recrop-fab" aria-label="Re-crop image" style="display:none;">
+            ✂️ Re-crop
+        </button>
+    </div>
 
     <!-- Main Site Container -->
     <div id="main-site-container" style="width: 100%; min-height: 100vh; position: relative; margin: 0; padding: 0; overflow-x: hidden;">
@@ -3341,32 +3473,342 @@
 
         <script>
             function openUploadFromHero() {
-                try {
-                    scrollToSection('scene-container');
-                } catch (e) {
-                    console.warn('scrollToSection unavailable', e);
-                }
+                console.log('📷 openUploadFromHero called');
                 const fileInput = document.getElementById('file-input');
-                if (fileInput) {
-                    // Small delay to allow scroll and avoid blocked click
-                    setTimeout(() => fileInput.click(), 120);
+                if (!fileInput) {
+                    console.error('❌ File input not found');
+                    alert('File input not found. Please refresh the page.');
+                    return;
                 }
+                
+                const isMobile = window.matchMedia('(max-width: 768px)').matches;
+                console.log('📱 Is mobile:', isMobile);
+                
+                // Try to click file input immediately (required for mobile browsers)
+                // Mobile browsers require file input clicks to be directly from user interaction
+                try {
+                    console.log('🖱️ Attempting to click file input directly');
+                    fileInput.click();
+                    console.log('✅ File input click triggered');
+                } catch (error) {
+                    console.error('❌ Error clicking file input:', error);
+                    // Fallback: try again after a short delay
+                    setTimeout(() => {
+                        try {
+                            fileInput.click();
+                            console.log('✅ File input click triggered (retry)');
+                        } catch (retryError) {
+                            console.error('❌ Retry also failed:', retryError);
+                            alert('Unable to open file picker. Please try again or refresh the page.');
+                        }
+                    }, 100);
+                }
+                
+                // Optionally scroll to scene container (non-blocking)
+                if (isMobile) {
+                    setTimeout(() => {
+                        try {
+                            if (typeof scrollToSection === 'function') {
+                                scrollToSection('scene-container');
+                            } else {
+                                const sceneContainer = document.getElementById('scene-container');
+                                if (sceneContainer) {
+                                    sceneContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('scrollToSection unavailable', e);
+                        }
+                    }, 100);
+                }
+            }
+
+            // Function to check if an image has been processed
+            function checkIfImageExists() {
+                const fileInput = document.getElementById('file-input');
+                const hasFileInput = fileInput && fileInput.files && fileInput.files.length > 0;
+                
+                // Check if the current file is retrieverModel.png or pet.png - if so, treat as no image
+                if (hasFileInput && fileInput.files[0]) {
+                    const fileName = fileInput.files[0].name.toLowerCase();
+                    if (fileName === 'retrievermodel.png' || fileName === 'retrievermodel' || fileName.includes('retrievermodel') ||
+                        fileName === 'pet.png' || fileName === 'pet') {
+                        return false; // Keep as "Add a Photo" button
+                    }
+                }
+                
+                // Also check if canvas has been rendered (indicates image was processed)
+                const canvas = document.querySelector('canvas');
+                const hasCanvasContent = canvas && canvas.width > 0 && canvas.height > 0;
+                
+                // Check if viewer has processed an image
+                const hasViewerImage = window.viewer && window.viewer.currentImageData;
+                
+                // If canvas/viewer has content but no file input, it's likely the default pet.png
+                // loaded programmatically - treat as "no image" to keep "Add a Photo" button
+                if ((hasCanvasContent || hasViewerImage) && !hasFileInput) {
+                    return false; // Default image loaded, keep as "Add a Photo" button
+                }
+                
+                return hasFileInput || hasCanvasContent || hasViewerImage;
             }
 
             function updateMobileAddPhotoFab(hasImage) {
                 const fab = document.getElementById('mobile-add-photo-fab');
-                if (!fab) return;
+                const fabContainer = document.getElementById('floating-action-buttons');
+                if (!fab || !fabContainer) return;
                 const isMobile = window.matchMedia('(max-width: 768px)').matches;
-                fab.style.display = !hasImage && isMobile ? 'flex' : 'none';
+                const isDesktop = !isMobile;
+                
+                // Check if current image is retrieverModel.png or pet.png - if so, force "Add a Photo"
+                const fileInput = document.getElementById('file-input');
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    const fileName = fileInput.files[0].name.toLowerCase();
+                    if (fileName === 'retrievermodel.png' || fileName === 'retrievermodel' || fileName.includes('retrievermodel') ||
+                        fileName === 'pet.png' || fileName === 'pet') {
+                        hasImage = false; // Force to show "Add a Photo"
+                    }
+                } else if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                    // If canvas has content but no file input, it's likely the default pet.png
+                    // loaded programmatically - keep as "Add a Photo"
+                    const canvas = document.querySelector('canvas');
+                    const hasCanvasContent = canvas && canvas.width > 0 && canvas.height > 0;
+                    if (hasCanvasContent) {
+                        hasImage = false; // Default image, keep as "Add a Photo"
+                    }
+                }
+                
+                if (hasImage && (isMobile || isDesktop)) {
+                    // Show "Buy Now" button when image is present (both mobile and desktop)
+                    fabContainer.style.display = 'flex';
+                    fab.style.display = 'flex';
+                    fab.innerHTML = '🛒 Buy Now';
+                    fab.setAttribute('aria-label', 'Buy Now');
+                    fab.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Scroll to product section
+                        try {
+                            if (typeof scrollToSection === 'function') {
+                                scrollToSection('scene-container');
+                            } else {
+                                const sceneContainer = document.getElementById('scene-container');
+                                if (sceneContainer) {
+                                    sceneContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                            }
+                        } catch (err) {
+                            console.warn('scrollToSection unavailable', err);
+                            const sceneContainer = document.getElementById('scene-container');
+                            if (sceneContainer) {
+                                sceneContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }
+                        // Small delay to allow scroll, then try to click Buy Now button
+                        setTimeout(() => {
+                            const productNode = document.getElementById('product-component-1764405426589');
+                            if (productNode) {
+                                // Try to find and click the Buy Now button in the Shopify iframe
+                                try {
+                                    const iframe = productNode.querySelector('iframe');
+                                    if (iframe) {
+                                        // Try to access iframe content (may fail due to CORS)
+                                        try {
+                                            const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+                                            if (iframeDoc) {
+                                                const buyNowBtns = iframeDoc.querySelectorAll('button, [role="button"], a[href*="cart"]');
+                                                for (const btn of buyNowBtns) {
+                                                    const buttonText = btn.textContent?.trim().toLowerCase() || '';
+                                                    const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
+                                                    if (buttonText.includes('buy') || ariaLabel.includes('buy')) {
+                                                        btn.click();
+                                                        return;
+                                                    }
+                                                }
+                                            }
+                                        } catch (iframeError) {
+                                            // CORS error - can't access iframe content, use fallback
+                                            console.log('Cannot access iframe content (CORS), using fallback');
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.warn('Error accessing iframe:', error);
+                                }
+                                // Fallback: scroll to product and let user click manually
+                                productNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 500);
+                        return false;
+                    };
+                } else if (!hasImage && isMobile) {
+                    // Show "Add a Photo" button when no image
+                    fabContainer.style.display = 'flex';
+                    fab.style.display = 'flex';
+                    fab.innerHTML = '📷 Add a Photo';
+                    fab.setAttribute('aria-label', 'Add a photo');
+                    // Set up click handler - use onclick for better mobile compatibility
+                    fab.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('📷 Add Photo button clicked');
+                        if (typeof openUploadFromHero === 'function') {
+                            openUploadFromHero();
+                        } else {
+                            console.error('❌ openUploadFromHero function not available');
+                            // Fallback: directly click file input
+                            const fileInput = document.getElementById('file-input');
+                            if (fileInput) {
+                                fileInput.click();
+                            } else {
+                                console.error('❌ File input not found');
+                                alert('File input not found. Please refresh the page.');
+                            }
+                        }
+                        return false;
+                    };
+                    
+                    // Also add touch handler for better mobile support
+                    fab.addEventListener('touchend', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('📷 Add Photo button touched');
+                        if (typeof openUploadFromHero === 'function') {
+                            openUploadFromHero();
+                        } else {
+                            const fileInput = document.getElementById('file-input');
+                            if (fileInput) {
+                                fileInput.click();
+                            }
+                        }
+                    }, { passive: false, once: false });
+                } else {
+                    // Hide on desktop when no image
+                    if (!hasImage) {
+                        fabContainer.style.display = 'none';
+                    }
+                }
             }
+
+            // Function to update re-crop button visibility
+            function updateRecropButton() {
+                const recropBtn = document.getElementById('recrop-image-btn'); // Old canvas button
+                const recropFab = document.getElementById('recrop-fab'); // New floating button
+                const fabContainer = document.getElementById('floating-action-buttons');
+                
+                if (!recropFab || !fabContainer) return;
+                
+                const hasImage = checkIfImageExists();
+                const isMobile = window.matchMedia('(max-width: 768px)').matches;
+                const isDesktop = !isMobile;
+                
+                // Hide old canvas button
+                if (recropBtn) {
+                    recropBtn.style.display = 'none';
+                }
+                
+                // Show floating button if there's a real user image (not default/demo images) on both mobile and desktop
+                if (hasImage && (isMobile || isDesktop)) {
+                    recropFab.style.display = 'flex';
+                    // Ensure container is visible
+                    if (fabContainer) {
+                        fabContainer.style.display = 'flex';
+                    }
+                } else {
+                    recropFab.style.display = 'none';
+                }
+            }
+
+            // Make functions globally accessible
+            window.updateMobileAddPhotoFab = updateMobileAddPhotoFab;
+            window.checkIfImageExists = checkIfImageExists;
+            window.updateRecropButton = updateRecropButton;
 
             document.addEventListener('DOMContentLoaded', () => {
                 const fileInput = document.getElementById('file-input');
                 if (fileInput) {
                     fileInput.addEventListener('change', () => {
-                        const hasImage = fileInput.files && fileInput.files.length > 0;
-                        updateMobileAddPhotoFab(hasImage);
+                        // Small delay to allow image processing to start
+                        setTimeout(() => {
+                            const hasImage = checkIfImageExists();
+                            updateMobileAddPhotoFab(hasImage);
+                            updateRecropButton();
+                        }, 100);
                     });
+                }
+
+                // Monitor for image processing completion
+                // Check periodically if an image has been processed (for AI-generated images)
+                const imageCheckInterval = setInterval(() => {
+                    const hasImage = checkIfImageExists();
+                    updateMobileAddPhotoFab(hasImage);
+                    updateRecropButton();
+                }, 1000);
+
+                // Clear interval after 5 minutes to avoid infinite checking
+                setTimeout(() => clearInterval(imageCheckInterval), 300000);
+                
+                // Set up re-crop button click handlers (both old canvas button and new floating button)
+                const recropBtn = document.getElementById('recrop-image-btn'); // Old canvas button
+                const recropFab = document.getElementById('recrop-fab'); // New floating button
+                
+                const handleRecropClick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Get the original image data URL from viewer
+                    if (window.viewer && window.viewer.originalImageDataUrl) {
+                        const originalImage = window.viewer.originalImageDataUrl;
+                        const currentObjectType = window.viewer.currentObjectType || 'circular-pendant';
+                        const cropShape = (currentObjectType === 'circular-pendant' || currentObjectType === 'circular-stud') ? 'circle' : 'rect';
+                        
+                        // Open cropper with original image
+                        if (window.showCropperModal && typeof window.showCropperModal === 'function') {
+                            window.showCropperModal(originalImage, (croppedBlob) => {
+                                console.log('✂️ Re-crop callback triggered with blob size:', croppedBlob.size);
+                                
+                                // Upload cropped image to S3 in the background
+                                if (window.uploadCroppedImageToS3 && typeof window.uploadCroppedImageToS3 === 'function') {
+                                    window.uploadCroppedImageToS3(croppedBlob, true).then(uploadResult => {
+                                        console.log('✅ Re-cropped image uploaded to S3:', uploadResult.filename);
+                                        // Store cropped image GUID for Shopify order
+                                        if (uploadResult.guid) {
+                                            sessionStorage.setItem('croppedImageGuid', uploadResult.guid);
+                                            console.log('💾 Re-cropped image GUID stored:', uploadResult.guid);
+                                        }
+                                    }).catch(error => {
+                                        console.error('❌ Failed to upload re-cropped image to S3:', error);
+                                    });
+                                }
+                                
+                                // Process the re-cropped image
+                                if (window.viewer && typeof window.viewer.processImage === 'function') {
+                                    window.viewer.processImage(croppedBlob);
+                                    // Update buttons after processing
+                                    setTimeout(() => {
+                                        const hasImage = checkIfImageExists();
+                                        updateMobileAddPhotoFab(hasImage);
+                                        updateRecropButton();
+                                    }, 500);
+                                }
+                            }, null, cropShape);
+                        } else {
+                            console.error('❌ showCropperModal not available');
+                            alert('Failed to open image cropper. Please refresh the page and try again.');
+                        }
+                    } else {
+                        console.warn('⚠️ No original image data URL available');
+                        alert('Original image not found. Please upload a new image.');
+                    }
+                };
+                
+                // Attach handler to both buttons
+                if (recropBtn) {
+                    recropBtn.addEventListener('click', handleRecropClick);
+                }
+                if (recropFab) {
+                    recropFab.addEventListener('click', handleRecropClick);
+                    // Initial update
+                    updateRecropButton();
                 }
 
                 // Initial state: assume no image selected yet
@@ -3374,8 +3816,9 @@
 
                 // Re-evaluate on resize/orientation change
                 window.addEventListener('resize', () => {
-                    const hasImage = fileInput && fileInput.files && fileInput.files.length > 0;
+                    const hasImage = checkIfImageExists();
                     updateMobileAddPhotoFab(hasImage);
+                    updateRecropButton();
                 });
             });
 
@@ -3608,6 +4051,11 @@
                                 🔄 Invert Design
                             </button>
                             
+                            <!-- Re-crop Button (old canvas button - kept for desktop fallback, but hidden) -->
+                            <button id="recrop-image-btn" style="position: absolute; top: 16px; left: 16px; z-index: 1001; background: var(--oxblood); border: 2px solid var(--oxblood); color: var(--bg-parchment); font-size: 13px; cursor: pointer; padding: 9px 16px; border-radius: 8px; font-weight: 600; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); transition: all 0.25s ease; display: none;">
+                                ✂️ Re-crop Image
+                            </button>
+                            
                             <!-- Demo Message -->
                             <div id="demo-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-stone); color: var(--ink); padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1100; pointer-events: auto; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: none; text-align: center; max-width: 400px; display: none;">
                                 <div style="margin-bottom: 4px;"><strong>WELCOME</strong></div>
@@ -3635,6 +4083,11 @@
                                     
                                     #demo-message > div:last-child {
                                         font-size: 9px !important;
+                                    }
+                                    
+                                    /* Mobile re-crop button (old canvas button - hide on mobile) */
+                                    #recrop-image-btn {
+                                        display: none !important;
                                     }
                                 }
                             </style>
@@ -5613,6 +6066,16 @@
                                     // Process the image
                                     if (window.viewer && typeof window.viewer.processImage === 'function') {
                                         window.viewer.processImage(croppedBlob);
+                                        // Update mobile FAB and re-crop button after image is processed (with delay to allow processing)
+                                        setTimeout(() => {
+                                            if (typeof updateMobileAddPhotoFab === 'function') {
+                                                const hasImage = checkIfImageExists();
+                                                updateMobileAddPhotoFab(hasImage);
+                                            }
+                                            if (typeof updateRecropButton === 'function') {
+                                                updateRecropButton();
+                                            }
+                                        }, 1500);
                             } else {
                                         console.error('❌ viewer.processImage not available');
                                         alert('Failed to process image. Please refresh the page and try again.');

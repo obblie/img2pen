@@ -448,7 +448,7 @@ function interceptShopifyCheckout() {
                 return url;
             }
             
-            const urlObj = new URL(url, window.location.origin);
+                const urlObj = new URL(url, window.location.origin);
             
             // Only add Session UUID if not already present
             if (sessionUUID && !urlObj.searchParams.has('attributes[Session UUID]')) {
@@ -456,10 +456,10 @@ function interceptShopifyCheckout() {
                 console.log('🆔 Adding Session UUID to checkout URL:', sessionUUID);
             }
             
-            return urlObj.toString();
+                return urlObj.toString();
         } catch (e) {
             console.warn('⚠️ Error modifying checkout URL:', e);
-            return url;
+        return url;
         }
     }
     
@@ -1470,7 +1470,7 @@ class HeightfieldViewer {
                             } catch (error) {
                                 console.error('❌ DALL-E image upload failed:', error);
                             }
-                        }).catch(error => {
+                            }).catch(error => {
                             console.error('❌ Failed to convert DALL-E image to blob:', error);
                         });
                         

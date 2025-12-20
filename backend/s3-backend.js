@@ -220,7 +220,7 @@ app.post('/api/get-image-upload-url', async (req, res) => {
             console.log(`[IMAGE-URL] Using custom filename: ${filename}`);
         } else {
             // Generate unique filename for image
-            const extension = fileType.split('/')[1] || 'jpg';
+        const extension = fileType.split('/')[1] || 'jpg';
             filename = `${directory}/${timestamp}-${guid}.${extension}`;
         }
 
@@ -276,7 +276,7 @@ app.post('/api/get-dalle-upload-url', async (req, res) => {
             console.log(`[DALLE-URL] Using custom filename: ${filename}`);
         } else {
             // Generate unique filename for DALL-E image
-            const extension = fileType.split('/')[1] || 'png';
+        const extension = fileType.split('/')[1] || 'png';
             filename = `dalleGenerations/${timestamp}-${guid}.${extension}`;
         }
 
