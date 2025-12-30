@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image Keepsake Studio - Create 3D Jewelry from Your Photos</title>
-    <link rel="icon" type="image/x-icon" href="/IKSfav.ico">
+    <title>Momenza - Create 3D Jewelry from Your Photos</title>
+    <link rel="icon" type="image/x-icon" href="/momenzafav.ico">
     <!-- Tailwind CDN removed for production safety. Use built CSS or PostCSS/CLI if needed. -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
@@ -261,6 +261,159 @@
         }
         #testimonials-container::-webkit-scrollbar {
             display: none;
+        }
+
+        /* Password Protected Splash Screen */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-parchment);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .splash-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .splash-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 48px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            animation: splashFadeIn 0.6s ease-out;
+        }
+
+        @keyframes splashFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .splash-logo {
+            margin-bottom: 24px;
+        }
+
+        .splash-title {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 0 0 8px 0;
+        }
+
+        .splash-subtitle {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 1rem;
+            color: var(--oxblood);
+            margin: 0 0 32px 0;
+        }
+
+        .password-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .password-input-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 14px 50px 14px 16px;
+            font-size: 1rem;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            border: 2px solid var(--bg-stone);
+            border-radius: 10px;
+            background: var(--bg-parchment);
+            color: var(--ink);
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: var(--oxblood);
+            box-shadow: 0 0 0 3px rgba(124, 111, 100, 0.1);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 4px;
+            opacity: 0.6;
+            transition: opacity 0.2s ease;
+        }
+
+        .toggle-password:hover {
+            opacity: 1;
+        }
+
+        .password-error {
+            color: #dc2626;
+            font-size: 0.875rem;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            text-align: left;
+            padding: 8px 12px;
+            background: rgba(220, 38, 38, 0.1);
+            border-radius: 6px;
+            margin-top: -8px;
+        }
+
+        .password-submit-btn {
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 600;
+            color: var(--bg-parchment);
+            background: var(--oxblood);
+            border: 2px solid var(--oxblood);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .password-submit-btn:hover {
+            background: var(--oxblood-strong);
+            border-color: var(--oxblood-strong);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .password-submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Hide main content until authenticated */
+        body:not(.authenticated) #main-site-container,
+        body:not(.authenticated) .navbar,
+        body:not(.authenticated) .floating-action-buttons,
+        body:not(.authenticated) #mobile-debug {
+            display: none !important;
         }
 
         /* Normalize testimonial card sizing + wrapping (consistent layout per review) */
@@ -3372,6 +3525,34 @@
 </head>
 <body>
 
+    <!-- Password Protected Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-logo">
+                <img src="/momenzaLogo_transparent.png" alt="Momenza Logo" style="width: 200px; max-width: 100%; height: auto;">
+            </div>
+            <h1 class="splash-title">Welcome to Momenza Studio</h1>
+            <p class="splash-subtitle">Please enter the password to continue</p>
+            <form id="password-form" class="password-form" onsubmit="handlePasswordSubmit(event)">
+                <div class="password-input-wrapper">
+                    <input 
+                        type="password" 
+                        id="password-input" 
+                        class="password-input" 
+                        placeholder="Enter password"
+                        autocomplete="off"
+                        required
+                        autofocus
+                    >
+                    <button type="button" id="toggle-password" class="toggle-password" onclick="togglePasswordVisibility()" aria-label="Show password">
+                        👁️
+                    </button>
+                </div>
+                <div id="password-error" class="password-error" style="display: none;"></div>
+                <button type="submit" class="password-submit-btn">Enter</button>
+            </form>
+        </div>
+    </div>
     
     <!-- Mobile Debug Panel -->
     <div id="mobile-debug" style="display:none;position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.9);color:white;padding:15px;border-radius:8px;z-index:9999;max-width:300px;font-family:monospace;font-size:12px;">
@@ -3382,8 +3563,8 @@
     <!-- Navigation Bar -->
     <nav class="navbar" id="navbar">
         <a href="#" class="navbar-brand" onclick="event.preventDefault(); scrollToSection('hero-container'); return false;">
-            <img src="/IKSlogo_transparentbg.png" alt="Image Keepsake Studio Logo">
-            <span>Image Keepsake Studio</span>
+            <img src="/momenzaLogo_transparent.png" alt="Momenza Logo">
+            <span>Momenza Studio</span>
         </a>
         <ul class="navbar-nav">
             <li><a href="#" onclick="event.preventDefault(); scrollToSection('hero-container'); return false;">About</a></li>
@@ -3414,7 +3595,7 @@
                 <!-- Left: Text Content -->
                 <div class="hero-text-col">
                     <h1 class="hero-title" style="max-width: 520px; text-align: center; margin: 0 auto;">
-                        <img class="hero-logo" src="/IKSlogo_transparentbg.png" alt="Image Keepsake Studio" style="width: 360px; max-width: 100%; height: auto; display: block; margin: 0 auto;" loading="lazy" decoding="async">
+                        <img class="hero-logo" src="/momenzaLogo_transparent.png" alt="Momenza" style="width: 360px; max-width: 100%; height: auto; display: block; margin: 0 auto;" loading="lazy" decoding="async">
                     </h1>
                     <p class="hero-subtitle" style="max-width: 550px; text-align: center; margin: 12px auto 0;">Upload your cherished memories and transform them into stunning, wearable jewelry. Make <span style="background: var(--highlight); color: var(--ink); padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">once in a lifetime</span> last <em>forever.</em></p>
                     <div style="margin: 16px auto 8px; text-align: center;">
@@ -3689,6 +3870,33 @@
                 }
             }
 
+            // Function to update depth controls visibility
+            function updateDepthControlsVisibility() {
+                const depthControls = document.getElementById('depth-adjustment-controls');
+                const paintControls = document.getElementById('depth-painting-controls');
+                if (!depthControls) return;
+                
+                const hasImage = checkIfImageExists();
+                if (hasImage) {
+                    depthControls.style.display = 'flex';
+                    if (paintControls) {
+                        paintControls.style.display = 'flex';
+                    }
+                    // Update depth display if viewer is available
+                    if (window.viewer && window.viewer.depth !== undefined) {
+                        const depthDisplay = document.getElementById('depth-value-display');
+                        if (depthDisplay) {
+                            depthDisplay.textContent = window.viewer.depth.toFixed(1);
+                        }
+                    }
+                } else {
+                    depthControls.style.display = 'none';
+                    if (paintControls) {
+                        paintControls.style.display = 'none';
+                    }
+                }
+            }
+
             // Function to update re-crop button visibility
             function updateRecropButton() {
                 const recropBtn = document.getElementById('recrop-image-btn'); // Old canvas button
@@ -3732,6 +3940,7 @@
                             const hasImage = checkIfImageExists();
                             updateMobileAddPhotoFab(hasImage);
                             updateRecropButton();
+                            updateDepthControlsVisibility();
                         }, 100);
                     });
                 }
@@ -3742,6 +3951,7 @@
                     const hasImage = checkIfImageExists();
                     updateMobileAddPhotoFab(hasImage);
                     updateRecropButton();
+                    updateDepthControlsVisibility();
                 }, 1000);
 
                 // Clear interval after 5 minutes to avoid infinite checking
@@ -3784,11 +3994,12 @@
                                 if (window.viewer && typeof window.viewer.processImage === 'function') {
                                     window.viewer.processImage(croppedBlob);
                                     // Update buttons after processing
-                                    setTimeout(() => {
-                                        const hasImage = checkIfImageExists();
-                                        updateMobileAddPhotoFab(hasImage);
-                                        updateRecropButton();
-                                    }, 500);
+                                        setTimeout(() => {
+                                            const hasImage = checkIfImageExists();
+                                            updateMobileAddPhotoFab(hasImage);
+                                            updateRecropButton();
+                                            updateDepthControlsVisibility();
+                                        }, 500);
                                 }
                             }, null, cropShape);
                         } else {
@@ -3819,6 +4030,7 @@
                     const hasImage = checkIfImageExists();
                     updateMobileAddPhotoFab(hasImage);
                     updateRecropButton();
+                    updateDepthControlsVisibility();
                 });
             });
 
@@ -4056,6 +4268,52 @@
                                 ✂️ Re-crop Image
                             </button>
                             
+                            <!-- Depth Adjustment Controls -->
+                            <div id="depth-adjustment-controls" style="position: absolute; bottom: 16px; right: 16px; z-index: 1001; background: rgba(255, 255, 255, 0.95); border: 2px solid rgba(0, 0, 0, 0.2); border-radius: 12px; padding: 12px; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); display: none; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">
+                                <div style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Depth</div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <button id="depth-decrease-btn" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.3); background: rgba(255, 255, 255, 0.9); color: #333; font-size: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
+                                        −
+                                    </button>
+                                    <span id="depth-value-display" style="font-size: 16px; font-weight: 700; color: #000; min-width: 50px; text-align: center;">0.6</span>
+                                    <button id="depth-increase-btn" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.3); background: rgba(255, 255, 255, 0.9); color: #333; font-size: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Brush Cursor (visual indicator) -->
+                            <div id="brush-cursor" style="position: absolute; pointer-events: none; z-index: 1002; display: none; border: 2px solid rgba(76, 175, 80, 0.8); border-radius: 50%; background: rgba(76, 175, 80, 0.1); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5); transform: translate(-50%, -50%); transition: width 0.1s ease, height 0.1s ease;"></div>
+                            
+                            <!-- Depth Painting Controls -->
+                            <div id="depth-painting-controls" style="position: absolute; bottom: 16px; left: 16px; z-index: 1001; background: rgba(255, 255, 255, 0.95); border: 2px solid rgba(0, 0, 0, 0.2); border-radius: 12px; padding: 12px; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); display: none; flex-direction: column; align-items: center; gap: 8px; min-width: 140px;">
+                                <div style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Paint Depth</div>
+                                <div style="font-size: 10px; color: #999; margin-bottom: 4px; text-align: center;">Hold Ctrl/Cmd + Click</div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                    <button id="paint-mode-add-btn" class="paint-mode-btn" style="flex: 1; padding: 6px 12px; border-radius: 6px; border: 2px solid rgba(0, 0, 0, 0.3); background: rgba(76, 175, 80, 0.9); color: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                                        Add
+                                    </button>
+                                    <button id="paint-mode-subtract-btn" class="paint-mode-btn" style="flex: 1; padding: 6px 12px; border-radius: 6px; border: 2px solid rgba(0, 0, 0, 0.3); background: rgba(255, 255, 255, 0.9); color: #333; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                                        Subtract
+                                    </button>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                    <button id="paint-invert-toggle-btn" style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 2px solid rgba(0, 0, 0, 0.3); background: rgba(255, 255, 255, 0.9); color: #333; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        🔄 Invert Mode: Off
+                                    </button>
+                                </div>
+                                <div style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">Brush Size</div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <button id="brush-size-decrease-btn" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.3); background: rgba(255, 255, 255, 0.9); color: #333; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
+                                        −
+                                    </button>
+                                    <input type="number" id="brush-size-input" min="1" max="200" value="5" style="width: 60px; height: 32px; border: 2px solid rgba(0, 0, 0, 0.3); border-radius: 6px; background: rgba(255, 255, 255, 0.9); color: #000; font-size: 14px; font-weight: 700; text-align: center; padding: 0; -webkit-tap-highlight-color: transparent;">
+                                    <button id="brush-size-increase-btn" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.3); background: rgba(255, 255, 255, 0.9); color: #333; font-size: 18px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                            
                             <!-- Demo Message -->
                             <div id="demo-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-stone); color: var(--ink); padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1100; pointer-events: auto; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: none; text-align: center; max-width: 400px; display: none;">
                                 <div style="margin-bottom: 4px;"><strong>WELCOME</strong></div>
@@ -4249,7 +4507,7 @@
                             <span aria-hidden="true">+</span>
                         </button>
                         <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
-                            We accept returns on a case by case basis for items that do not meet your expectations. Please contact us within 72 hours of receiving your Image Keepsake and we will work with you to resolve the issue.
+                            We accept returns on a case by case basis for items that do not meet your expectations. Please contact us within 72 hours of receiving your Momenza and we will work with you to resolve the issue.
                         </div>
                     </div>
                     <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
@@ -4258,7 +4516,7 @@
                             <span aria-hidden="true">+</span>
                         </button>
                         <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
-                            We do not formally offer design services, but we are happy to help you create a custom design for your Image Keepsake. Please contact us and we will work with you to create a custom design that makes you happy :).
+                            We do not formally offer design services, but we are happy to help you create a custom design for your Momenza. Please contact us and we will work with you to create a custom design that makes you happy :).
                         </div>
                     </div>
                 </div>
@@ -4523,6 +4781,127 @@
     <!-- Cropper.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     
+    <!-- Password Authentication Script -->
+    <script>
+        // Password hash (SHA-256) - Replace this with your desired password's hash
+        // To generate a hash for your password, use: await crypto.subtle.digest('SHA-256', new TextEncoder().encode('yourpassword'))
+        // Then convert to hex: Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
+        // Or use an online SHA-256 tool
+        const CORRECT_PASSWORD_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'; // Default: "password"
+        
+        // Session storage key
+        const AUTH_SESSION_KEY = 'momenza_authenticated';
+        
+        // Hash password using SHA-256
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+        
+        // Check if user is authenticated
+        function isAuthenticated() {
+            return sessionStorage.getItem(AUTH_SESSION_KEY) === 'true';
+        }
+        
+        // Set authenticated state
+        function setAuthenticated() {
+            sessionStorage.setItem(AUTH_SESSION_KEY, 'true');
+            document.body.classList.add('authenticated');
+        }
+        
+        // Handle password form submission
+        async function handlePasswordSubmit(event) {
+            event.preventDefault();
+            const passwordInput = document.getElementById('password-input');
+            const errorDiv = document.getElementById('password-error');
+            const password = passwordInput.value;
+            
+            // Clear previous error
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+            
+            if (!password) {
+                errorDiv.textContent = 'Please enter a password';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            // Hash the entered password
+            const enteredHash = await hashPassword(password);
+            
+            // Compare with correct hash
+            if (enteredHash === CORRECT_PASSWORD_HASH) {
+                // Correct password - authenticate and hide splash
+                setAuthenticated();
+                const splashScreen = document.getElementById('splash-screen');
+                splashScreen.classList.add('hidden');
+                
+                // Show main content after animation
+                setTimeout(() => {
+                    splashScreen.style.display = 'none';
+                }, 500);
+            } else {
+                // Incorrect password
+                errorDiv.textContent = 'Incorrect password. Please try again.';
+                errorDiv.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // Shake animation
+                passwordInput.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    passwordInput.style.animation = '';
+                }, 500);
+            }
+        }
+        
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password-input');
+            const toggleBtn = document.getElementById('toggle-password');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+        
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (isAuthenticated()) {
+                setAuthenticated();
+                const splashScreen = document.getElementById('splash-screen');
+                splashScreen.style.display = 'none';
+            } else {
+                // Focus password input
+                setTimeout(() => {
+                    const passwordInput = document.getElementById('password-input');
+                    if (passwordInput) {
+                        passwordInput.focus();
+                    }
+                }, 100);
+            }
+        });
+        
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-10px); }
+                75% { transform: translateX(10px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+
     <!-- dat.GUI Initialization Script -->
     <script>
         // Wait for the page to load
@@ -7335,7 +7714,7 @@
         </a>
     </div>
     <span style="width: 100%; text-align: center; color: var(--ink); font-size: 0.9em;">
-        © 2026 Image Keepsake Studio. All rights reserved.
+        © 2026 Momenza. All rights reserved.
     </span>
 </div>
 

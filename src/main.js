@@ -1155,6 +1155,47 @@ class HeightfieldViewer {
             rotation: 0
         };
         
+        // Depth adjustment (default 0.6mm)
+        this.depth = 0.6;
+        // Total thickness constant (base + max relief)
+        this.totalThickness = 1.6; // mm (1.0mm base + 0.6mm max relief)
+        // Base thickness (will be adjusted to keep total constant)
+        this.baseThickness = 1.0; // Initial base thickness
+        
+        // Helper method to calculate effective base thickness
+        this.getEffectiveBaseThickness = function() {
+            // Base = total - depth, but ensure minimum base of 0.3mm
+            return Math.max(0.3, this.totalThickness - this.depth);
+        };
+        
+        // Helper method to read grayscale value from heightfield data, handling exceeded depth
+        this.readGrayscaleFromHeightfield = function(heightfieldData, pixelIndex) {
+            const r = heightfieldData.data[pixelIndex];
+            const g = heightfieldData.data[pixelIndex + 1];
+            const b = heightfieldData.data[pixelIndex + 2];
+            
+            // Check if this pixel has exceeded depth (R = 255, G > 0, B = 255 indicates exceeded)
+            if (r === 255 && g > 0 && b === 255) {
+                // Exceeded depth: base (1.0) + excess from G channel
+                // G channel stores normalized excess (0-1), scale back to actual excess
+                const maxGray = 2.0 / this.depth; // Max gray value (e.g., 3.33 for 0.6mm depth)
+                const excessNormalized = g / 255.0; // Normalized excess (0-1)
+                const excess = excessNormalized * (maxGray - 1.0); // Actual excess amount
+                return 1.0 + excess; // Can go up to maxGray (e.g., 3.33)
+            } else {
+                // Normal depth: use standard grayscale calculation
+                return (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+            }
+        };
+        
+        // Depth painting system
+        this.brushSize = 5; // Brush size in pixels (default 5)
+        this.paintingMode = 'add'; // 'add' or 'subtract'
+        this.paintInvertMode = false; // When true, inverts the effect based on current height
+        this.isPainting = false;
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+        
         // Text box system
         this.textBoxes = [];
         this.textBoxCounter = 0;
@@ -1286,6 +1327,7 @@ class HeightfieldViewer {
         // Setup event listeners and UI controls
         this.setupEventListeners();
         this.setupUIControls();
+        this.setupDepthPainting();
         
         // Setup back to upload button
         const backButton = document.getElementById('back-to-upload');
@@ -2469,7 +2511,8 @@ class HeightfieldViewer {
                 const radius = effectiveRadius; // For backward compatibility with existing code
                 const widthSegments = heightfieldData.width - 1;
                 const heightSegments = heightfieldData.height - 1;
-                const thickness = this.pendantThickness;
+                // Adjust base thickness to keep total thickness constant
+                const thickness = this.getEffectiveBaseThickness();
 
                 // Relief positions, normals, uvs
                 const reliefPositions = [];
@@ -2488,10 +2531,15 @@ class HeightfieldViewer {
                             const pixelX = Math.floor(u * (heightfieldData.width - 1));
                             const pixelY = heightfieldData.height - 1 - Math.floor(v * (heightfieldData.height - 1));
                             const pixelIndex = (pixelY * heightfieldData.width + pixelX) * 4;
-                            const gray = (heightfieldData.data[pixelIndex] * 0.299 +
-                                heightfieldData.data[pixelIndex + 1] * 0.587 +
-                                heightfieldData.data[pixelIndex + 2] * 0.114) / 255;
-                            z = gray * MAX_DEPTH;
+                            const gray = this.readGrayscaleFromHeightfield(heightfieldData, pixelIndex);
+                            // Apply depth scaling - depth controls relief intensity
+                            // The depth value directly scales the relief pattern
+                            // For exceeded values (gray > 1.0), we add additional depth beyond the base
+                            if (gray > 1.0) {
+                                z = this.depth + (gray - 1.0) * this.depth; // Can exceed up to 2x depth
+                            } else {
+                                z = gray * this.depth;
+                            }
                         }
                         grid.push({ px, py, z, u, v, inCircle: dist <= effectiveRadius });
                     }
@@ -2681,7 +2729,7 @@ class HeightfieldViewer {
                 if (this.currentObjectType === 'circular-pendant') {
                     // For upright circular pendant, no rotation needed
                     redLayerMesh.rotation.x = 0;
-                    redLayerMesh.position.y = this.pendantThickness / 2;
+                    redLayerMesh.position.y = this.getEffectiveBaseThickness() / 2;
                 } else {
                     // For other shapes, keep original flat rotation
                     redLayerMesh.rotation.x = -Math.PI / 2;
@@ -2719,9 +2767,19 @@ class HeightfieldViewer {
                     for (let j = 0; j <= jumpringTubularSegments; j++) {
                         const v = j / jumpringTubularSegments * Math.PI * 2;
                         
-                        // Base jumpring position
+                        // Base jumpring position - center it on the pendant (middle of total thickness)
+                        // Mesh is positioned at y = effectiveBaseThickness/2 in world coordinates
+                        // In local (geometry) coordinates, y=0 is at the mesh center (middle of base)
+                        // World coordinates: base bottom=0, base top=effectiveBaseThickness, relief top=effectiveBaseThickness+depth
+                        // World middle = totalThickness/2 = 0.8mm (constant)
+                        // To get world y = 0.8mm, we need: effectiveBaseThickness/2 + localY = 0.8mm
+                        // So: localY = 0.8mm - effectiveBaseThickness/2
+                        const effectiveBaseThickness = this.getEffectiveBaseThickness();
+                        const worldMiddleY = this.totalThickness / 2; // 0.8mm constant
+                        const meshCenterY = effectiveBaseThickness / 2; // Mesh is positioned here
+                        const pendantMiddleYLocal = worldMiddleY - meshCenterY; // Convert world middle to local coords
                         const baseX = (jumpringRadius + jumpringWireThickness * Math.cos(v)) * Math.cos(u);
-                        const baseY = (jumpringRadius + jumpringWireThickness * Math.cos(v)) * Math.sin(u) + this.pendantThickness / 2 + jumpringRadius + 11.45;
+                        const baseY = (jumpringRadius + jumpringWireThickness * Math.cos(v)) * Math.sin(u) + pendantMiddleYLocal + jumpringRadius + 11.45;
                         const baseZ = jumpringWireThickness * Math.sin(v);
                         
                         // Apply minimal, consistent relief to the jumpring to avoid kinks
@@ -2999,10 +3057,10 @@ class HeightfieldViewer {
                 if (this.currentObjectType === 'circular-pendant') {
                     // For circular pendant, rotate to stand upright and position bottom edge at y=0
                     mesh.rotation.x = 0; // Remove the flat rotation
-                    mesh.position.y = this.pendantThickness / 2;
+                    mesh.position.y = this.getEffectiveBaseThickness() / 2;
                 } else {
                     // Position so the bottom edge sits on the platform (y=0)
-                    mesh.position.y = this.pendantThickness / 2;
+                    mesh.position.y = this.getEffectiveBaseThickness() / 2;
                 }
                 
                 this.scene.add(mesh);
@@ -3061,7 +3119,8 @@ class HeightfieldViewer {
                 const radius = diameter / 2;
                 const widthSegments = heightfieldData.width - 1;
                 const heightSegments = heightfieldData.height - 1;
-                const thickness = this.pendantThickness;
+                // Adjust base thickness to keep total thickness constant
+                const thickness = this.getEffectiveBaseThickness();
 
                 // Relief positions, normals, uvs (EXACT COPY from circular-pendant)
                 const reliefPositions = [];
@@ -3080,10 +3139,15 @@ class HeightfieldViewer {
                             const pixelX = Math.floor(u * (heightfieldData.width - 1));
                             const pixelY = heightfieldData.height - 1 - Math.floor(v * (heightfieldData.height - 1));
                             const pixelIndex = (pixelY * heightfieldData.width + pixelX) * 4;
-                            const gray = (heightfieldData.data[pixelIndex] * 0.299 +
-                                heightfieldData.data[pixelIndex + 1] * 0.587 +
-                                heightfieldData.data[pixelIndex + 2] * 0.114) / 255;
-                            z = gray * MAX_DEPTH;
+                            const gray = this.readGrayscaleFromHeightfield(heightfieldData, pixelIndex);
+                            // Apply depth scaling - depth controls relief intensity
+                            // The depth value directly scales the relief pattern
+                            // For exceeded values (gray > 1.0), we add additional depth beyond the base
+                            if (gray > 1.0) {
+                                z = this.depth + (gray - 1.0) * this.depth; // Can exceed up to 2x depth
+                            } else {
+                                z = gray * this.depth;
+                            }
                         }
                         grid.push({ px, py, z, u, v, inCircle: dist <= radius });
                     }
@@ -3262,10 +3326,11 @@ class HeightfieldViewer {
                 
                 // Position earrings side by side with some spacing
                 const spacing = this.pendantDiameter * 1.2;
+                const effectiveThickness = this.getEffectiveBaseThickness();
                 mesh1.position.x = -spacing / 2;
-                mesh1.position.y = this.pendantThickness / 2;
+                mesh1.position.y = effectiveThickness / 2;
                 mesh2.position.x = spacing / 2;
-                mesh2.position.y = this.pendantThickness / 2;
+                mesh2.position.y = effectiveThickness / 2;
                 
                 // Create jump rings for each earring
                 const jumpringRadius = 2.5; // Made larger for visibility
@@ -3283,7 +3348,7 @@ class HeightfieldViewer {
                 const jumpring2 = new THREE.Mesh(jumpringGeometry.clone(), jumpringMaterial.clone());
                 
                 // Position jump rings at the top of each earring - made more visible
-                const earringTopY = this.pendantThickness / 2 + 15.0; // Much higher above the earring for visibility
+                const earringTopY = this.getEffectiveBaseThickness() / 2 + 15.0; // Much higher above the earring for visibility
                 jumpring1.position.set(-spacing / 2, earringTopY, 0);
                 jumpring2.position.set(spacing / 2, earringTopY, 0);
                 
@@ -3359,12 +3424,15 @@ class HeightfieldViewer {
             const pixelIndex = (pixelY * heightfieldData.width + pixelX) * 4;
 
             // Convert RGB to grayscale
-            const gray = (heightfieldData.data[pixelIndex] * 0.299 +
-                         heightfieldData.data[pixelIndex + 1] * 0.587 +
-                         heightfieldData.data[pixelIndex + 2] * 0.114) / 255;
+            const gray = this.readGrayscaleFromHeightfield(heightfieldData, pixelIndex);
 
-            // Apply height
-            positions[i + 2] = gray * MAX_DEPTH;
+            // Apply height - depth directly controls relief depth
+            // For exceeded values (gray > 1.0), we add additional depth beyond the base
+            if (gray > 1.0) {
+                positions[i + 2] = this.depth + (gray - 1.0) * this.depth; // Can exceed up to 2x depth
+            } else {
+                positions[i + 2] = gray * this.depth;
+            }
         }
 
         // IMPORTANT: Recompute normals after modifying vertices for correct lighting/reflections
@@ -3423,13 +3491,16 @@ class HeightfieldViewer {
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         
+        // Calculate effective base thickness for positioning
+        const effectiveThickness = this.getEffectiveBaseThickness();
+        
         if (this.currentObjectType === 'circular-pendant') {
             // For circular pendant, rotate to stand upright and position bottom edge at y=0
             mesh.rotation.x = 0; // Remove the flat rotation
-            mesh.position.y = this.pendantThickness / 2;
+            mesh.position.y = effectiveThickness / 2;
         } else {
             // Position so the bottom edge sits on the platform (y=0)
-            mesh.position.y = this.pendantThickness / 2;
+            mesh.position.y = effectiveThickness / 2;
         }
         
         this.scene.add(mesh);
@@ -3849,19 +3920,317 @@ class HeightfieldViewer {
     }
 
     updateJumpringPosition() {
-        if (!this.jumpring || !this.heightfield) return;
-        const heightfieldBounds = new THREE.Box3().setFromObject(this.heightfield);
-        const heightfieldSize = heightfieldBounds.getSize(new THREE.Vector3());
-        const heightfieldCenter = heightfieldBounds.getCenter(new THREE.Vector3());
+        if (!this.jumpring) return;
         
-        // Position jumpring slightly above the top edge for minimal intersection
-        let x = heightfieldCenter.x; // Use actual center X coordinate
-        let y = heightfieldCenter.y + heightfieldSize.y / 2 + 1; // 1mm above the top edge for minimal intersection
-        let z = heightfieldCenter.z; // Use actual center Z coordinate
+        // Position jumpring at the middle of the total pendant thickness
+        // World coordinates: base bottom=0, base top=effectiveBaseThickness, relief top=effectiveBaseThickness+depth
+        // Total thickness = effectiveBaseThickness + depth = totalThickness = 1.6mm (constant)
+        // Middle of total = totalThickness / 2 = 0.8mm (constant, regardless of depth)
+        const pendantMiddleY = this.totalThickness / 2; // Center of total pendant = 0.8mm (constant)
+        const jumpringRadius = 2; // Jumpring radius (matches geometry creation)
+        
+        // Use fixed X and Z positions (centered on pendant)
+        let x = 0; // Center X
+        let y = pendantMiddleY + jumpringRadius + 11.45; // Position at middle of pendant + offset
+        let z = 0; // Center Z
         
         this.jumpring.position.set(x, y, z);
         // No rotation needed - jumpring naturally hangs down
         this.jumpring.rotation.set(0, 0, 0);
+        
+        console.log(`🔧 Jumpring repositioned to Y: ${y.toFixed(2)}mm (pendant middle: ${pendantMiddleY.toFixed(2)}mm, total top: ${totalTopY.toFixed(2)}mm)`);
+    }
+
+    setupDepthPainting() {
+        // Add mouse event listeners for depth painting
+        const canvas = this.renderer.domElement;
+        const brushCursor = document.getElementById('brush-cursor');
+        
+        // Track if we're in painting mode (Ctrl/Cmd key held)
+        let isPaintingMode = false;
+        
+        // Function to update brush cursor position and size
+        const updateBrushCursor = (event) => {
+            if (!brushCursor || !isPaintingMode) {
+                if (brushCursor) brushCursor.style.display = 'none';
+                return;
+            }
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Calculate brush size in screen pixels
+            // The brush size is in heightfield pixels (1-50)
+            // We need to convert this to screen pixels based on the 3D scene scale
+            let brushSizePx = 20; // Default fallback
+            
+            if (this.heightfieldData && this.heightfield) {
+                // Get mouse position in normalized device coordinates
+                const mouseX = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                const mouseY = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                
+                // Use raycaster to find intersection point
+                this.raycaster.setFromCamera(new THREE.Vector2(mouseX, mouseY), this.camera);
+                const intersects = this.raycaster.intersectObject(this.heightfield, true);
+                
+                if (intersects.length > 0) {
+                    const intersection = intersects[0];
+                    const point = intersection.point;
+                    
+                    // Calculate world-space brush radius
+                    // Brush size is in heightfield pixels, pendant diameter maps to heightfield width
+                    const heightfieldWidth = this.heightfieldData.width;
+                    const pendantDiameter = this.pendantDiameter || 25; // mm
+                    const effectiveRadius = (pendantDiameter / 2) - this.borderThickness;
+                    
+                    // Convert brush size from heightfield pixels to world units (mm)
+                    const brushRadiusWorld = (this.brushSize || 5) * (effectiveRadius * 2) / heightfieldWidth;
+                    
+                    // Project world size to screen pixels
+                    // Get distance from camera to intersection point
+                    const distance = point.distanceTo(this.camera.position);
+                    
+                    // Calculate screen size: world size * (screen height / (2 * distance * tan(fov/2)))
+                    const fov = this.camera.fov * (Math.PI / 180);
+                    const screenHeight = rect.height;
+                    const worldToScreen = screenHeight / (2 * distance * Math.tan(fov / 2));
+                    brushSizePx = brushRadiusWorld * worldToScreen * 2; // *2 for diameter
+                    
+                    // Clamp to reasonable range
+                    brushSizePx = Math.max(10, Math.min(200, brushSizePx));
+                } else {
+                    // Fallback: use approximate calculation based on canvas size
+                    const canvasWidth = rect.width;
+                    const heightfieldWidth = this.heightfieldData.width;
+                    const scale = canvasWidth / heightfieldWidth;
+                    brushSizePx = (this.brushSize || 5) * scale;
+                }
+            }
+            
+            brushCursor.style.left = x + 'px';
+            brushCursor.style.top = y + 'px';
+            brushCursor.style.width = brushSizePx + 'px';
+            brushCursor.style.height = brushSizePx + 'px';
+            brushCursor.style.display = 'block';
+            
+            // Update color based on painting mode and invert mode
+            if (this.paintInvertMode) {
+                // Invert mode: use purple/blue color
+                brushCursor.style.borderColor = 'rgba(156, 39, 176, 0.8)';
+                brushCursor.style.background = 'rgba(156, 39, 176, 0.1)';
+            } else if (this.paintingMode === 'add') {
+                brushCursor.style.borderColor = 'rgba(76, 175, 80, 0.8)';
+                brushCursor.style.background = 'rgba(76, 175, 80, 0.1)';
+            } else {
+                brushCursor.style.borderColor = 'rgba(244, 67, 54, 0.8)';
+                brushCursor.style.background = 'rgba(244, 67, 54, 0.1)';
+            }
+        };
+        
+        const onMouseDown = (event) => {
+            if (!isPaintingMode || !this.heightfield || !this.heightfieldData) return;
+            
+            // Prevent OrbitControls from rotating
+            event.preventDefault();
+            event.stopPropagation();
+            this.isPainting = true;
+            this.paintOnMesh(event);
+            updateBrushCursor(event);
+        };
+        
+        const onMouseMove = (event) => {
+            updateBrushCursor(event);
+            
+            if (!isPaintingMode || !this.isPainting || !this.heightfield || !this.heightfieldData) return;
+            event.preventDefault();
+            event.stopPropagation();
+            this.paintOnMesh(event);
+        };
+        
+        const onMouseUp = () => {
+            this.isPainting = false;
+        };
+        
+        const onMouseLeave = () => {
+            this.isPainting = false;
+            if (brushCursor) brushCursor.style.display = 'none';
+        };
+        
+        // Toggle painting mode with Ctrl/Cmd key
+        const onKeyDown = (event) => {
+            if (event.ctrlKey || event.metaKey) {
+                isPaintingMode = true;
+                canvas.style.cursor = 'none'; // Hide default cursor when showing brush
+                // Temporarily disable OrbitControls rotation
+                if (this.controls) {
+                    this.controls.enableRotate = false;
+                }
+            }
+        };
+        
+        const onKeyUp = (event) => {
+            if (!event.ctrlKey && !event.metaKey) {
+                isPaintingMode = false;
+                canvas.style.cursor = 'default';
+                this.isPainting = false;
+                if (brushCursor) brushCursor.style.display = 'none';
+                // Re-enable OrbitControls rotation
+                if (this.controls) {
+                    this.controls.enableRotate = true;
+                }
+            }
+        };
+        
+        canvas.addEventListener('mousedown', onMouseDown);
+        canvas.addEventListener('mousemove', onMouseMove);
+        canvas.addEventListener('mouseup', onMouseUp);
+        canvas.addEventListener('mouseleave', onMouseLeave);
+        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener('keyup', onKeyUp);
+    }
+    
+    paintOnMesh(event) {
+        if (!this.heightfield || !this.heightfieldData) return;
+        
+        // Get mouse position in normalized device coordinates (-1 to +1)
+        const rect = this.renderer.domElement.getBoundingClientRect();
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        
+        // Update raycaster
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        
+        // Find intersections with the heightfield mesh (check recursively for groups)
+        const intersects = this.raycaster.intersectObject(this.heightfield, true);
+        
+        if (intersects.length > 0) {
+            // Find the first intersection that has UV coordinates (relief surface)
+            let intersection = null;
+            for (const inter of intersects) {
+                if (inter.uv && inter.object && inter.object.geometry && inter.object.geometry.attributes.uv) {
+                    intersection = inter;
+                    break;
+                }
+            }
+            
+            if (intersection && intersection.uv) {
+                const uv = intersection.uv;
+                
+                // Convert UV to pixel coordinates
+                const pixelX = Math.floor(uv.x * (this.heightfieldData.width - 1));
+                const pixelY = Math.floor((1 - uv.y) * (this.heightfieldData.height - 1));
+                
+                // Clamp to valid range
+                const clampedX = Math.max(0, Math.min(this.heightfieldData.width - 1, pixelX));
+                const clampedY = Math.max(0, Math.min(this.heightfieldData.height - 1, pixelY));
+                
+                // Paint with brush
+                this.applyBrushToHeightfield(clampedX, clampedY, this.paintingMode === 'add' ? 0.1 : -0.1);
+                
+                // Regenerate mesh
+                this.createHeightfieldMesh(this.heightfieldData);
+                
+                // Reposition jumpring if needed
+                if (this.jumpring && typeof this.updateJumpringPosition === 'function') {
+                    this.updateJumpringPosition();
+                }
+            }
+        }
+    }
+    
+    applyBrushToHeightfield(centerX, centerY, depthDelta) {
+        if (!this.heightfieldData || !this.heightfieldData.data) return;
+        
+        const { width, height, data } = this.heightfieldData;
+        const brushRadius = this.brushSize;
+        let depthChange = depthDelta; // 0.1 or -0.1
+        
+        // Convert depth change to grayscale change
+        // depth = gray * this.depth, so gray = depth / this.depth
+        // To change depth by delta, we need to change gray by delta / this.depth
+        const grayDelta = depthChange / this.depth;
+        
+        // Clamp to valid pixel range
+        const minX = Math.max(0, centerX - brushRadius);
+        const maxX = Math.min(width - 1, centerX + brushRadius);
+        const minY = Math.max(0, centerY - brushRadius);
+        const maxY = Math.min(height - 1, centerY + brushRadius);
+        
+        for (let y = minY; y <= maxY; y++) {
+            for (let x = minX; x <= maxX; x++) {
+                const dx = x - centerX;
+                const dy = y - centerY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                // Apply circular brush with smooth falloff
+                if (dist <= brushRadius) {
+                    const falloff = 1 - (dist / brushRadius); // Linear falloff from 1 to 0
+                    const pixelIndex = (y * width + x) * 4;
+                    
+                    // Get current RGB values
+                    const r = data[pixelIndex];
+                    const g = data[pixelIndex + 1];
+                    const b = data[pixelIndex + 2];
+                    
+                    // Calculate current grayscale value (0-1)
+                    const currentGray = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+                    
+                    // Apply invert mode logic: if enabled, invert the effect based on current height
+                    let effectiveGrayDelta = grayDelta * falloff;
+                    if (this.paintInvertMode) {
+                        // Invert mode: 
+                        // - If current area is dark (recessed/low), painting should raise it (make it brighter)
+                        // - If current area is bright (raised/high), painting should lower it (make it darker)
+                        // This means we push the value toward the opposite end
+                        
+                        // Determine if we're in a dark (recessed) or bright (raised) area
+                        const isDark = currentGray < 0.5; // Below middle = recessed/dark
+                        const isBright = currentGray > 0.5; // Above middle = raised/bright
+                        
+                        // In invert mode, we want to push toward the opposite:
+                        // - Dark areas → push toward bright (positive delta)
+                        // - Bright areas → push toward dark (negative delta)
+                        if (isDark) {
+                            // Recessed area: push toward raised (brighten)
+                            effectiveGrayDelta = Math.abs(grayDelta) * falloff;
+                        } else if (isBright) {
+                            // Raised area: push toward recessed (darken)
+                            effectiveGrayDelta = -Math.abs(grayDelta) * falloff;
+                        } else {
+                            // Exactly at middle: use normal behavior
+                            effectiveGrayDelta = grayDelta * falloff;
+                        }
+                    }
+                    
+                    // Apply depth change with falloff
+                    // Allow values > 1.0 to exceed normal depth limit
+                    // Max depth is 2mm, so if depth is 0.6mm, max gray = 2.0 / 0.6 = 3.33
+                    const maxGray = 2.0 / this.depth; // Allow up to 2mm total depth
+                    const newGray = Math.max(0, Math.min(maxGray, currentGray + effectiveGrayDelta));
+                    
+                    // Convert back to RGB (grayscale)
+                    // Store values 0-1 as normal grayscale (0-255)
+                    // Store values > 1.0 by encoding: R=255, G=excess (0-255), B=255
+                    if (newGray <= 1.0) {
+                        // Normal range: store as standard grayscale
+                        const grayValue = Math.round(newGray * 255);
+                        data[pixelIndex] = grayValue;
+                        data[pixelIndex + 1] = grayValue;
+                        data[pixelIndex + 2] = grayValue;
+                    } else {
+                        // Exceeded range: encode excess in G channel
+                        // R=255 (indicates exceeded), G=excess amount (0-255), B=255
+                        const excess = newGray - 1.0; // Amount over 1.0
+                        const excessNormalized = Math.min(1.0, excess / (maxGray - 1.0)); // Normalize to 0-1
+                        data[pixelIndex] = 255; // Marker for exceeded depth
+                        data[pixelIndex + 1] = Math.round(excessNormalized * 255); // Excess amount
+                        data[pixelIndex + 2] = 255; // Keep as white
+                    }
+                    // Alpha stays the same
+                }
+            }
+        }
     }
 
     createPlatform() {
@@ -3924,7 +4293,7 @@ class HeightfieldViewer {
         }
         const gridHelper = new THREE.GridHelper(gridSize, divisions, 0xffffff, 0x888888);
         // Position grid horizontally like a platform - pendant will sit on top
-        gridHelper.position.y = -this.pendantThickness / 2 - 0.5; // Just below the pendant bottom
+        gridHelper.position.y = -this.getEffectiveBaseThickness() / 2 - 0.5; // Just below the pendant bottom
         gridHelper.material.opacity = 0.5;
         gridHelper.material.transparent = true;
         this.grid = gridHelper;
@@ -4253,7 +4622,7 @@ class HeightfieldViewer {
         // This excludes only the jumpring, sprue, and red layer
         try {
             const { width, height, data } = heightfieldData;
-            const MAX_DEPTH = 0.6; // mm
+            const MAX_DEPTH = this.depth; // mm
             
             // Create geometry based on the current object type
             let geometry;
@@ -4266,7 +4635,9 @@ class HeightfieldViewer {
                     const outerRadius = diameter / 2; // Outer radius including border
                     const widthSegments = width - 1;
                     const heightSegments = height - 1;
-                    const thickness = this.pendantThickness;
+                    // Adjust base thickness to keep total thickness constant
+                    const maxReliefDepth = Math.max(this.depth, 0.6);
+                    const thickness = Math.max(0.3, this.totalThickness - maxReliefDepth);
                     
                     // Relief positions, normals, uvs
                     const reliefPositions = [];
@@ -4291,7 +4662,11 @@ class HeightfieldViewer {
                                 const gray = (data[pixelIndex] * 0.299 +
                                     data[pixelIndex + 1] * 0.587 +
                                     data[pixelIndex + 2] * 0.114) / 255;
-                                z = gray * MAX_DEPTH;
+                                // Scale relief pattern intensity by depth, but clamp maximum to 0.6mm
+                                // This ensures total thickness remains constant (thickness + 0.6mm max)
+                                const MAX_RELIEF = 0.6; // Maximum relief depth (keeps total thickness constant)
+                                const depthScale = Math.min(this.depth / 0.6, 1.0); // Scale factor, clamped to 1.0 max
+                                z = gray * MAX_RELIEF * depthScale; // Scale pattern intensity, but max height stays at 0.6mm
                             }
                             
                             grid.push({ px, py, z, u, v, inCircle: dist <= effectiveRadius });
@@ -4476,7 +4851,7 @@ class HeightfieldViewer {
         // This recreates just the pendant relief without any jumpring or sprue
         try {
             const { width, height, data } = heightfieldData;
-            const MAX_DEPTH = 0.6; // mm
+            const MAX_DEPTH = this.depth; // mm
             
             // Create geometry based on the current object type
             let geometry;
@@ -4512,7 +4887,11 @@ class HeightfieldViewer {
                                 const gray = (data[pixelIndex] * 0.299 +
                                     data[pixelIndex + 1] * 0.587 +
                                     data[pixelIndex + 2] * 0.114) / 255;
-                                z = gray * MAX_DEPTH;
+                                // Scale relief pattern intensity by depth, but clamp maximum to 0.6mm
+                                // This ensures total thickness remains constant (thickness + 0.6mm max)
+                                const MAX_RELIEF = 0.6; // Maximum relief depth (keeps total thickness constant)
+                                const depthScale = Math.min(this.depth / 0.6, 1.0); // Scale factor, clamped to 1.0 max
+                                z = gray * MAX_RELIEF * depthScale; // Scale pattern intensity, but max height stays at 0.6mm
                             }
                             
                             reliefPositions.push(px, py, z);
@@ -4637,7 +5016,7 @@ class HeightfieldViewer {
             mesh.position.set(
                 textBox.positionX,
                 textBox.positionY,
-                -this.pendantThickness / 2 - fontHeight - 1.0 + textBox.positionZ
+                -this.getEffectiveBaseThickness() / 2 - fontHeight - 1.0 + textBox.positionZ
             );
             
             // Rotate to face backward (like an engraving on the back)
@@ -5031,7 +5410,7 @@ class HeightfieldViewer {
             mesh.position.set(
                 textBox.positionX,
                 textBox.positionY,
-                -this.pendantThickness / 2 - fontHeight - 1.0 + textBox.positionZ
+                -this.getEffectiveBaseThickness() / 2 - fontHeight - 1.0 + textBox.positionZ
             );
             
             // Rotate to face backward (like an engraving on the back)
@@ -5125,7 +5504,7 @@ class HeightfieldViewer {
             group.position.set(
                 textBox.positionX,
                 textBox.positionY,
-                -this.pendantThickness / 2 - 1.3 + textBox.positionZ
+                -this.getEffectiveBaseThickness() / 2 - 1.3 + textBox.positionZ
             );
             
             // Rotate to face backward (like an engraving on the back)
@@ -6285,5 +6664,336 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('⚠️ Invert requested but viewer not ready');
         }
     });
+    
+    // Wire depth adjustment controls
+    const depthControls = document.getElementById('depth-adjustment-controls');
+    const depthDecreaseBtn = document.getElementById('depth-decrease-btn');
+    const depthIncreaseBtn = document.getElementById('depth-increase-btn');
+    const depthValueDisplay = document.getElementById('depth-value-display');
+    
+    if (depthControls && depthDecreaseBtn && depthIncreaseBtn && depthValueDisplay) {
+        // Function to update depth display
+        function updateDepthDisplay() {
+            if (window.viewer && window.viewer.depth !== undefined) {
+                depthValueDisplay.textContent = window.viewer.depth.toFixed(1);
+            } else {
+                depthValueDisplay.textContent = '0.6';
+            }
+        }
+        
+        // Function to adjust depth and regenerate mesh
+        function adjustDepth(delta) {
+            if (!window.viewer || !window.viewer.heightfieldData) {
+                console.warn('⚠️ Cannot adjust depth: viewer or heightfield data not available');
+                return;
+            }
+            
+            // Update depth value (clamp to reasonable range to keep base thickness valid)
+            const newDepth = Math.max(0.1, Math.min(1.3, window.viewer.depth + delta)); // Max 1.3mm to keep base >= 0.3mm
+            window.viewer.depth = newDepth;
+            
+            // Update base thickness to keep total constant
+            window.viewer.baseThickness = window.viewer.getEffectiveBaseThickness();
+            
+            console.log(`🔧 Depth adjusted to: ${window.viewer.depth.toFixed(1)}mm, base thickness: ${window.viewer.baseThickness.toFixed(1)}mm`);
+            
+            // Update display
+            updateDepthDisplay();
+            
+            // Regenerate mesh with new depth
+            if (typeof window.viewer.createHeightfieldMesh === 'function') {
+                window.viewer.createHeightfieldMesh(window.viewer.heightfieldData);
+                console.log('✅ Mesh regenerated with new depth');
+                
+                // Reposition jumpring to stay centered after depth change
+                if (typeof window.viewer.updateJumpringPosition === 'function') {
+                    window.viewer.updateJumpringPosition();
+                    console.log('✅ Jumpring repositioned to center');
+                }
+            } else {
+                console.error('❌ createHeightfieldMesh function not available');
+            }
+        }
+        
+        // Set up button handlers
+        depthDecreaseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            adjustDepth(-0.1);
+        });
+        
+        depthIncreaseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            adjustDepth(0.1);
+        });
+        
+        // Add touch handlers for mobile
+        depthDecreaseBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            adjustDepth(-0.1);
+        }, { passive: false });
+        
+        depthIncreaseBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            adjustDepth(0.1);
+        }, { passive: false });
+        
+        // Add hover effects
+        depthDecreaseBtn.addEventListener('mouseenter', () => {
+            depthDecreaseBtn.style.background = 'rgba(0, 0, 0, 0.1)';
+            depthDecreaseBtn.style.transform = 'scale(1.1)';
+        });
+        depthDecreaseBtn.addEventListener('mouseleave', () => {
+            depthDecreaseBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            depthDecreaseBtn.style.transform = 'scale(1)';
+        });
+        
+        depthIncreaseBtn.addEventListener('mouseenter', () => {
+            depthIncreaseBtn.style.background = 'rgba(0, 0, 0, 0.1)';
+            depthIncreaseBtn.style.transform = 'scale(1.1)';
+        });
+        depthIncreaseBtn.addEventListener('mouseleave', () => {
+            depthIncreaseBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+            depthIncreaseBtn.style.transform = 'scale(1)';
+        });
+        
+        // Wire brush painting controls
+        const paintControls = document.getElementById('depth-painting-controls');
+        const brushSizeDecreaseBtn = document.getElementById('brush-size-decrease-btn');
+        const brushSizeIncreaseBtn = document.getElementById('brush-size-increase-btn');
+        const brushSizeInput = document.getElementById('brush-size-input');
+        const paintModeAddBtn = document.getElementById('paint-mode-add-btn');
+        const paintModeSubtractBtn = document.getElementById('paint-mode-subtract-btn');
+        
+        if (paintControls && brushSizeDecreaseBtn && brushSizeIncreaseBtn && brushSizeInput && paintModeAddBtn && paintModeSubtractBtn) {
+            // Function to update brush size input
+            function updateBrushSizeInput() {
+                if (window.viewer && window.viewer.brushSize !== undefined) {
+                    brushSizeInput.value = window.viewer.brushSize;
+                } else {
+                    brushSizeInput.value = '5';
+                }
+            }
+            
+            // Function to set brush size (with validation)
+            function setBrushSize(newSize) {
+                if (!window.viewer) {
+                    console.warn('⚠️ Cannot set brush size: viewer not available');
+                    return;
+                }
+                
+                const clampedSize = Math.max(1, Math.min(200, parseInt(newSize) || 5));
+                window.viewer.brushSize = clampedSize;
+                console.log(`🖌️ Brush size set to: ${clampedSize}px`);
+                updateBrushSizeInput();
+            }
+            
+            // Function to adjust brush size
+            function adjustBrushSize(delta) {
+                if (!window.viewer) {
+                    console.warn('⚠️ Cannot adjust brush size: viewer not available');
+                    return;
+                }
+                
+                const newSize = Math.max(1, Math.min(200, (window.viewer.brushSize || 5) + delta));
+                setBrushSize(newSize);
+            }
+            
+            // Handle direct input
+            brushSizeInput.addEventListener('change', (e) => {
+                const value = parseInt(e.target.value);
+                if (!isNaN(value)) {
+                    setBrushSize(value);
+                } else {
+                    updateBrushSizeInput(); // Reset to current value if invalid
+                }
+            });
+            
+            brushSizeInput.addEventListener('blur', (e) => {
+                const value = parseInt(e.target.value);
+                if (isNaN(value) || value < 1 || value > 200) {
+                    updateBrushSizeInput(); // Reset to current value if invalid
+                }
+            });
+            
+            // Function to set painting mode
+            function setPaintingMode(mode) {
+                if (!window.viewer) return;
+                
+                window.viewer.paintingMode = mode;
+                console.log(`🖌️ Painting mode set to: ${mode}`);
+                
+                // Update button styles
+                if (mode === 'add') {
+                    paintModeAddBtn.style.background = 'rgba(76, 175, 80, 0.9)';
+                    paintModeAddBtn.style.color = 'white';
+                    paintModeSubtractBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+                    paintModeSubtractBtn.style.color = '#333';
+                } else {
+                    paintModeAddBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+                    paintModeAddBtn.style.color = '#333';
+                    paintModeSubtractBtn.style.background = 'rgba(244, 67, 54, 0.9)';
+                    paintModeSubtractBtn.style.color = 'white';
+                }
+            }
+            
+            // Set up button handlers
+            brushSizeDecreaseBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                adjustBrushSize(-1);
+            });
+            
+            brushSizeIncreaseBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                adjustBrushSize(1);
+            });
+            
+            paintModeAddBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setPaintingMode('add');
+            });
+            
+            paintModeSubtractBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setPaintingMode('subtract');
+            });
+            
+            // Add touch handlers for mobile
+            brushSizeDecreaseBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                adjustBrushSize(-1);
+            }, { passive: false });
+            
+            brushSizeIncreaseBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                adjustBrushSize(1);
+            }, { passive: false });
+            
+            paintModeAddBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setPaintingMode('add');
+            }, { passive: false });
+            
+            paintModeSubtractBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setPaintingMode('subtract');
+            }, { passive: false });
+            
+            // Invert mode toggle
+            const paintInvertToggleBtn = document.getElementById('paint-invert-toggle-btn');
+            if (paintInvertToggleBtn) {
+                function toggleInvertMode() {
+                    if (!window.viewer) return;
+                    
+                    window.viewer.paintInvertMode = !window.viewer.paintInvertMode;
+                    const isInverted = window.viewer.paintInvertMode;
+                    
+                    console.log(`🔄 Invert mode ${isInverted ? 'enabled' : 'disabled'}`);
+                    
+                    // Update button text and style
+                    if (isInverted) {
+                        paintInvertToggleBtn.textContent = '🔄 Invert Mode: On';
+                        paintInvertToggleBtn.style.background = 'rgba(156, 39, 176, 0.9)';
+                        paintInvertToggleBtn.style.color = 'white';
+                    } else {
+                        paintInvertToggleBtn.textContent = '🔄 Invert Mode: Off';
+                        paintInvertToggleBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+                        paintInvertToggleBtn.style.color = '#333';
+                    }
+                }
+                
+                paintInvertToggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleInvertMode();
+                });
+                
+                paintInvertToggleBtn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleInvertMode();
+                }, { passive: false });
+            }
+            
+            // Initialize display and mode
+            updateBrushSizeInput();
+            setPaintingMode('add');
+            
+            // Function to show/hide paint controls based on image presence
+            function updatePaintControlsVisibility() {
+                if (!paintControls) return;
+                
+                const hasImage = window.viewer && window.viewer.heightfieldData;
+                if (hasImage) {
+                    paintControls.style.display = 'flex';
+                } else {
+                    paintControls.style.display = 'none';
+                }
+            }
+            
+            // Update visibility when image is loaded
+            updatePaintControlsVisibility();
+            
+            // Check periodically for image changes
+            setInterval(() => {
+                updatePaintControlsVisibility();
+            }, 1000);
+        }
+        
+        // Function to show/hide depth controls based on image presence
+        function updateDepthControlsVisibility() {
+            if (!depthControls) return;
+            
+            // Check if viewer has heightfield data (image is loaded)
+            const hasImage = window.viewer && window.viewer.heightfieldData && window.viewer.heightfield;
+            
+            if (hasImage) {
+                depthControls.style.display = 'flex';
+                updateDepthDisplay();
+            } else {
+                depthControls.style.display = 'none';
+            }
+        }
+        
+        // Monitor for image loading
+        const checkImageInterval = setInterval(() => {
+            updateDepthControlsVisibility();
+        }, 1000);
+        
+        // Clear interval after 5 minutes
+        setTimeout(() => clearInterval(checkImageInterval), 300000);
+        
+        // Initial update
+        updateDepthControlsVisibility();
+        
+        // Also update when viewer is available
+        const checkViewerInterval = setInterval(() => {
+            if (window.viewer) {
+                clearInterval(checkViewerInterval);
+                updateDepthControlsVisibility();
+                // Update display periodically
+                setInterval(() => {
+                    if (depthControls.style.display !== 'none') {
+                        updateDepthDisplay();
+                    }
+                }, 2000);
+            }
+        }, 100);
+        
+        console.log('✅ Depth adjustment controls initialized');
+    } else {
+        console.warn('⚠️ Depth adjustment controls not found');
+    }
 });
 
