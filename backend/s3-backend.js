@@ -23,6 +23,8 @@ app.use(cors({
     origin: [
         'https://obblie.github.io',      // GitHub Pages domain
         'https://img2pen.onrender.com',  // Render frontend domain
+        'https://momenza.io',            // Custom domain
+        'https://www.momenza.io',        // Custom domain with www
         'http://localhost:5173',         // For local development
         'http://localhost:3000'          // For local development
     ],
