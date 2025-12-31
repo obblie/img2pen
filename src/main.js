@@ -5823,19 +5823,135 @@ class HeightfieldViewer {
 
 }
 
-// Initialize the viewer
-console.log('🔧 About to create HeightfieldViewer...');
-try {
-    window.viewer = new HeightfieldViewer(); 
-    console.log('✅ HeightfieldViewer created successfully:', window.viewer);
-} catch (error) {
-    console.error('❌ Failed to create HeightfieldViewer:', error);
-    throw error;
+// Initialize the viewer - wait for authentication if needed
+let viewerInitialized = false;
+
+function initializeViewer() {
+    // Check if already initialized
+    if (viewerInitialized || window.viewer) {
+        if (viewerInitialized) {
+            console.log('✅ HeightfieldViewer already initialized');
+        }
+        return;
+    }
+    
+    // Check if content is visible (authenticated)
+    const isAuthenticated = document.body.classList.contains('authenticated') || 
+                           sessionStorage.getItem('momenza_authenticated') === 'true';
+    const canvasContainer = document.getElementById('canvas-container');
+    const mainContent = document.getElementById('main-site-container');
+    
+    // More robust check - ensure content is actually visible
+    const isContentVisible = mainContent && 
+                            (mainContent.offsetParent !== null || 
+                             window.getComputedStyle(mainContent).display !== 'none');
+    
+    if (!isAuthenticated || !canvasContainer || !isContentVisible) {
+        if (!isAuthenticated) {
+            console.log('⏳ Waiting for authentication before initializing viewer...');
+        } else if (!isContentVisible) {
+            console.log('⏳ Waiting for content to be visible before initializing viewer...');
+        } else {
+            console.log('⏳ Waiting for canvas container before initializing viewer...');
+        }
+        // Wait and retry
+        setTimeout(initializeViewer, 500);
+        return;
+    }
+    
+    console.log('🔧 About to create HeightfieldViewer...');
+    try {
+        window.viewer = new HeightfieldViewer(); 
+        viewerInitialized = true;
+        console.log('✅ HeightfieldViewer created successfully:', window.viewer);
+        
+        // Attach OpenAI functions immediately after viewer is created
+        if (typeof generateImageWithOpenAI !== 'undefined') {
+            window.viewer.generateImageWithOpenAI = generateImageWithOpenAI;
+        }
+        if (typeof uploadDalleImageToS3 !== 'undefined') {
+            window.viewer.uploadDalleImageToS3 = uploadDalleImageToS3;
+        }
+        
+        // Load default image after viewer is initialized
+        loadDefaultImage();
+    } catch (error) {
+        console.error('❌ Failed to create HeightfieldViewer:', error);
+        // Retry after a delay
+        setTimeout(() => initializeViewer(), 1000);
+        return;
+    }
 }
 
-// Add OpenAI functions to viewer object for modal access
-window.viewer.generateImageWithOpenAI = generateImageWithOpenAI;
-window.viewer.uploadDalleImageToS3 = uploadDalleImageToS3;
+// Don't start initialization immediately - wait for authentication
+// The viewer will only initialize when:
+// 1. Authentication event is fired, OR
+// 2. User is already authenticated (on page reload) AND DOM is ready
+
+// Check on DOM ready (for page reloads when already authenticated)
+function checkAndInitialize() {
+    // ULTRA STRICT check: Must have BOTH sessionStorage AND body class AND splash must be hidden
+    const hasSessionAuth = sessionStorage.getItem('momenza_authenticated') === 'true';
+    const hasBodyClass = document.body.classList.contains('authenticated');
+    const splashScreen = document.getElementById('splash-screen');
+    
+    // Check if splash is actually hidden (multiple checks)
+    let isSplashHidden = false;
+    if (!splashScreen) {
+        isSplashHidden = true; // No splash screen = hidden
+    } else {
+        const style = window.getComputedStyle(splashScreen);
+        isSplashHidden = (splashScreen.style.display === 'none' || 
+                         style.display === 'none' ||
+                         splashScreen.classList.contains('hidden')) &&
+                        style.visibility !== 'visible';
+    }
+    
+    // Only initialize if ALL THREE conditions are met
+    const shouldInitialize = hasSessionAuth && hasBodyClass && isSplashHidden;
+    
+    if (shouldInitialize) {
+        console.log('🔐 Already authenticated (reload), initializing viewer...');
+        setTimeout(initializeViewer, 300);
+    } else {
+        console.log('⏳ Authentication check:', {
+            hasSessionAuth,
+            hasBodyClass,
+            isSplashHidden,
+            willWait: true
+        });
+        // Don't initialize - wait for authentication event
+        // The 'authenticated' event listener will handle initialization
+    }
+}
+
+// Wait longer before checking to ensure splash screen logic has run
+// IMPORTANT: Only check for existing authentication after a delay to ensure
+// the splash screen authentication check has run first
+if (!window.viewerCheckStarted) {
+    window.viewerCheckStarted = true;
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait longer to ensure authentication check in index.html has run first
+            // This gives the splash screen time to set up and check sessionStorage
+            setTimeout(checkAndInitialize, 1000);
+        }, { once: true });
+    } else {
+        // DOM already loaded - wait longer to ensure other scripts have run
+        setTimeout(checkAndInitialize, 1000);
+    }
+}
+
+// Listen for custom auth event (only once)
+if (!window.viewerAuthListenerAdded) {
+    window.viewerAuthListenerAdded = true;
+    window.addEventListener('authenticated', function() {
+        console.log('🔐 Authentication event received, initializing viewer...');
+        setTimeout(initializeViewer, 200);
+    }, { once: false }); // Keep listener active in case of multiple auth events, but initializeViewer has guards
+}
+
+// OpenAI functions will be attached in initializeViewer() after viewer is created
 
 // Demo/best-practices badge helpers
 const DEMO_MESSAGE_KEY = 'demoMessageSeen';
@@ -5886,52 +6002,46 @@ sessionStorage.removeItem(DEMO_MESSAGE_KEY);
 // Attempt to show immediately in case default image load is slow
 setTimeout(showDemoMessageIfEligible, 0);
 
-// Load default image (pet.png) on page load - no delay
-if (window.viewer) {
-    console.log('🖼️ Loading default image: pet.png');
+// Load default image (pet.png) - only after authentication
+function loadDefaultImage() {
+    const isAuthenticated = document.body.classList.contains('authenticated') || 
+                           sessionStorage.getItem('momenza_authenticated') === 'true';
+    if (!isAuthenticated) {
+        // Wait for authentication
+        window.addEventListener('authenticated', loadDefaultImage, { once: true });
+        return;
+    }
     
-    // Fetch the pet.png image with cache-busting to ensure fresh load
-    const timestamp = new Date().getTime();
-    fetch(`/pet.png?t=${timestamp}`, { cache: 'no-store' })
-        .then(response => response.blob())
-        .then(blob => {
-            // Create a file object from the blob
-            const file = new File([blob], 'pet.png', { type: 'image/png' });
-            
-            // Process the image with auto-crop (top portion) and no loading screen
-            window.viewer.processImage(file, true, false, false); // true for auto-crop, false for no loading screen, false for no S3 upload
-            
-            // Show demo message for initial load
-            showDemoMessageIfEligible();
-            
-            console.log('✅ Default image loaded successfully');
-        })
-        .catch(error => {
-            console.error('❌ Failed to load default image:', error);
-        });
-} else {
-    // If viewer not ready, wait for it (but only if absolutely necessary)
-    const checkViewer = setInterval(() => {
-        if (window.viewer) {
-            clearInterval(checkViewer);
-            console.log('🖼️ Loading default image: pet.png');
-            
-            // Fetch with cache-busting to ensure fresh load
-            const timestamp = new Date().getTime();
-            fetch(`/pet.png?t=${timestamp}`, { cache: 'no-store' })
-                .then(response => response.blob())
-                .then(blob => {
-                    const file = new File([blob], 'pet.png', { type: 'image/png' });
-                    window.viewer.processImage(file, true, false, false);
-                    showDemoMessageIfEligible();
-                    console.log('✅ Default image loaded successfully');
-                })
-                .catch(error => {
-                    console.error('❌ Failed to load default image:', error);
-                });
-        }
-    }, 10); // Check every 10ms instead of waiting 1 second
+    if (window.viewer) {
+        console.log('🖼️ Loading default image: pet.png');
+        
+        // Fetch the pet.png image with cache-busting to ensure fresh load
+        const timestamp = new Date().getTime();
+        fetch(`/pet.png?t=${timestamp}`, { cache: 'no-store' })
+            .then(response => response.blob())
+            .then(blob => {
+                // Create a file object from the blob
+                const file = new File([blob], 'pet.png', { type: 'image/png' });
+                
+                // Process the image with auto-crop (top portion) and no loading screen
+                window.viewer.processImage(file, true, false, false); // true for auto-crop, false for no loading screen, false for no S3 upload
+                
+                // Show demo message for initial load
+                showDemoMessageIfEligible();
+                
+                console.log('✅ Default image loaded successfully');
+            })
+            .catch(error => {
+                console.error('❌ Failed to load default image:', error);
+            });
+    } else {
+        // If viewer not ready, wait for it
+        setTimeout(loadDefaultImage, 500);
+    }
 }
+
+// Don't load default image immediately - wait for authentication
+// loadDefaultImage() will be called after viewer is initialized in initializeViewer()
 
 // Show deployment GUID in lower left
 fetch('./version.json')
@@ -6595,15 +6705,39 @@ function enhanceMobileCropping() {
     }
 }
 
-// Initialize mobile menu when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeMobileMenu);
-} else {
-    initializeMobileMenu();
+// Initialize mobile menu - only after authentication
+function initializeMobileMenuAfterAuth() {
+    const isAuthenticated = document.body.classList.contains('authenticated') || 
+                           sessionStorage.getItem('momenza_authenticated') === 'true';
+    if (isAuthenticated) {
+        initializeMobileMenu();
+    } else {
+        window.addEventListener('authenticated', initializeMobileMenuAfterAuth, { once: true });
+    }
 }
 
-// Initialize mobile cropping enhancements
-enhanceMobileCropping();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeMobileMenuAfterAuth);
+} else {
+    initializeMobileMenuAfterAuth();
+}
+
+// Initialize mobile cropping enhancements - only after authentication
+function enhanceMobileCroppingAfterAuth() {
+    const isAuthenticated = document.body.classList.contains('authenticated') || 
+                           sessionStorage.getItem('momenza_authenticated') === 'true';
+    if (isAuthenticated) {
+        enhanceMobileCropping();
+    } else {
+        window.addEventListener('authenticated', enhanceMobileCroppingAfterAuth, { once: true });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', enhanceMobileCroppingAfterAuth);
+} else {
+    enhanceMobileCroppingAfterAuth();
+}
 
 // Draggable control panel functionality
 // Control panel is fixed - no drag functionality needed
@@ -6613,14 +6747,24 @@ enhanceMobileCropping();
 // Simple draggable control panel
 let dragInitialized = false;
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded - setting up control panel...');
-    
-
-    
+// Setup control panel - only after authentication
+function setupControlPanelAfterAuth() {
+    const isAuthenticated = document.body.classList.contains('authenticated') || 
+                           sessionStorage.getItem('momenza_authenticated') === 'true';
+    if (isAuthenticated) {
+        console.log('DOM loaded - setting up control panel...');
         // Control panel is fixed in position - no drag functionality
-    console.log('Control panel is fixed in position');
-});
+        console.log('Control panel is fixed in position');
+    } else {
+        window.addEventListener('authenticated', setupControlPanelAfterAuth, { once: true });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupControlPanelAfterAuth);
+} else {
+    setupControlPanelAfterAuth();
+}
 
 // Make functions globally available at the end of the file
 // This ensures all functions are defined before being assigned to window

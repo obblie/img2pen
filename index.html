@@ -5,6 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Momenza - Create 3D Jewelry from Your Photos</title>
     <link rel="icon" type="image/x-icon" href="/momenzafav.ico">
+    
+    <!-- Canonical URL and Redirect: Prefer www subdomain -->
+    <link rel="canonical" href="https://www.momenza.io">
+    <script>
+    // Redirect root domain to www subdomain for SSL compatibility
+    if (window.location.hostname === 'momenza.io' && !window.location.hostname.startsWith('www.')) {
+        window.location.replace('https://www.momenza.io' + window.location.pathname + window.location.search + window.location.hash);
+    }
+    </script>
+    
+    <!-- Meta Pixel Code -->
+    <script type="module">
+    // Get Meta Pixel ID from environment variable (Vite exposes VITE_ prefixed vars)
+    const META_PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID || '1559480902057075';
+    
+    // Initialize Meta Pixel
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', META_PIXEL_ID);
+    fbq('track', 'PageView');
+    </script>
+    <!-- End Meta Pixel Code -->
+    
     <!-- Tailwind CDN removed for production safety. Use built CSS or PostCSS/CLI if needed. -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
@@ -3525,6 +3554,13 @@
 </head>
 <body>
 
+    <!-- Meta Pixel Noscript Fallback -->
+    <noscript>
+        <img height="1" width="1" style="display:none"
+        src="https://www.facebook.com/tr?id=1559480902057075&ev=PageView&noscript=1"
+        />
+    </noscript>
+
     <!-- Password Protected Splash Screen -->
     <div id="splash-screen" class="splash-screen">
         <div class="splash-content">
@@ -4843,6 +4879,25 @@
                 // Show main content after animation
                 setTimeout(() => {
                     splashScreen.style.display = 'none';
+                    // Ensure main content is visible
+                    const mainContent = document.getElementById('main-site-container');
+                    if (mainContent) {
+                        mainContent.style.display = 'block';
+                    }
+                    // Dispatch authentication event only once
+                    if (!window.authEventDispatched) {
+                        window.authEventDispatched = true;
+                        window.dispatchEvent(new CustomEvent('authenticated'));
+                        // Trigger initialization after a brief delay to ensure DOM is ready
+                        setTimeout(() => {
+                            // Trigger window load event for scripts that depend on it
+                            if (document.readyState === 'complete') {
+                                window.dispatchEvent(new Event('load'));
+                            }
+                            // Trigger resize to ensure proper layout
+                            window.dispatchEvent(new Event('resize'));
+                        }, 100);
+                    }
                 }, 500);
             } else {
                 // Incorrect password
@@ -4879,6 +4934,18 @@
                 setAuthenticated();
                 const splashScreen = document.getElementById('splash-screen');
                 splashScreen.style.display = 'none';
+                // Ensure main content is visible
+                const mainContent = document.getElementById('main-site-container');
+                if (mainContent) {
+                    mainContent.style.display = 'block';
+                }
+                // Dispatch authentication event only once after a brief delay to ensure DOM is ready
+                if (!window.authEventDispatched) {
+                    window.authEventDispatched = true;
+                    setTimeout(() => {
+                        window.dispatchEvent(new CustomEvent('authenticated'));
+                    }, 200);
+                }
             } else {
                 // Focus password input
                 setTimeout(() => {
@@ -6567,27 +6634,116 @@
     <script type="text/javascript">
     /*<![CDATA[*/
     (function () {
-      var scriptURL = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
-      if (window.ShopifyBuy) {
-        if (window.ShopifyBuy.UI) {
-          ShopifyBuyInit();
-        } else {
-          loadScript();
+      // Prevent multiple initializations
+      if (window.shopifyInitialized) {
+        console.log('✅ Shopify already initialized, skipping...');
+        return;
+      }
+      
+      // Flag to prevent multiple script loads
+      let shopifyScriptLoading = false;
+      let shopifyScriptLoaded = false;
+      
+      // Wait for authentication before initializing Shopify
+      function waitForAuthAndInit() {
+        // Check if already initialized
+        if (window.shopifyInitialized || window.shopifyProductComponent) {
+          return;
         }
-      } else {
-        loadScript();
+        
+        const isAuthenticated = document.body.classList.contains('authenticated') || 
+                               sessionStorage.getItem('momenza_authenticated') === 'true';
+        const splashScreen = document.getElementById('splash-screen');
+        const isSplashHidden = !splashScreen || 
+                             splashScreen.style.display === 'none' || 
+                             splashScreen.classList.contains('hidden');
+        
+        if (!isAuthenticated || !isSplashHidden) {
+          // Only add event listener once
+          if (!window.shopifyAuthListenerAdded) {
+            window.shopifyAuthListenerAdded = true;
+            window.addEventListener('authenticated', function initShopify() {
+              if (!window.shopifyInitialized) {
+                setTimeout(loadShopifyScript, 300);
+              }
+            }, { once: true });
+          }
+          return;
+        }
+        
+        // Already authenticated, load immediately
+        loadShopifyScript();
       }
-      function loadScript() {
-        var script = document.createElement('script');
-        script.async = true;
-        script.src = scriptURL;
-        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(script);
-        script.onload = ShopifyBuyInit;
+      
+      function loadShopifyScript() {
+        // Prevent multiple loads
+        if (shopifyScriptLoading || shopifyScriptLoaded || window.shopifyInitialized) {
+          return;
+        }
+        
+        shopifyScriptLoading = true;
+        var scriptURL = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
+        
+        // Check if script already exists in DOM
+        const existingScript = document.querySelector('script[src="' + scriptURL + '"]');
+        if (existingScript) {
+          shopifyScriptLoaded = true;
+          if (window.ShopifyBuy && window.ShopifyBuy.UI) {
+            ShopifyBuyInit();
+          } else {
+            existingScript.addEventListener('load', ShopifyBuyInit, { once: true });
+          }
+          return;
+        }
+        
+        if (window.ShopifyBuy) {
+          if (window.ShopifyBuy.UI) {
+            shopifyScriptLoaded = true;
+            ShopifyBuyInit();
+          } else {
+            var script = document.createElement('script');
+            script.async = true;
+            script.src = scriptURL;
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(script);
+            script.onload = function() {
+              shopifyScriptLoaded = true;
+              ShopifyBuyInit();
+            };
+          }
+        } else {
+          var script = document.createElement('script');
+          script.async = true;
+          script.src = scriptURL;
+          (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(script);
+          script.onload = function() {
+            shopifyScriptLoaded = true;
+            ShopifyBuyInit();
+          };
+        }
       }
+      
+      // Start waiting for authentication (only once)
+      if (!window.shopifyInitStarted) {
+        window.shopifyInitStarted = true;
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', waitForAuthAndInit, { once: true });
+        } else {
+          waitForAuthAndInit();
+        }
+      }
+      
       // Store Shopify component reference globally
       window.shopifyProductComponent = null;
       
       function ShopifyBuyInit() {
+        // Prevent multiple initializations
+        if (window.shopifyInitialized || window.shopifyProductComponent) {
+          console.log('✅ Shopify already initialized, skipping ShopifyBuyInit...');
+          return;
+        }
+        
+        console.log('🛒 Initializing Shopify Buy Button...');
+        window.shopifyInitialized = true;
         var client = ShopifyBuy.buildClient({
           domain: 'z0u750-mb.myshopify.com',
           storefrontAccessToken: '73a8e88f430939341abe6e2afdd62d90',
@@ -6747,7 +6903,9 @@
           });
           
           // Store component reference globally for variant updates
-          window.shopifyProductComponent = component;
+          if (!window.shopifyProductComponent) {
+            window.shopifyProductComponent = component;
+          }
           
           // Set up reverse sync: Listen for Shopify variant changes via iframe (more reliable)
           function setupShopifyVariantListener() {
@@ -6880,7 +7038,9 @@
           }, 1000);
           
           // Store component globally for access
-          window.shopifyProductComponent = component;
+          if (!window.shopifyProductComponent) {
+            window.shopifyProductComponent = component;
+          }
           console.log('Shopify product component initialized and stored');
           console.log('🔧 Component stored:', !!window.shopifyProductComponent);
           
