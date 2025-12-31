@@ -31,6 +31,16 @@
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', META_PIXEL_ID);
     fbq('track', 'PageView');
+    
+    // Meta Pixel tracking helper function
+    window.trackMetaEvent = function(eventName, eventData = {}) {
+        if (typeof fbq !== 'undefined') {
+            console.log('📊 Meta Pixel Event:', eventName, eventData);
+            fbq('track', eventName, eventData);
+        } else {
+            console.warn('Meta Pixel not loaded yet, event not tracked:', eventName);
+        }
+    };
     </script>
     <!-- End Meta Pixel Code -->
     
@@ -6422,6 +6432,15 @@
                         return;
                     }
                     
+                    // Track AI prompt submission from modal
+                    if (typeof window.trackMetaEvent === 'function') {
+                        window.trackMetaEvent('Lead', {
+                            content_name: 'AI Image Generation',
+                            content_category: 'AI Tool',
+                            prompt_length: prompt.length
+                        });
+                    }
+                    
                     console.log('🎨 Generate button clicked with prompt:', prompt);
                     
                     try {
@@ -7286,6 +7305,14 @@
                       button.addEventListener('click', function(e) {
                         console.log('🛒 ===== Buy Now button clicked (iframe method) =====');
                         
+                        // Track Buy Now button click for Meta Pixel
+                        if (typeof window.trackMetaEvent === 'function') {
+                          window.trackMetaEvent('InitiateCheckout', {
+                            content_name: 'Custom Jewelry',
+                            content_category: 'Jewelry'
+                          });
+                        }
+                        
                         // Prevent duplicate processing
                         if (e.target.dataset.stlProcessed === 'true') {
                           console.log('⚠️ Button already processed, skipping');
@@ -7404,6 +7431,14 @@
                           styleBuyNowButton(button);
                           console.log('✅ Adding interceptor to dynamically added Buy Now button');
                           button.addEventListener('click', function(e) {
+                            // Track Buy Now button click for Meta Pixel
+                            if (typeof window.trackMetaEvent === 'function') {
+                              window.trackMetaEvent('InitiateCheckout', {
+                                content_name: 'Custom Jewelry',
+                                content_category: 'Jewelry'
+                              });
+                            }
+                            
                             console.log('🛒 Buy Now button clicked (dynamic) - generating Order ID...');
                             
                             // Prevent default behavior
@@ -7690,6 +7725,14 @@
                 
                 if (isBuyButton || (isInShopifyComponent && (target.tagName === 'BUTTON' || target.tagName === 'A'))) {
                   console.log(`🛒 ===== Buy Now button detected (document-level click) =====`);
+                  
+                  // Track Buy Now button click for Meta Pixel
+                  if (typeof window.trackMetaEvent === 'function') {
+                    window.trackMetaEvent('InitiateCheckout', {
+                      content_name: 'Custom Jewelry',
+                      content_category: 'Jewelry'
+                    });
+                  }
                   
                   // Check if we've already handled this click (prevent duplicate processing)
                   if (e.target.dataset.stlProcessed === 'true') {

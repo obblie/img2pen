@@ -1248,6 +1248,19 @@ class HeightfieldViewer {
         // Allow zooming in up to ~50% closer than the default camera distance
         this.controls.minDistance = baseCameraDistance * 0.5;
         this.controls.maxDistance = baseCameraDistance * 2.0;
+        
+        // Track Three.js scene interaction for Meta Pixel
+        let sceneInteractionTracked = false;
+        this.controls.addEventListener('start', () => {
+            if (!sceneInteractionTracked && typeof window.trackMetaEvent === 'function') {
+                sceneInteractionTracked = true;
+                window.trackMetaEvent('ViewContent', {
+                    content_type: '3d_scene',
+                    content_name: '3D Jewelry Viewer',
+                    content_category: 'Product Visualization'
+                });
+            }
+        });
 
         // Use Poly Haven HDRI for environment map
         const rgbeLoader = new RGBELoader();
@@ -1409,6 +1422,15 @@ class HeightfieldViewer {
             console.log('Selected file:', file);
             if (file) {
                 console.log('File type:', file.type);
+                
+                // Track image upload event
+                if (typeof window.trackMetaEvent === 'function') {
+                    window.trackMetaEvent('ViewContent', {
+                        content_type: 'image',
+                        content_name: 'User Uploaded Image'
+                    });
+                }
+                
                 // Upload image to S3 immediately
                 console.log('📤 Uploading image to S3 immediately...');
                 uploadImageToS3(file).then(uploadResult => {
@@ -1494,6 +1516,15 @@ class HeightfieldViewer {
                     console.log('❌ No prompt provided, showing notification');
                     showNotification('Please enter a prompt to generate an image', 'error');
                     return;
+                }
+
+                // Track AI prompt submission event
+                if (typeof window.trackMetaEvent === 'function') {
+                    window.trackMetaEvent('Lead', {
+                        content_name: 'AI Image Generation',
+                        content_category: 'AI Tool',
+                        prompt_length: prompt.length
+                    });
                 }
 
                 try {
