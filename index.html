@@ -281,10 +281,23 @@
             }
         }
 
-        /* Hide debug export buttons but keep layout container */
-        #debug-export-stl-btn,
-        #export-pendant-only-btn {
-            display: none !important;
+        /* Show export STL button */
+        #export-stl-btn {
+            background: #1d4ed8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(29, 78, 216, 0.4);
+        }
+        #export-stl-btn:hover {
+            background: #1e40af;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(29, 78, 216, 0.5);
         }
 
         /* Hide debug helper text and container */
@@ -4441,6 +4454,14 @@
                 <div class="product-details-section">
                     <!-- Product Options -->        
                     <div class="product-options">
+                        <!-- Export STL Button -->
+                        <div class="option-group" style="margin-top: 20px;">
+                            <button id="export-stl-btn" style="width: 100%; background: #1d4ed8; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(29, 78, 216, 0.4);">
+                                <span style="margin-right: 8px;">🖨️</span>
+                                Export STL
+                            </button>
+                        </div>
+                        
                         <!-- Shopify Buy Button -->
                         <div class="option-group" style="margin-top: 20px;">
                             <div id='product-component-1764405426589'></div>

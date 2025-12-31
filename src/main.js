@@ -2046,6 +2046,20 @@ class HeightfieldViewer {
         
         console.log('✅ Test function window.testSTLGeneration created');
 
+        // Export STL button
+        const exportStlBtn = document.getElementById('export-stl-btn');
+        if (exportStlBtn) {
+            exportStlBtn.addEventListener('click', () => {
+                if (this.exportSTL) {
+                    this.exportSTL();
+                    showNotification('STL file exported successfully!', 'success');
+                } else {
+                    console.error('exportSTL method not available');
+                    showNotification('Error: Export STL functionality not available', 'error');
+                }
+            });
+        }
+        
         // Debug Export STL button
         const debugExportStlBtn = document.getElementById('debug-export-stl-btn');
         if (debugExportStlBtn) {
@@ -2564,6 +2578,7 @@ class HeightfieldViewer {
                             const pixelIndex = (pixelY * heightfieldData.width + pixelX) * 4;
                             const gray = this.readGrayscaleFromHeightfield(heightfieldData, pixelIndex);
                             // Apply depth scaling - depth controls relief intensity
+                            // Relief Z coordinates: 0 = base top, depth = relief top
                             // The depth value directly scales the relief pattern
                             // For exceeded values (gray > 1.0), we add additional depth beyond the base
                             if (gray > 1.0) {
@@ -2571,6 +2586,8 @@ class HeightfieldViewer {
                             } else {
                                 z = gray * this.depth;
                             }
+                            // Ensure z is never negative (relief is always on top of base)
+                            z = Math.max(0, z);
                         }
                         grid.push({ px, py, z, u, v, inCircle: dist <= effectiveRadius });
                     }
@@ -2760,7 +2777,8 @@ class HeightfieldViewer {
                 if (this.currentObjectType === 'circular-pendant') {
                     // For upright circular pendant, no rotation needed
                     redLayerMesh.rotation.x = 0;
-                    redLayerMesh.position.y = this.getEffectiveBaseThickness() / 2;
+                    // Position red layer at same height as main mesh
+                    redLayerMesh.position.y = this.getEffectiveBaseThickness();
                 } else {
                     // For other shapes, keep original flat rotation
                     redLayerMesh.rotation.x = -Math.PI / 2;
@@ -2798,26 +2816,28 @@ class HeightfieldViewer {
                     for (let j = 0; j <= jumpringTubularSegments; j++) {
                         const v = j / jumpringTubularSegments * Math.PI * 2;
                         
-                        // Base jumpring position - center it on the pendant (middle of total thickness)
-                        // Mesh is positioned at y = effectiveBaseThickness/2 in world coordinates
-                        // In local (geometry) coordinates, y=0 is at the mesh center (middle of base)
-                        // World coordinates: base bottom=0, base top=effectiveBaseThickness, relief top=effectiveBaseThickness+depth
-                        // World middle = totalThickness/2 = 0.8mm (constant)
-                        // To get world y = 0.8mm, we need: effectiveBaseThickness/2 + localY = 0.8mm
-                        // So: localY = 0.8mm - effectiveBaseThickness/2
+                        // Base jumpring position - position at the top of the pendant
+                        // Mesh is positioned at y = thickness in world coordinates
+                        // In local (geometry) coordinates: z = -thickness (base bottom), z = 0 (base top), z = depth (relief top)
+                        // World coordinates: base bottom = 0, base top = thickness, relief top = thickness + depth
+                        // Jumpring should be positioned at the top of the relief (z = depth in local coords)
                         const effectiveBaseThickness = this.getEffectiveBaseThickness();
-                        const worldMiddleY = this.totalThickness / 2; // 0.8mm constant
-                        const meshCenterY = effectiveBaseThickness / 2; // Mesh is positioned here
-                        const pendantMiddleYLocal = worldMiddleY - meshCenterY; // Convert world middle to local coords
+                        const meshY = effectiveBaseThickness; // Mesh position in world coords (base bottom at y=0)
+                        // Top of relief in local coords is z = depth
+                        // Top of relief in world coords is y = meshY + depth = thickness + depth
+                        // Jumpring center should be at top of relief + jumpring radius
+                        const reliefTopLocalZ = this.depth; // Top of relief in local coordinates
                         const baseX = (jumpringRadius + jumpringWireThickness * Math.cos(v)) * Math.cos(u);
-                        const baseY = (jumpringRadius + jumpringWireThickness * Math.cos(v)) * Math.sin(u) + pendantMiddleYLocal + jumpringRadius + 11.45;
+                        const baseY = (jumpringRadius + jumpringWireThickness * Math.cos(v)) * Math.sin(u) + reliefTopLocalZ + jumpringRadius;
                         const baseZ = jumpringWireThickness * Math.sin(v);
                         
                         // Apply minimal, consistent relief to the jumpring to avoid kinks
                         const reliefZ = 0.05; // Small constant relief to maintain smooth shape
+                        const jumpringZOffset = 0; // No forward offset - keep jumpring aligned with pendant
+                        const jumpringYOffset = 11; // Move jumpring higher vertically (up on Y axis, which appears as Z from some views)
                         const finalX = baseX;
-                        const finalY = baseY;
-                        const finalZ = baseZ + reliefZ;
+                        const finalY = baseY + jumpringYOffset; // Add vertical offset to move jumpring higher
+                        const finalZ = baseZ + reliefZ + jumpringZOffset;
                         
                         jumpringPositions.push(finalX, finalY, finalZ);
                         jumpringUVs.push(i / jumpringSegments, j / jumpringTubularSegments);
@@ -3087,11 +3107,19 @@ class HeightfieldViewer {
                 
                 if (this.currentObjectType === 'circular-pendant') {
                     // For circular pendant, rotate to stand upright and position bottom edge at y=0
+                    // In local coords: base bottom is at z=-thickness, base top is at z=0, relief top is at z=depth
+                    // We want base bottom (z=-thickness) to be at world y=0
+                    // So: mesh.position.y + (-thickness) = 0
+                    // Therefore: mesh.position.y = thickness
+                    const thickness = this.getEffectiveBaseThickness();
+                    console.log(`🔧 Mesh positioning - thickness: ${thickness.toFixed(2)}mm, depth: ${this.depth.toFixed(2)}mm, totalThickness: ${this.totalThickness.toFixed(2)}mm`);
                     mesh.rotation.x = 0; // Remove the flat rotation
-                    mesh.position.y = this.getEffectiveBaseThickness() / 2;
+                    mesh.position.y = thickness; // Position so base bottom (z=-thickness) is at y=0
+                    console.log(`🔧 Mesh positioned at y=${mesh.position.y.toFixed(2)}mm, rotation.x=${mesh.rotation.x}`);
                 } else {
                     // Position so the bottom edge sits on the platform (y=0)
-                    mesh.position.y = this.getEffectiveBaseThickness() / 2;
+                    const thickness = this.getEffectiveBaseThickness();
+                    mesh.position.y = thickness; // Position so base bottom (z=-thickness) is at y=0
                 }
                 
                 this.scene.add(mesh);
@@ -3359,9 +3387,10 @@ class HeightfieldViewer {
                 const spacing = this.pendantDiameter * 1.2;
                 const effectiveThickness = this.getEffectiveBaseThickness();
                 mesh1.position.x = -spacing / 2;
-                mesh1.position.y = effectiveThickness / 2;
+                // Position so base bottom (z=-thickness) is at y=0
+                mesh1.position.y = effectiveThickness;
                 mesh2.position.x = spacing / 2;
-                mesh2.position.y = effectiveThickness / 2;
+                mesh2.position.y = effectiveThickness;
                 
                 // Create jump rings for each earring
                 const jumpringRadius = 2.5; // Made larger for visibility
@@ -3527,11 +3556,15 @@ class HeightfieldViewer {
         
         if (this.currentObjectType === 'circular-pendant') {
             // For circular pendant, rotate to stand upright and position bottom edge at y=0
+            // In local coords: base bottom is at z=-thickness, base top is at z=0, relief top is at z=depth
+            // We want base bottom (z=-thickness) to be at world y=0
+            // So: mesh.position.y + (-thickness) = 0
+            // Therefore: mesh.position.y = thickness
             mesh.rotation.x = 0; // Remove the flat rotation
-            mesh.position.y = effectiveThickness / 2;
+            mesh.position.y = effectiveThickness; // Position so base bottom (z=-thickness) is at y=0
         } else {
             // Position so the bottom edge sits on the platform (y=0)
-            mesh.position.y = effectiveThickness / 2;
+            mesh.position.y = effectiveThickness; // Position so base bottom (z=-thickness) is at y=0
         }
         
         this.scene.add(mesh);
@@ -3953,23 +3986,26 @@ class HeightfieldViewer {
     updateJumpringPosition() {
         if (!this.jumpring) return;
         
-        // Position jumpring at the middle of the total pendant thickness
-        // World coordinates: base bottom=0, base top=effectiveBaseThickness, relief top=effectiveBaseThickness+depth
+        // Position jumpring at the top of the pendant (top of relief)
+        // Mesh is positioned at y = thickness, so:
+        // World coordinates: base bottom=0, base top=thickness, relief top=thickness+depth
         // Total thickness = effectiveBaseThickness + depth = totalThickness = 1.6mm (constant)
-        // Middle of total = totalThickness / 2 = 0.8mm (constant, regardless of depth)
-        const pendantMiddleY = this.totalThickness / 2; // Center of total pendant = 0.8mm (constant)
+        const effectiveBaseThickness = this.getEffectiveBaseThickness();
+        const meshY = effectiveBaseThickness; // Mesh position (base bottom at y=0)
+        const reliefTopY = meshY + this.depth; // Top of relief in world coordinates
         const jumpringRadius = 2; // Jumpring radius (matches geometry creation)
         
         // Use fixed X and Z positions (centered on pendant)
+        // Add additional offset to move jumpring higher on Z axis (forward from pendant)
         let x = 0; // Center X
-        let y = pendantMiddleY + jumpringRadius + 11.45; // Position at middle of pendant + offset
-        let z = 0; // Center Z
+        let y = reliefTopY + jumpringRadius; // Position at top of relief + jumpring radius
+        let z = 9.5; // Move jumpring forward (higher on Z axis) so it sits above the pendant surface
         
         this.jumpring.position.set(x, y, z);
         // No rotation needed - jumpring naturally hangs down
         this.jumpring.rotation.set(0, 0, 0);
         
-        console.log(`🔧 Jumpring repositioned to Y: ${y.toFixed(2)}mm (pendant middle: ${pendantMiddleY.toFixed(2)}mm, total top: ${totalTopY.toFixed(2)}mm)`);
+        console.log(`🔧 Jumpring repositioned to Y: ${y.toFixed(2)}mm, Z: ${z.toFixed(2)}mm (relief top: ${reliefTopY.toFixed(2)}mm, effective base: ${effectiveBaseThickness.toFixed(2)}mm, depth: ${this.depth.toFixed(2)}mm)`);
     }
 
     setupDepthPainting() {
@@ -4667,7 +4703,7 @@ class HeightfieldViewer {
                     const widthSegments = width - 1;
                     const heightSegments = height - 1;
                     // Adjust base thickness to keep total thickness constant
-                    const maxReliefDepth = Math.max(this.depth, 0.6);
+                    const maxReliefDepth = this.depth;
                     const thickness = Math.max(0.3, this.totalThickness - maxReliefDepth);
                     
                     // Relief positions, normals, uvs
@@ -4693,11 +4729,9 @@ class HeightfieldViewer {
                                 const gray = (data[pixelIndex] * 0.299 +
                                     data[pixelIndex + 1] * 0.587 +
                                     data[pixelIndex + 2] * 0.114) / 255;
-                                // Scale relief pattern intensity by depth, but clamp maximum to 0.6mm
-                                // This ensures total thickness remains constant (thickness + 0.6mm max)
-                                const MAX_RELIEF = 0.6; // Maximum relief depth (keeps total thickness constant)
-                                const depthScale = Math.min(this.depth / 0.6, 1.0); // Scale factor, clamped to 1.0 max
-                                z = gray * MAX_RELIEF * depthScale; // Scale pattern intensity, but max height stays at 0.6mm
+                                // Apply depth scaling - use this.depth directly for consistency
+                                // Relief Z coordinates: 0 = base top, depth = relief top
+                                z = gray * this.depth;
                             }
                             
                             grid.push({ px, py, z, u, v, inCircle: dist <= effectiveRadius });
@@ -4918,11 +4952,9 @@ class HeightfieldViewer {
                                 const gray = (data[pixelIndex] * 0.299 +
                                     data[pixelIndex + 1] * 0.587 +
                                     data[pixelIndex + 2] * 0.114) / 255;
-                                // Scale relief pattern intensity by depth, but clamp maximum to 0.6mm
-                                // This ensures total thickness remains constant (thickness + 0.6mm max)
-                                const MAX_RELIEF = 0.6; // Maximum relief depth (keeps total thickness constant)
-                                const depthScale = Math.min(this.depth / 0.6, 1.0); // Scale factor, clamped to 1.0 max
-                                z = gray * MAX_RELIEF * depthScale; // Scale pattern intensity, but max height stays at 0.6mm
+                                // Apply depth scaling - use this.depth directly for consistency
+                                // Relief Z coordinates: 0 = base top, depth = relief top
+                                z = gray * this.depth;
                             }
                             
                             reliefPositions.push(px, py, z);
