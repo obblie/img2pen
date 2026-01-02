@@ -1,0 +1,64 @@
+/* Hide Search bar on cart page */
+body.template-cart header .search,
+body.template-cart header .search-bar,
+body.template-cart header .search-form,
+body.template-cart header form[action*="search"],
+body.template-cart header input[type="search"],
+body.template-cart header input[placeholder*="Search"],
+body.template-cart header [class*="search"],
+body.template-cart header [id*="search"],
+body.template-cart header [data-search],
+body.template-cart header .header__search,
+body.template-cart header .site-header__search,
+body.template-cart header button[aria-label*="Search"],
+body.template-cart header button[aria-label*="search"] {
+  display: none !important;
+}
+
+/* Hide Sign in / Login on cart page */
+body.template-cart header a[href*="/account"],
+body.template-cart header a[href*="/account/login"],
+body.template-cart header a[href*="account"],
+body.template-cart header .account-link,
+body.template-cart header .login-link,
+body.template-cart header [class*="account"],
+body.template-cart header [class*="login"],
+body.template-cart header [id*="account"],
+body.template-cart header [id*="login"],
+body.template-cart header .header__account,
+body.template-cart header .site-header__account,
+body.template-cart header button[aria-label*="Account"],
+body.template-cart header button[aria-label*="account"],
+body.template-cart header .customer-account {
+  display: none !important;
+}
+
+/* Hide Cart icon on cart page */
+body.template-cart header a[href="/cart"],
+body.template-cart header a[href*="/cart"],
+body.template-cart header .cart-icon,
+body.template-cart header .cart-link,
+body.template-cart header [class*="cart-icon"],
+body.template-cart header [class*="cart-link"],
+body.template-cart header [id*="cart-icon"],
+body.template-cart header [id*="cart-link"],
+body.template-cart header [data-cart],
+body.template-cart header .header__cart,
+body.template-cart header .site-header__cart,
+body.template-cart header button[aria-label*="Cart"],
+body.template-cart header button[aria-label*="cart"],
+body.template-cart header svg[class*="cart"],
+body.template-cart header .icon-cart,
+body.template-cart header .cart-count {
+  display: none !important;
+}
+
+/* Hide parent containers if needed */
+body.template-cart header li:has(a[href*="/account"]),
+body.template-cart header li:has(a[href="/cart"]),
+body.template-cart header li:has([class*="search"]),
+body.template-cart header .header__icons,
+body.template-cart header .header__actions {
+  display: none !important;
+}
+

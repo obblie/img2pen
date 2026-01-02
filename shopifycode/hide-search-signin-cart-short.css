@@ -1,0 +1,2 @@
+body.template-cart header [class*="search"],body.template-cart header input[type="search"],body.template-cart header form[action*="search"],body.template-cart header a[href*="/account"],body.template-cart header [class*="account"],body.template-cart header [class*="login"],body.template-cart header a[href="/cart"],body.template-cart header [class*="cart"],body.template-cart header [id*="cart"]{display:none!important}
+

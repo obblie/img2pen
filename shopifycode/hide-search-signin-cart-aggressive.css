@@ -1,0 +1,47 @@
+/* More aggressive targeting - try multiple approaches */
+body.template-cart #header-component search-button,
+body.template-cart #header-component > div > div > div.header__column.header__column--right > search-button,
+body.template-cart #header-component search-button button,
+body.template-cart #header-component search-button * {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
+}
+
+body.template-cart #header-component header-actions anchored-popover-component,
+body.template-cart #header-component > div > div > div.header__column.header__column--right > header-actions > anchored-popover-component,
+body.template-cart #header-component header-actions anchored-popover-component button,
+body.template-cart #header-component header-actions anchored-popover-component *,
+body.template-cart #header-component header-actions anchored-popover-component svg {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
+}
+
+body.template-cart #header-component header-actions a[href*="/cart"],
+body.template-cart #header-component > div > div > div.header__column.header__column--right > header-actions > a,
+body.template-cart #header-component header-actions cart-icon,
+body.template-cart #header-component header-actions cart-icon *,
+body.template-cart #header-component header-actions cart-icon div,
+body.template-cart #header-component header-actions cart-icon span.cart-bubble__background {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Target parent containers */
+body.template-cart #header-component .header__column--right > search-button,
+body.template-cart #header-component .header__column--right > header-actions > anchored-popover-component,
+body.template-cart #header-component .header__column--right > header-actions > a[href*="/cart"] {
+  display: none !important;
+}
+

@@ -819,7 +819,7 @@ async function uploadImageToS3(file) {
         
         const sessionUUID = getSessionUUID();
         const sessionDirectory = getSessionDirectory();
-        const filename = `${sessionUUID}_uploadedImage`;
+        const filename = `${sessionDirectory}_uploadedImage`;
         
         // Step 1: Get signed URL for image
         const urlResponse = await fetch(`${BACKEND_URL}/api/get-image-upload-url`, {
@@ -1641,6 +1641,13 @@ class HeightfieldViewer {
                     return;
                 }
 
+                // Show loading overlay IMMEDIATELY - no delay
+                showLoadingOverlay();
+                const loadingStatus = document.getElementById('loading-status');
+                if (loadingStatus) {
+                    loadingStatus.textContent = 'Generating image with AI...';
+                }
+
                 // Track AI prompt submission event
                 if (typeof window.trackMetaEvent === 'function') {
                     window.trackMetaEvent('Lead', {
@@ -2189,7 +2196,7 @@ class HeightfieldViewer {
                 // Get session UUID and directory
                 const sessionUUID = getSessionUUID();
                 const sessionDirectory = getSessionDirectory();
-                const filename = `${sessionUUID}_referenceImage`;
+                const filename = `${sessionDirectory}_referenceImage`;
                 
                 console.log('📤 Uploading reference image to S3:', filename);
                 
@@ -3157,14 +3164,31 @@ class HeightfieldViewer {
                             // Apply depth scaling - depth controls relief intensity
                             // Relief Z coordinates: 0 = base top, depth = relief top
                             // The depth value directly scales the relief pattern
-                            // For exceeded values (effectiveGray > 1.0), we add additional depth beyond the base
-                            if (effectiveGray > 1.0) {
-                                z = this.depth + (effectiveGray - 1.0) * this.depth; // Can exceed up to 2x depth
+                            
+                            // Clamp effectiveGray to 1.0 when in normal relief mode (reliefBlendFactor = 0.0)
+                            // This prevents excessive depth when processing new images
+                            let clampedGray = effectiveGray;
+                            if (this.reliefBlendFactor === 0.0) {
+                                // Normal relief mode: clamp to 0-1 range
+                                clampedGray = Math.max(0, Math.min(1.0, effectiveGray));
                             } else {
-                                z = effectiveGray * this.depth;
+                                // Blended mode: allow values > 1.0 for enhanced relief, but cap at reasonable maximum
+                                clampedGray = Math.max(0, Math.min(2.0, effectiveGray));
+                            }
+                            
+                            // Calculate Z based on clamped gray value
+                            if (clampedGray > 1.0) {
+                                z = this.depth + (clampedGray - 1.0) * this.depth; // Can exceed up to 2x depth
+                            } else {
+                                z = clampedGray * this.depth;
                             }
                             // Ensure z is never negative (relief is always on top of base)
                             z = Math.max(0, z);
+                            
+                            // In normal relief mode, clamp z to depth to prevent excessive relief
+                            if (this.reliefBlendFactor === 0.0) {
+                                z = Math.min(z, this.depth);
+                            }
                             
                             // Debug: Warn if Z exceeds expected maximum (2x depth = 1.2mm for 0.6mm depth)
                             if (z > this.depth * 2.1 && x === 0 && y === 0) {
@@ -3802,11 +3826,30 @@ class HeightfieldViewer {
                             const effectiveGray = this.applyReliefMapping(gray, u, v);
                             // Apply depth scaling - depth controls relief intensity
                             // The depth value directly scales the relief pattern
-                            // For exceeded values (effectiveGray > 1.0), we add additional depth beyond the base
-                            if (effectiveGray > 1.0) {
-                                z = this.depth + (effectiveGray - 1.0) * this.depth; // Can exceed up to 2x depth
+                            
+                            // Clamp effectiveGray to 1.0 when in normal relief mode (reliefBlendFactor = 0.0)
+                            // This prevents excessive depth when processing new images
+                            let clampedGray = effectiveGray;
+                            if (this.reliefBlendFactor === 0.0) {
+                                // Normal relief mode: clamp to 0-1 range
+                                clampedGray = Math.max(0, Math.min(1.0, effectiveGray));
                             } else {
-                                z = effectiveGray * this.depth;
+                                // Blended mode: allow values > 1.0 for enhanced relief, but cap at reasonable maximum
+                                clampedGray = Math.max(0, Math.min(2.0, effectiveGray));
+                            }
+                            
+                            // Calculate Z based on clamped gray value
+                            if (clampedGray > 1.0) {
+                                z = this.depth + (clampedGray - 1.0) * this.depth; // Can exceed up to 2x depth
+                            } else {
+                                z = clampedGray * this.depth;
+                            }
+                            // Ensure z is never negative (relief is always on top of base)
+                            z = Math.max(0, z);
+                            
+                            // In normal relief mode, clamp z to depth to prevent excessive relief
+                            if (this.reliefBlendFactor === 0.0) {
+                                z = Math.min(z, this.depth);
                             }
                         }
                         grid.push({ px, py, z, u, v, inCircle: dist <= radius });
@@ -4090,12 +4133,34 @@ class HeightfieldViewer {
             const effectiveGray = this.applyReliefMapping(gray, u, v);
 
             // Apply height - depth directly controls relief depth
-            // For exceeded values (effectiveGray > 1.0), we add additional depth beyond the base
-            if (effectiveGray > 1.0) {
-                positions[i + 2] = this.depth + (effectiveGray - 1.0) * this.depth; // Can exceed up to 2x depth
+            
+            // Clamp effectiveGray to 1.0 when in normal relief mode (reliefBlendFactor = 0.0)
+            // This prevents excessive depth when processing new images
+            let clampedGray = effectiveGray;
+            if (this.reliefBlendFactor === 0.0) {
+                // Normal relief mode: clamp to 0-1 range
+                clampedGray = Math.max(0, Math.min(1.0, effectiveGray));
             } else {
-                positions[i + 2] = effectiveGray * this.depth;
+                // Blended mode: allow values > 1.0 for enhanced relief, but cap at reasonable maximum
+                clampedGray = Math.max(0, Math.min(2.0, effectiveGray));
             }
+            
+            // Calculate Z based on clamped gray value
+            let zValue;
+            if (clampedGray > 1.0) {
+                zValue = this.depth + (clampedGray - 1.0) * this.depth; // Can exceed up to 2x depth
+            } else {
+                zValue = clampedGray * this.depth;
+            }
+            // Ensure z is never negative (relief is always on top of base)
+            zValue = Math.max(0, zValue);
+            
+            // In normal relief mode, clamp z to depth to prevent excessive relief
+            if (this.reliefBlendFactor === 0.0) {
+                zValue = Math.min(zValue, this.depth);
+            }
+            
+            positions[i + 2] = zValue;
         }
 
         // IMPORTANT: Recompute normals after modifying vertices for correct lighting/reflections
@@ -5334,9 +5399,26 @@ class HeightfieldViewer {
                                     data[pixelIndex + 2] * 0.114) / 255;
                                 // Apply reverse relief mapping if enabled
                                 const effectiveGray = this.applyReliefMapping(gray);
+                                
+                                // Clamp effectiveGray to 1.0 when in normal relief mode (reliefBlendFactor = 0.0)
+                                // This prevents excessive depth when processing new images
+                                let clampedGray = effectiveGray;
+                                if (this.reliefBlendFactor === 0.0) {
+                                    // Normal relief mode: clamp to 0-1 range
+                                    clampedGray = Math.max(0, Math.min(1.0, effectiveGray));
+                                } else {
+                                    // Blended mode: allow values > 1.0 for enhanced relief, but cap at reasonable maximum
+                                    clampedGray = Math.max(0, Math.min(2.0, effectiveGray));
+                                }
+                                
                                 // Apply depth scaling - use this.depth directly for consistency
                                 // Relief Z coordinates: 0 = base top, depth = relief top
-                                z = effectiveGray * this.depth;
+                                z = clampedGray * this.depth;
+                                
+                                // In normal relief mode, clamp z to depth to prevent excessive relief
+                                if (this.reliefBlendFactor === 0.0) {
+                                    z = Math.min(z, this.depth);
+                                }
                             }
                             
                             grid.push({ px, py, z, u, v, inCircle: dist <= effectiveRadius });
@@ -5559,9 +5641,26 @@ class HeightfieldViewer {
                                     data[pixelIndex + 2] * 0.114) / 255;
                                 // Apply reverse relief mapping if enabled
                                 const effectiveGray = this.applyReliefMapping(gray);
+                                
+                                // Clamp effectiveGray to 1.0 when in normal relief mode (reliefBlendFactor = 0.0)
+                                // This prevents excessive depth when processing new images
+                                let clampedGray = effectiveGray;
+                                if (this.reliefBlendFactor === 0.0) {
+                                    // Normal relief mode: clamp to 0-1 range
+                                    clampedGray = Math.max(0, Math.min(1.0, effectiveGray));
+                                } else {
+                                    // Blended mode: allow values > 1.0 for enhanced relief, but cap at reasonable maximum
+                                    clampedGray = Math.max(0, Math.min(2.0, effectiveGray));
+                                }
+                                
                                 // Apply depth scaling - use this.depth directly for consistency
                                 // Relief Z coordinates: 0 = base top, depth = relief top
-                                z = effectiveGray * this.depth;
+                                z = clampedGray * this.depth;
+                                
+                                // In normal relief mode, clamp z to depth to prevent excessive relief
+                                if (this.reliefBlendFactor === 0.0) {
+                                    z = Math.min(z, this.depth);
+                                }
                             }
                             
                             reliefPositions.push(px, py, z);
@@ -6752,6 +6851,14 @@ function showMobileDebug(info, isError = false) {
 // Function to generate image using backend OpenAI proxy
 async function generateImageWithOpenAI(prompt) {
     console.log('🚀 generateImageWithOpenAI called with prompt:', prompt);
+    
+    // Show loading overlay IMMEDIATELY - no delay
+    showLoadingOverlay();
+    const loadingStatus = document.getElementById('loading-status');
+    if (loadingStatus) {
+        loadingStatus.textContent = 'Generating image with AI...';
+    }
+    
     try {
         const deviceInfo = {
             userAgent: navigator.userAgent,
@@ -6783,9 +6890,6 @@ async function generateImageWithOpenAI(prompt) {
         console.log('🌐 Making request to:', `${OPENAI_BACKEND_URL}/api/generate-image`);
         console.log('⏱️ Request started at:', new Date().toISOString());
         console.log('📝 Prompt length:', prompt.length);
-        
-        showLoadingOverlay();
-        document.getElementById('loading-status').textContent = 'Generating image with AI...';
         
         // Check network connectivity
         if (!navigator.onLine) {
@@ -6942,7 +7046,7 @@ async function uploadDalleImageToS3(imageBlob, prompt) {
         
         const sessionUUID = getSessionUUID();
         const sessionDirectory = getSessionDirectory();
-        const filename = `${sessionUUID}_dallE`;
+        const filename = `${sessionDirectory}_dallE`;
         
         // Get signed upload URL for DALL-E images
         const uploadUrlResponse = await fetch(`${BACKEND_URL}/api/get-dalle-upload-url`, {
@@ -7002,8 +7106,8 @@ async function uploadCroppedImageToS3(imageBlob, isFromDallE = false) {
         const sessionUUID = getSessionUUID();
         const sessionDirectory = getSessionDirectory();
         // Determine suffix based on source
-        const suffix = isFromDallE ? '_croppedDallE' : '_croppedUploadedImage';
-        const filename = `${sessionUUID}${suffix}`;
+        const suffix = isFromDallE ? '_croppedDallE' : '_croppedImage';
+        const filename = `${sessionDirectory}${suffix}`;
         
         // Get signed upload URL for cropped images using the same endpoint with directory parameter
         const uploadUrlResponse = await fetch(`${BACKEND_URL}/api/get-image-upload-url`, {

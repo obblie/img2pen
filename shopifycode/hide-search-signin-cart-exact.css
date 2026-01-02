@@ -1,0 +1,29 @@
+/* Hide Search button on cart page */
+body.template-cart #header-component search-button,
+body.template-cart #header-component search-button button,
+body.template-cart #header-component .header__column--right search-button {
+  display: none !important;
+}
+
+/* Hide Sign in (Account) button on cart page */
+body.template-cart #header-component header-actions anchored-popover-component,
+body.template-cart #header-component header-actions anchored-popover-component button,
+body.template-cart #header-component .header__column--right header-actions anchored-popover-component {
+  display: none !important;
+}
+
+/* Hide Cart icon on cart page */
+body.template-cart #header-component header-actions a[href*="/cart"],
+body.template-cart #header-component header-actions cart-icon,
+body.template-cart #header-component .header__column--right header-actions cart-icon,
+body.template-cart #header-component .header__column--right header-actions a[href*="/cart"] {
+  display: none !important;
+}
+
+/* Alternative: Hide the entire right column section if needed */
+body.template-cart #header-component .header__column--right search-button,
+body.template-cart #header-component .header__column--right header-actions anchored-popover-component,
+body.template-cart #header-component .header__column--right header-actions a[href*="/cart"] {
+  display: none !important;
+}
+

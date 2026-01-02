@@ -1,0 +1,70 @@
+/* Hide header items on cart page */
+body.template-cart header nav a[href*="home"],
+body.template-cart header nav a[href*="Home"],
+body.template-cart header nav a[href="/"],
+body.template-cart header .nav-link[href*="home"],
+body.template-cart header .nav-link[href*="Home"],
+body.template-cart header .nav-link[href="/"] {
+  display: none !important;
+}
+
+/* Hide Catalog link */
+body.template-cart header nav a[href*="catalog"],
+body.template-cart header nav a[href*="Catalog"],
+body.template-cart header .nav-link[href*="catalog"],
+body.template-cart header .nav-link[href*="Catalog"],
+body.template-cart header a[href*="/collections/"] {
+  display: none !important;
+}
+
+/* Hide Contact link */
+body.template-cart header nav a[href*="contact"],
+body.template-cart header nav a[href*="Contact"],
+body.template-cart header .nav-link[href*="contact"],
+body.template-cart header .nav-link[href*="Contact"],
+body.template-cart header a[href*="/pages/contact"] {
+  display: none !important;
+}
+
+/* Hide Search bar */
+body.template-cart header .search,
+body.template-cart header .search-bar,
+body.template-cart header input[type="search"],
+body.template-cart header form[action*="search"],
+body.template-cart header [class*="search"],
+body.template-cart header [id*="search"] {
+  display: none !important;
+}
+
+/* Hide Login link */
+body.template-cart header nav a[href*="account"],
+body.template-cart header nav a[href*="login"],
+body.template-cart header nav a[href*="Login"],
+body.template-cart header .nav-link[href*="account"],
+body.template-cart header .nav-link[href*="login"],
+body.template-cart header a[href*="/account/login"],
+body.template-cart header a[href*="/account"] {
+  display: none !important;
+}
+
+/* Hide Cart icon */
+body.template-cart header .cart-icon,
+body.template-cart header [class*="cart-icon"],
+body.template-cart header [id*="cart-icon"],
+body.template-cart header a[href*="/cart"],
+body.template-cart header .cart-link,
+body.template-cart header [class*="cart-link"],
+body.template-cart header svg[class*="cart"],
+body.template-cart header .icon-cart {
+  display: none !important;
+}
+
+/* Alternative selectors for different theme structures */
+.template-cart header nav li:has(a[href="/"]),
+.template-cart header nav li:has(a[href*="catalog"]),
+.template-cart header nav li:has(a[href*="contact"]),
+.template-cart header nav li:has(a[href*="account"]),
+.template-cart header nav li:has(a[href*="cart"]) {
+  display: none !important;
+}
+

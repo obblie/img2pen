@@ -1,0 +1,28 @@
+/* More comprehensive selectors - try this version */
+body.template-cart header *[class*="search"]:not(.no-hide),
+body.template-cart header *[id*="search"]:not(.no-hide),
+body.template-cart header input[type="search"],
+body.template-cart header button[type="submit"][form*="search"],
+body.template-cart header form[action*="search"],
+body.template-cart header *[class*="account"]:not(.no-hide),
+body.template-cart header *[id*="account"]:not(.no-hide),
+body.template-cart header *[class*="login"]:not(.no-hide),
+body.template-cart header a[href*="/account"],
+body.template-cart header a[href*="login"],
+body.template-cart header *[class*="cart"]:not(.no-hide),
+body.template-cart header *[id*="cart"]:not(.no-hide),
+body.template-cart header a[href="/cart"],
+body.template-cart header a[href*="/cart?"],
+body.template-cart header svg[class*="cart"],
+body.template-cart header [data-cart-toggle],
+body.template-cart header [aria-label*="cart" i],
+body.template-cart header [aria-label*="search" i],
+body.template-cart header [aria-label*="account" i] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+}
+

@@ -6492,6 +6492,15 @@
                         return;
                     }
                     
+                    // Show loading overlay IMMEDIATELY - no delay
+                    if (typeof showLoadingOverlay === 'function') {
+                        showLoadingOverlay();
+                        const loadingStatus = document.getElementById('loading-status');
+                        if (loadingStatus) {
+                            loadingStatus.textContent = 'Generating image with AI...';
+                        }
+                    }
+                    
                     // Track AI prompt submission from modal
                     if (typeof window.trackMetaEvent === 'function') {
                         window.trackMetaEvent('Lead', {
@@ -7362,7 +7371,7 @@
                       }
                       button.dataset.stlListenerAdded = 'true';
                       
-                      button.addEventListener('click', function(e) {
+                      button.addEventListener('click', async function(e) {
                         console.log('🛒 ===== Buy Now button clicked (iframe method) =====');
                         
                         // Track Buy Now button click for Meta Pixel
@@ -7390,19 +7399,7 @@
                           console.log('🆔 Order ID generated and added to checkout:', orderId);
                         }
                         
-                        // Capture and upload reference image (front-facing screenshot)
-                        if (typeof window.captureAndUploadReferenceImage === 'function') {
-                          window.captureAndUploadReferenceImage().then(result => {
-                            console.log('✅ Reference image captured and uploaded:', result);
-                          }).catch(error => {
-                            console.error('❌ Failed to capture reference image:', error);
-                            // Don't block checkout if image capture fails
-                          });
-                        } else {
-                          console.warn('⚠️ captureAndUploadReferenceImage function not available');
-                        }
-                        
-                        // Get variant ID from the iframe select element
+                        // Get variant ID from the iframe select element FIRST (before upload)
                         let variantId = null;
                         
                         try {
@@ -7458,21 +7455,39 @@
                           console.warn('⚠️ Could not access iframe for variant ID:', err);
                         }
                         
-                        // Build cart permalink with attributes (async function)
-                        if (typeof window.buildCartPermalinkWithAttributes === 'function') {
-                          window.buildCartPermalinkWithAttributes(variantId, 1).then(cartUrl => {
+                        // Build cart permalink and open in new tab IMMEDIATELY
+                        try {
+                          if (typeof window.buildCartPermalinkWithAttributes === 'function') {
+                            const cartUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
                             if (cartUrl) {
-                              console.log('🛒 Redirecting to cart permalink with attributes...');
-                              window.location.href = cartUrl;
+                              console.log('🛒 Opening cart in new tab immediately...');
+                              window.open(cartUrl, '_blank');
                             } else {
                               console.error('❌ Could not build cart permalink - variant ID required');
                               alert('Unable to add item to cart. Please try again or contact support.');
                             }
-                          }).catch(err => {
-                            console.error('❌ Error building cart permalink:', err);
-                            alert('Error adding item to cart. Please try again.');
-                          });
+                            return; // Don't continue with default behavior
+                          } else {
+                            throw new Error('buildCartPermalinkWithAttributes function not available');
+                          }
+                        } catch (err) {
+                          console.error('❌ Error building cart permalink:', err);
+                          alert('Error adding item to cart. Please try again.');
+                          e.target.dataset.stlProcessed = 'false'; // Reset flag to allow retry
                           return; // Don't continue with default behavior
+                        }
+                        
+                        // Start upload in background (fire and forget - don't block)
+                        if (typeof window.captureAndUploadReferenceImage === 'function') {
+                          console.log('📸 Starting reference image upload in background...');
+                          window.captureAndUploadReferenceImage().then(result => {
+                            console.log('✅ Reference image captured and uploaded successfully:', result);
+                          }).catch(error => {
+                            console.error('❌ Failed to capture/upload reference image (background):', error);
+                            // Don't show alert - upload failed but checkout already opened
+                          });
+                        } else {
+                          console.warn('⚠️ captureAndUploadReferenceImage function not available');
                         }
                         
                         // Fallback: if function not available, log error
@@ -7502,7 +7517,7 @@
                           button.dataset.stlInterceptorAdded = 'true';
                           styleBuyNowButton(button);
                           console.log('✅ Adding interceptor to dynamically added Buy Now button');
-                          button.addEventListener('click', function(e) {
+                          button.addEventListener('click', async function(e) {
                             // Track Buy Now button click for Meta Pixel
                             if (typeof window.trackMetaEvent === 'function') {
                               window.trackMetaEvent('InitiateCheckout', {
@@ -7522,27 +7537,7 @@
                               window.generateStlOrderId();
                             }
                             
-                            // Capture and upload reference image (front-facing screenshot)
-                            if (typeof window.captureAndUploadReferenceImage === 'function') {
-                              window.captureAndUploadReferenceImage().then(result => {
-                                console.log('✅ Reference image captured and uploaded:', result);
-                              }).catch(error => {
-                                console.error('❌ Failed to capture reference image:', error);
-                                // Don't block checkout if image capture fails
-                              });
-                            }
-                            
-                            // Capture and upload reference image (front-facing screenshot)
-                            if (typeof window.captureAndUploadReferenceImage === 'function') {
-                              window.captureAndUploadReferenceImage().then(result => {
-                                console.log('✅ Reference image captured and uploaded:', result);
-                              }).catch(error => {
-                                console.error('❌ Failed to capture reference image:', error);
-                                // Don't block checkout if image capture fails
-                              });
-                            }
-                            
-                            // Get variant ID from the iframe select element
+                            // Get variant ID from the iframe select element FIRST (before upload)
                             let variantId = null;
                             
                             try {
@@ -7598,25 +7593,40 @@
                               console.warn('⚠️ Could not access iframe for variant ID:', err);
                             }
                             
-                            // Build cart permalink with attributes (async function)
-                            if (typeof window.buildCartPermalinkWithAttributes === 'function') {
-                              window.buildCartPermalinkWithAttributes(variantId, 1).then(cartUrl => {
+                            // Build cart permalink and open in new tab IMMEDIATELY
+                            try {
+                              if (typeof window.buildCartPermalinkWithAttributes === 'function') {
+                                const cartUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
                                 if (cartUrl) {
-                                  console.log('🛒 Redirecting to cart permalink with attributes...');
-                                  window.location.href = cartUrl;
+                                  console.log('🛒 Opening cart in new tab immediately...');
+                                  window.open(cartUrl, '_blank');
+                                  return; // Don't continue with default behavior
                                 } else {
                                   console.error('❌ Could not build cart permalink - variant ID required');
                                   alert('Unable to add item to cart. Please try again or contact support.');
+                                  return;
                                 }
-                              }).catch(err => {
-                                console.error('❌ Error building cart permalink:', err);
-                                alert('Error adding item to cart. Please try again.');
-                              });
+                              } else {
+                                throw new Error('buildCartPermalinkWithAttributes function not available');
+                              }
+                            } catch (err) {
+                              console.error('❌ Error building cart permalink:', err);
+                              alert('Error adding item to cart. Please try again.');
                               return;
                             }
                             
-                            console.error('❌ buildCartPermalinkWithAttributes function not available');
-                            alert('Cart functionality not available. Please refresh the page.');
+                            // Start upload in background (fire and forget - don't block)
+                            if (typeof window.captureAndUploadReferenceImage === 'function') {
+                              console.log('📸 Starting reference image upload in background...');
+                              window.captureAndUploadReferenceImage().then(result => {
+                                console.log('✅ Reference image captured and uploaded successfully:', result);
+                              }).catch(error => {
+                                console.error('❌ Failed to capture/upload reference image (background):', error);
+                                // Don't show alert - upload failed but checkout already opened
+                              });
+                            } else {
+                              console.warn('⚠️ captureAndUploadReferenceImage function not available');
+                            }
                             
                             // Fire and forget - don't block checkout
                             if (window.viewer && window.generateAndUploadSTL) {
@@ -7770,7 +7780,7 @@
           console.log('🔧 Setting up document-level click listener...');
           
           // Use only click event to avoid multiple triggers (mousedown + click + mouseup = 3 triggers!)
-          document.addEventListener('click', function(e) {
+          document.addEventListener('click', async function(e) {
               const target = e.target;
               const buttonText = target.textContent?.trim().toLowerCase() || '';
               const ariaLabel = target.getAttribute('aria-label')?.toLowerCase() || '';
@@ -7847,19 +7857,7 @@
                     console.log('🆔 Order ID already exists:', sessionStorage.getItem('stlOrderId'));
                   }
                   
-                  // Capture and upload reference image (front-facing screenshot)
-                  if (typeof window.captureAndUploadReferenceImage === 'function') {
-                    window.captureAndUploadReferenceImage().then(result => {
-                      console.log('✅ Reference image captured and uploaded:', result);
-                    }).catch(error => {
-                      console.error('❌ Failed to capture reference image:', error);
-                      // Don't block checkout if image capture fails
-                    });
-                  } else {
-                    console.warn('⚠️ captureAndUploadReferenceImage function not available');
-                  }
-                  
-                  // Get variant ID from the iframe select element
+                  // Get variant ID from the iframe select element FIRST (before upload)
                   let variantId = null;
                   
                   try {
@@ -7930,35 +7928,40 @@
                     console.warn('⚠️ Could not get variant ID:', err);
                   }
                   
-                  // Build cart permalink with attributes (async function)
-                  if (typeof window.buildCartPermalinkWithAttributes === 'function') {
-                    window.buildCartPermalinkWithAttributes(variantId, 1).then(cartUrl => {
+                  // Build cart permalink and open in new tab IMMEDIATELY
+                  try {
+                    if (typeof window.buildCartPermalinkWithAttributes === 'function') {
+                      const cartUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
                       if (cartUrl) {
-                        console.log('🛒 Redirecting to cart permalink with attributes...');
-                        window.location.href = cartUrl;
+                        console.log('🛒 Opening cart in new tab immediately...');
+                        window.open(cartUrl, '_blank');
+                        return; // Don't continue with default behavior
                       } else {
                         console.error('❌ Could not build cart permalink - variant ID required');
                         alert('Unable to add item to cart. Please try again or contact support.');
+                        return;
                       }
-                    }).catch(err => {
-                      console.error('❌ Error building cart permalink:', err);
-                      alert('Error adding item to cart. Please try again.');
-                    });
-                    return; // Don't continue with default behavior
+                    } else {
+                      throw new Error('buildCartPermalinkWithAttributes function not available');
+                    }
+                  } catch (err) {
+                    console.error('❌ Error building cart permalink:', err);
+                    alert('Error adding item to cart. Please try again.');
+                    e.target.dataset.stlProcessed = 'false'; // Reset flag to allow retry
+                    return;
                   }
                   
-                  // Fallback: if function not available, log error
-                  console.error('❌ buildCartPermalinkWithAttributes function not available');
-                  alert('Cart functionality not available. Please refresh the page.');
-                  
-                  // Generate and upload STL in background - DO NOT BLOCK CHECKOUT
-                  if (window.viewer && window.generateAndUploadSTL) {
-                    console.log('🛒 Triggering STL generation in background (non-blocking)...');
-                    setTimeout(() => {
-                      window.generateAndUploadSTL().catch(err => {
-                        console.error('❌ STL generation error (non-blocking):', err);
-                      });
-                    }, 0);
+                  // Start upload in background (fire and forget - don't block)
+                  if (typeof window.captureAndUploadReferenceImage === 'function') {
+                    console.log('📸 Starting reference image upload in background...');
+                    window.captureAndUploadReferenceImage().then(result => {
+                      console.log('✅ Reference image captured and uploaded successfully:', result);
+                    }).catch(error => {
+                      console.error('❌ Failed to capture/upload reference image (background):', error);
+                      // Don't show alert - upload failed but checkout already opened
+                    });
+                  } else {
+                    console.warn('⚠️ captureAndUploadReferenceImage function not available');
                   }
                 }
               }
