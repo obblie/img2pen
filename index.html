@@ -3950,7 +3950,8 @@
                 if (hasImage) {
                     depthControls.style.display = 'flex';
                     if (paintControls) {
-                        paintControls.style.display = 'flex';
+                        // Keep paint controls hidden
+                        paintControls.style.display = 'none';
                     }
                     // Update depth display if viewer is available
                     if (window.viewer && window.viewer.depth !== undefined) {
@@ -4339,7 +4340,7 @@
                             </button>
                             
                             <!-- Relief Blend Controls -->
-                            <div id="relief-blend-controls" style="position: absolute; top: 16px; left: 16px; z-index: 1001; background: rgba(255, 255, 255, 0.95); border: 2px solid rgba(0, 0, 0, 0.2); border-radius: 12px; padding: 12px; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 8px; min-width: 160px;">
+                            <div id="relief-blend-controls" style="position: absolute; top: 16px; left: 16px; z-index: 1001; background: rgba(255, 255, 255, 0.95); border: 2px solid rgba(0, 0, 0, 0.2); border-radius: 12px; padding: 12px; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); display: none; flex-direction: column; gap: 8px; min-width: 160px;">
                                 <div style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Relief Blend</div>
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span style="font-size: 10px; color: #999; min-width: 50px;">Normal</span>
@@ -4383,7 +4384,7 @@
                             <div id="brush-cursor" style="position: absolute; pointer-events: none; z-index: 1002; display: none; border: 2px solid rgba(76, 175, 80, 0.8); border-radius: 50%; background: rgba(76, 175, 80, 0.1); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5); transform: translate(-50%, -50%); transition: width 0.1s ease, height 0.1s ease;"></div>
                             
                             <!-- Depth Painting Controls -->
-                            <div id="depth-painting-controls" style="position: absolute; bottom: 16px; left: 16px; z-index: 1001; background: rgba(255, 255, 255, 0.95); border: 2px solid rgba(0, 0, 0, 0.2); border-radius: 12px; padding: 12px; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); display: none; flex-direction: column; align-items: center; gap: 8px; min-width: 140px;">
+                            <div id="depth-painting-controls" style="position: absolute; bottom: 16px; left: 16px; z-index: 1001; background: rgba(255, 255, 255, 0.95); border: 2px solid rgba(0, 0, 0, 0.2); border-radius: 12px; padding: 12px; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); display: none !important; flex-direction: column; align-items: center; gap: 8px; min-width: 140px;">
                                 <div style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Paint Depth</div>
                                 <div style="font-size: 10px; color: #999; margin-bottom: 4px; text-align: center;">Hold Ctrl/Cmd + Click</div>
                                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
@@ -7389,6 +7390,18 @@
                           console.log('🆔 Order ID generated and added to checkout:', orderId);
                         }
                         
+                        // Capture and upload reference image (front-facing screenshot)
+                        if (typeof window.captureAndUploadReferenceImage === 'function') {
+                          window.captureAndUploadReferenceImage().then(result => {
+                            console.log('✅ Reference image captured and uploaded:', result);
+                          }).catch(error => {
+                            console.error('❌ Failed to capture reference image:', error);
+                            // Don't block checkout if image capture fails
+                          });
+                        } else {
+                          console.warn('⚠️ captureAndUploadReferenceImage function not available');
+                        }
+                        
                         // Get variant ID from the iframe select element
                         let variantId = null;
                         
@@ -7507,6 +7520,26 @@
                             // Generate Order ID IMMEDIATELY
                             if (typeof window.generateStlOrderId === 'function') {
                               window.generateStlOrderId();
+                            }
+                            
+                            // Capture and upload reference image (front-facing screenshot)
+                            if (typeof window.captureAndUploadReferenceImage === 'function') {
+                              window.captureAndUploadReferenceImage().then(result => {
+                                console.log('✅ Reference image captured and uploaded:', result);
+                              }).catch(error => {
+                                console.error('❌ Failed to capture reference image:', error);
+                                // Don't block checkout if image capture fails
+                              });
+                            }
+                            
+                            // Capture and upload reference image (front-facing screenshot)
+                            if (typeof window.captureAndUploadReferenceImage === 'function') {
+                              window.captureAndUploadReferenceImage().then(result => {
+                                console.log('✅ Reference image captured and uploaded:', result);
+                              }).catch(error => {
+                                console.error('❌ Failed to capture reference image:', error);
+                                // Don't block checkout if image capture fails
+                              });
                             }
                             
                             // Get variant ID from the iframe select element
@@ -7812,6 +7845,18 @@
                     console.log('🆔 Order ID generated and added to checkout:', orderId);
                   } else if (sessionStorage.getItem('stlOrderId')) {
                     console.log('🆔 Order ID already exists:', sessionStorage.getItem('stlOrderId'));
+                  }
+                  
+                  // Capture and upload reference image (front-facing screenshot)
+                  if (typeof window.captureAndUploadReferenceImage === 'function') {
+                    window.captureAndUploadReferenceImage().then(result => {
+                      console.log('✅ Reference image captured and uploaded:', result);
+                    }).catch(error => {
+                      console.error('❌ Failed to capture reference image:', error);
+                      // Don't block checkout if image capture fails
+                    });
+                  } else {
+                    console.warn('⚠️ captureAndUploadReferenceImage function not available');
                   }
                   
                   // Get variant ID from the iframe select element

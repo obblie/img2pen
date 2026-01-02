@@ -180,6 +180,21 @@ function getSessionUUID() {
     return sessionUUID;
 }
 
+// Helper function to get directory name with date/time prefix
+function getSessionDirectory() {
+    const sessionUUID = getSessionUUID();
+    // Format: YYYY-MM-DD_HH-MM-SS_sessionUUID
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const dateTimePrefix = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
+    return `${dateTimePrefix}_${sessionUUID}`;
+}
+
 // Function to upload image to S3 (updated from GitHub)
 async function uploadImageToGitHub(file) {
     try {
@@ -803,6 +818,7 @@ async function uploadImageToS3(file) {
         console.log('📋 Requesting signed URL for image upload...');
         
         const sessionUUID = getSessionUUID();
+        const sessionDirectory = getSessionDirectory();
         const filename = `${sessionUUID}_uploadedImage`;
         
         // Step 1: Get signed URL for image
@@ -813,7 +829,7 @@ async function uploadImageToS3(file) {
             },
             body: JSON.stringify({
                 fileType: file.type,
-                directory: sessionUUID,  // Use UUID as directory
+                directory: sessionDirectory,  // Use date/time + UUID as directory
                 customFilename: filename  // Use UUID + suffix as filename
             })
         });
@@ -1337,6 +1353,9 @@ class HeightfieldViewer {
         
         // Store default camera position for reset functionality
         this.defaultCameraPosition = new THREE.Vector3(-22.37, 12.48, 37.75);
+        
+        // Store front-facing camera position for reference image capture
+        this.frontCameraPosition = new THREE.Vector3(0, 0, 50); // Front view, looking straight at pendant
         const baseCameraDistance = this.defaultCameraPosition.length();
 
         // Setup controls
@@ -2130,6 +2149,106 @@ class HeightfieldViewer {
         console.log('✅ generateAndUploadSTL function created and assigned to window');
         console.log('✅ Function available:', typeof window.generateAndUploadSTL);
         
+        // Function to capture and upload reference image (front-facing screenshot)
+        this.captureAndUploadReferenceImage = async function() {
+            try {
+                console.log('📸 Capturing reference image (front view)...');
+                
+                // Store current camera position to restore later
+                const originalPosition = this.camera.position.clone();
+                const originalTarget = new THREE.Vector3(0, 0, 0);
+                
+                // Position camera for front-facing view
+                this.camera.position.copy(this.frontCameraPosition);
+                this.camera.lookAt(0, 0, 0);
+                
+                // Update controls to match camera position
+                if (this.controls) {
+                    this.controls.target.set(0, 0, 0);
+                    this.controls.update();
+                }
+                
+                // Render the scene from front view
+                this.renderer.render(this.scene, this.camera);
+                
+                // Capture screenshot
+                const dataURL = this.renderer.domElement.toDataURL('image/png');
+                
+                // Restore original camera position
+                this.camera.position.copy(originalPosition);
+                this.camera.lookAt(originalTarget);
+                if (this.controls) {
+                    this.controls.target.set(0, 0, 0);
+                    this.controls.update();
+                }
+                
+                // Convert data URL to blob
+                const response = await fetch(dataURL);
+                const blob = await response.blob();
+                
+                // Get session UUID and directory
+                const sessionUUID = getSessionUUID();
+                const sessionDirectory = getSessionDirectory();
+                const filename = `${sessionUUID}_referenceImage`;
+                
+                console.log('📤 Uploading reference image to S3:', filename);
+                
+                // Upload to S3 using the existing uploadImageToS3 function pattern
+                const urlResponse = await fetch(`${BACKEND_URL}/api/get-image-upload-url`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        fileType: 'image/png',
+                        directory: sessionDirectory,  // Use date/time + UUID as directory
+                        customFilename: filename
+                    })
+                });
+                
+                if (!urlResponse.ok) {
+                    const error = await urlResponse.json();
+                    throw new Error(error.error || 'Failed to get image upload URL');
+                }
+                
+                const urlData = await urlResponse.json();
+                console.log('✅ Reference image signed URL received:', urlData.filename);
+                
+                // Upload the image to S3
+                const uploadResponse = await fetch(urlData.uploadUrl, {
+                    method: 'PUT',
+                    body: blob,
+                    headers: {
+                        'Content-Type': 'image/png'
+                    }
+                });
+                
+                if (!uploadResponse.ok) {
+                    throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
+                }
+                
+                console.log('✅ Reference image uploaded to S3 successfully:', urlData.filename);
+                return {
+                    success: true,
+                    filename: urlData.filename
+                };
+                
+            } catch (error) {
+                console.error('❌ Error capturing/uploading reference image:', error);
+                throw error;
+            }
+        };
+        
+        // Make function available globally
+        window.captureAndUploadReferenceImage = async () => {
+            if (window.viewer && window.viewer.captureAndUploadReferenceImage) {
+                return await window.viewer.captureAndUploadReferenceImage();
+            } else {
+                console.error('❌ captureAndUploadReferenceImage not available');
+                return Promise.reject('Function not available');
+            }
+        };
+        
         // Test function to manually trigger STL generation (for debugging)
         window.testSTLGeneration = async () => {
             console.log('🧪 Testing STL generation...');
@@ -2154,6 +2273,11 @@ class HeightfieldViewer {
         const reliefBlendSlider = document.getElementById('relief-blend-slider');
         const reliefBlendValue = document.getElementById('relief-blend-value');
         if (reliefBlendSlider && reliefBlendValue) {
+            // Sync reliefBlendFactor with slider's initial value (ensure it's 0)
+            const initialSliderValue = parseFloat(reliefBlendSlider.value) || 0;
+            this.reliefBlendFactor = initialSliderValue / 100.0;
+            console.log(`🔧 Initializing relief blend factor from slider: ${this.reliefBlendFactor} (slider value: ${initialSliderValue})`);
+            
             // Update display value
             const updateDisplay = () => {
                 reliefBlendValue.textContent = `${Math.round(this.reliefBlendFactor * 100)}%`;
@@ -2579,6 +2703,25 @@ class HeightfieldViewer {
         // Store uploadToS3 flag for use in other functions
         this.shouldUploadToS3 = uploadToS3;
         
+        // Reset relief blend factor to 0 when processing a new image
+        // This ensures each new image starts with normal relief, not a previous blend state
+        this.reliefBlendFactor = 0.0;
+        const reliefBlendSlider = document.getElementById('relief-blend-slider');
+        const reliefBlendValue = document.getElementById('relief-blend-value');
+        if (reliefBlendSlider) {
+            reliefBlendSlider.value = 0;
+        }
+        if (reliefBlendValue) {
+            reliefBlendValue.textContent = '0%';
+        }
+        console.log('🔄 Reset relief blend factor to 0 for new image');
+        
+        // Ensure depth and thickness are at correct defaults
+        this.depth = 0.6;
+        this.totalThickness = 1.6;
+        this.baseThickness = 1.0;
+        console.log('🔄 Reset depth/thickness to defaults - depth: 0.6mm, totalThickness: 1.6mm');
+        
         if (showLoading) {
             showLoadingOverlay();
         }
@@ -2937,6 +3080,9 @@ class HeightfieldViewer {
     }
 
     createHeightfieldMesh(heightfieldData) {
+        // Debug: Log current depth/thickness values at start of mesh creation
+        console.log(`🔧 createHeightfieldMesh START - depth: ${this.depth.toFixed(3)}mm, totalThickness: ${this.totalThickness.toFixed(3)}mm, baseThickness: ${this.baseThickness.toFixed(3)}mm, effectiveBaseThickness: ${this.getEffectiveBaseThickness().toFixed(3)}mm, reliefBlendFactor: ${this.reliefBlendFactor.toFixed(3)}`);
+        
         let alphaMap = null;
         let geometry = null;
         // Always remove the previous red layer at the start
@@ -3002,6 +3148,12 @@ class HeightfieldViewer {
                             const gray = this.readGrayscaleFromHeightfield(heightfieldData, pixelIndex);
                             // Apply reverse relief mapping if enabled (pass u, v for marquee selection)
                             const effectiveGray = this.applyReliefMapping(gray, u, v);
+                            
+                            // Debug: Log if effectiveGray exceeds expected range (only for first few pixels to avoid spam)
+                            if (x === 0 && y === 0) {
+                                console.log(`🔧 Relief mapping debug - gray: ${gray.toFixed(3)}, effectiveGray: ${effectiveGray.toFixed(3)}, reliefBlendFactor: ${this.reliefBlendFactor.toFixed(3)}, depth: ${this.depth.toFixed(3)}`);
+                            }
+                            
                             // Apply depth scaling - depth controls relief intensity
                             // Relief Z coordinates: 0 = base top, depth = relief top
                             // The depth value directly scales the relief pattern
@@ -3013,6 +3165,11 @@ class HeightfieldViewer {
                             }
                             // Ensure z is never negative (relief is always on top of base)
                             z = Math.max(0, z);
+                            
+                            // Debug: Warn if Z exceeds expected maximum (2x depth = 1.2mm for 0.6mm depth)
+                            if (z > this.depth * 2.1 && x === 0 && y === 0) {
+                                console.warn(`⚠️ Excessive Z value detected: ${z.toFixed(3)}mm (expected max: ${(this.depth * 2).toFixed(3)}mm)`);
+                            }
                         }
                         grid.push({ px, py, z, u, v, inCircle: dist <= effectiveRadius });
                     }
@@ -3538,9 +3695,26 @@ class HeightfieldViewer {
                     // Therefore: mesh.position.y = thickness
                     const thickness = this.getEffectiveBaseThickness();
                     console.log(`🔧 Mesh positioning - thickness: ${thickness.toFixed(2)}mm, depth: ${this.depth.toFixed(2)}mm, totalThickness: ${this.totalThickness.toFixed(2)}mm`);
+                    
+                    // Debug: Check if values are within expected range
+                    if (thickness > 1.5 || this.depth > 1.0) {
+                        console.warn(`⚠️ UNEXPECTED VALUES - thickness: ${thickness.toFixed(3)}mm (expected ~1.0mm), depth: ${this.depth.toFixed(3)}mm (expected 0.6mm)`);
+                    }
+                    
                     mesh.rotation.x = 0; // Remove the flat rotation
                     mesh.position.y = thickness; // Position so base bottom (z=-thickness) is at y=0
                     console.log(`🔧 Mesh positioned at y=${mesh.position.y.toFixed(2)}mm, rotation.x=${mesh.rotation.x}`);
+                    
+                    // Debug: Check max Z value in the geometry to verify relief depth
+                    const positions = geometry.attributes.position.array;
+                    let maxZ = -Infinity;
+                    for (let i = 2; i < positions.length; i += 3) {
+                        if (positions[i] > maxZ) maxZ = positions[i];
+                    }
+                    console.log(`🔧 Geometry Z range - max Z: ${maxZ.toFixed(3)}mm (expected max: ${this.depth.toFixed(3)}mm, or up to ${(this.depth * 2).toFixed(3)}mm if exceeded)`);
+                    if (maxZ > this.depth * 2.1) {
+                        console.warn(`⚠️ EXCESSIVE RELIEF DEPTH - max Z: ${maxZ.toFixed(3)}mm exceeds expected maximum of ${(this.depth * 2).toFixed(3)}mm`);
+                    }
                 } else {
                     // Position so the bottom edge sits on the platform (y=0)
                     const thickness = this.getEffectiveBaseThickness();
@@ -6767,6 +6941,7 @@ async function uploadDalleImageToS3(imageBlob, prompt) {
         console.log('📋 Requesting signed URL for DALL-E image upload...');
         
         const sessionUUID = getSessionUUID();
+        const sessionDirectory = getSessionDirectory();
         const filename = `${sessionUUID}_dallE`;
         
         // Get signed upload URL for DALL-E images
@@ -6778,7 +6953,7 @@ async function uploadDalleImageToS3(imageBlob, prompt) {
             body: JSON.stringify({
                 fileType: imageBlob.type,
                 prompt: prompt,
-                directory: sessionUUID,  // Use UUID as directory
+                directory: sessionDirectory,  // Use date/time + UUID as directory
                 customFilename: filename  // Use UUID + suffix as filename
             })
         });
@@ -6825,6 +7000,7 @@ async function uploadCroppedImageToS3(imageBlob, isFromDallE = false) {
         console.log('📋 Requesting signed URL for cropped image upload...');
         
         const sessionUUID = getSessionUUID();
+        const sessionDirectory = getSessionDirectory();
         // Determine suffix based on source
         const suffix = isFromDallE ? '_croppedDallE' : '_croppedUploadedImage';
         const filename = `${sessionUUID}${suffix}`;
@@ -6837,7 +7013,7 @@ async function uploadCroppedImageToS3(imageBlob, isFromDallE = false) {
             },
             body: JSON.stringify({
                 fileType: imageBlob.type || 'image/jpeg',
-                directory: sessionUUID,  // Use UUID as directory
+                directory: sessionDirectory,  // Use date/time + UUID as directory
                 customFilename: filename  // Use UUID + suffix as filename
             })
         });
@@ -7574,15 +7750,11 @@ document.addEventListener('DOMContentLoaded', () => {
             function updatePaintControlsVisibility() {
                 if (!paintControls) return;
                 
-                const hasImage = window.viewer && window.viewer.heightfieldData;
-                if (hasImage) {
-                    paintControls.style.display = 'flex';
-                } else {
-                    paintControls.style.display = 'none';
-                }
+                // Always keep paint controls hidden
+                paintControls.style.display = 'none';
             }
             
-            // Update visibility when image is loaded
+            // Update visibility when image is loaded (but keep hidden)
             updatePaintControlsVisibility();
             
             // Check periodically for image changes
