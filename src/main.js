@@ -1068,12 +1068,21 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
         });
     }
     xInput.onchange = yInput.onchange = wInput.onchange = hInput.onchange = setCropBoxFromInputs;
-    // Live preview
+    // Live preview - always show circular preview for pendant creation
     function updatePreview() {
         if (!previewCanvas) return;
         const canvas = cropper.getCroppedCanvas({width:250,height:250});
         previewCtx.clearRect(0,0,250,250);
-        if (canvas && canvas.width > 0 && canvas.height > 0) previewCtx.drawImage(canvas,0,0,250,250);
+        if (canvas && canvas.width > 0 && canvas.height > 0) {
+            // Always clip to a circle for pendant preview
+            previewCtx.save();
+            previewCtx.beginPath();
+            previewCtx.arc(125, 125, 125, 0, 2 * Math.PI);
+            previewCtx.closePath();
+            previewCtx.clip();
+            previewCtx.drawImage(canvas,0,0,250,250);
+            previewCtx.restore();
+        }
     }
     // Zoom/rotation display
     function updateZoomRotDisplay() {
