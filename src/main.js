@@ -1162,10 +1162,113 @@ class HeightfieldViewer {
         // Base thickness (will be adjusted to keep total constant)
         this.baseThickness = 1.0; // Initial base thickness
         
+        // Reverse relief technique: when enabled, performs normal relief then bulges out negative parts
+        // Normal relief: dark areas are at base (z=0), light areas are raised (z=depth)
+        // Reverse: dark areas that were at base bulge out (z=depth), light areas stay raised
+        // This creates a relief where everything is raised, with dark areas having extra bulge
+        this.reverseRelief = false;
+        // Blend factor for combining normal and reverse relief (0.0 = normal only, 1.0 = reverse only, 0.5 = equal blend)
+        this.reliefBlendFactor = 0.0; // Default to normal relief only
+        
+        // Marquee selection for applying reverse relief to specific areas
+        this.marqueeSelection = null; // Array of points [{x, y}, ...] in normalized coordinates (0-1) forming a closed polygon
+        this.marqueeMode = false; // Whether marquee tool is active
+        this.marqueePath = []; // Current path being drawn
+        this.isDrawingMarquee = false; // Whether currently drawing a path
+        
         // Helper method to calculate effective base thickness
         this.getEffectiveBaseThickness = function() {
             // Base = total - depth, but ensure minimum base of 0.3mm
             return Math.max(0.3, this.totalThickness - this.depth);
+        };
+        
+        // Helper method to check if a point (u, v in 0-1 normalized coords) is within marquee selection
+        // Uses point-in-polygon algorithm (ray casting)
+        this.isPointInMarquee = function(u, v) {
+            if (!this.marqueeSelection || this.marqueeSelection.length < 3) return true; // No selection or invalid polygon = apply to all
+            
+            const polygon = this.marqueeSelection;
+            let inside = false;
+            
+            // Ray casting algorithm
+            // Note: marqueeSelection stores points as {x, y, u, v} where u, v are normalized coordinates
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                const ui = polygon[i].u !== undefined ? polygon[i].u : polygon[i].x;
+                const vi = polygon[i].v !== undefined ? polygon[i].v : polygon[i].y;
+                const uj = polygon[j].u !== undefined ? polygon[j].u : polygon[j].x;
+                const vj = polygon[j].v !== undefined ? polygon[j].v : polygon[j].y;
+                
+                const intersect = ((vi > v) !== (vj > v)) && 
+                                  (u < (uj - ui) * (v - vi) / (vj - vi) + ui);
+                if (intersect) inside = !inside;
+            }
+            
+            return inside;
+        };
+        
+        // Helper method to apply relief mapping with optional reverse/bulge effect
+        // Combines normal relief and bulged relief based on blend factor
+        // When blended: neutral areas (gray=0.5) stay neutral, dark areas bulge out, light areas become more raised
+        // Only applies bulge effect if point is within marquee selection (or no selection is set)
+        this.applyReliefMapping = function(gray, u, v) {
+            // Check if this point is within the marquee selection
+            const normalizedU = u !== undefined ? u : 0.5;
+            const normalizedV = v !== undefined ? v : 0.5;
+            const inSelection = this.isPointInMarquee(normalizedU, normalizedV);
+            
+            // If not in selection and we have a selection, use normal relief only
+            if (this.marqueeSelection && !inSelection) {
+                return gray; // Normal relief only - no blend effect outside selection
+            }
+            
+            // If we have a selection and we're inside it, OR if we have no selection,
+            // apply the blend effect based on reliefBlendFactor
+            
+            // Always calculate both reliefs
+            // Normal relief: dark=0 (base), light=1 (raised)
+            const normalRelief = gray;
+            
+            // Bulged relief: neutral stays neutral, negatives become positive, positives become more positive
+            // Neutral (gray=0.5) → maps to 0 (base level, truly neutral)
+            // Dark (gray<0.5) → convert to positive bulge
+            // Light (gray>0.5) → enhance to be even more positive
+            let bulgedRelief;
+            if (gray <= 0.5) {
+                // Dark areas: convert negative to positive bulge
+                // gray=0 → (0.5 - 0) * 2 = 1.0 (maximum bulge)
+                // gray=0.5 → (0.5 - 0.5) * 2 = 0.0 (neutral/base)
+                bulgedRelief = (0.5 - gray) * 2;
+            } else {
+                // Light areas: enhance the positive (make it even more raised)
+                // gray=0.5 → 0.0 (neutral/base)
+                // gray=1.0 → 0.0 + (1.0 - 0.5) * 2.5 = 1.25 (enhanced positive, can exceed 1.0)
+                // Using 2.5 multiplier to make positives "even more positive"
+                bulgedRelief = (gray - 0.5) * 2.5;
+            }
+            // Don't clamp - allow values > 1.0 for enhanced positives (handled by exceeded depth logic)
+            bulgedRelief = Math.max(0, bulgedRelief);
+            
+            // Combine based on blend factor
+            // blendFactor = 0.0: normal only
+            // blendFactor = 1.0: bulged only
+            // blendFactor = 0.5: equal blend
+            // When gray=0.5: normal=0.5, bulged=0.0, so blended = 0.5*(1-blend) + 0.0*blend
+            // To keep neutral truly neutral, we need to adjust: make it map to 0 when blended
+            let blended = normalRelief * (1.0 - this.reliefBlendFactor) + bulgedRelief * this.reliefBlendFactor;
+            
+            // Adjust neutral point: when gray is near 0.5, bias towards base (0) when blending
+            // This ensures neutral areas stay truly neutral (at base level)
+            if (this.reliefBlendFactor > 0) {
+                const distanceFromNeutral = Math.abs(gray - 0.5);
+                if (distanceFromNeutral < 0.15) {
+                    // Near neutral: interpolate towards base (0) based on blend factor
+                    const neutralWeight = 1.0 - (distanceFromNeutral / 0.15); // 1.0 at exactly 0.5
+                    const neutralTarget = 0.0; // Base level
+                    blended = blended * (1.0 - neutralWeight * this.reliefBlendFactor) + neutralTarget * (neutralWeight * this.reliefBlendFactor);
+                }
+            }
+            
+            return blended;
         };
         
         // Helper method to read grayscale value from heightfield data, handling exceeded depth
@@ -1250,11 +1353,12 @@ class HeightfieldViewer {
         this.controls.maxDistance = baseCameraDistance * 2.0;
         
         // Track Three.js scene interaction for Meta Pixel
+        // Best practice: use custom event for Three.js engagement (high intent signal)
         let sceneInteractionTracked = false;
         this.controls.addEventListener('start', () => {
-            if (!sceneInteractionTracked && typeof window.trackMetaEvent === 'function') {
+            if (!sceneInteractionTracked && typeof window.trackMetaCustomEvent === 'function') {
                 sceneInteractionTracked = true;
-                window.trackMetaEvent('ViewContent', {
+                window.trackMetaCustomEvent('ViewerEngaged', {
                     content_type: '3d_scene',
                     content_name: '3D Jewelry Viewer',
                     content_category: 'Product Visualization'
@@ -2046,6 +2150,325 @@ class HeightfieldViewer {
         
         console.log('✅ Test function window.testSTLGeneration created');
 
+        // Relief Blend Slider
+        const reliefBlendSlider = document.getElementById('relief-blend-slider');
+        const reliefBlendValue = document.getElementById('relief-blend-value');
+        if (reliefBlendSlider && reliefBlendValue) {
+            // Update display value
+            const updateDisplay = () => {
+                reliefBlendValue.textContent = `${Math.round(this.reliefBlendFactor * 100)}%`;
+            };
+            updateDisplay();
+            
+            reliefBlendSlider.addEventListener('input', (e) => {
+                // Convert slider value (0-100) to blend factor (0.0-1.0)
+                this.reliefBlendFactor = parseFloat(e.target.value) / 100.0;
+                updateDisplay();
+                console.log(`🔄 Relief blend factor: ${(this.reliefBlendFactor * 100).toFixed(0)}%`);
+                
+                // If there's an existing heightfield, regenerate the mesh
+                if (this.heightfieldData) {
+                    console.log('🔄 Regenerating mesh with new relief blend...');
+                    this.createHeightfieldMesh(this.heightfieldData);
+                }
+            });
+        }
+        
+        // Marquee Tool (Freeform Drawing)
+        const marqueeToolBtn = document.getElementById('marquee-tool-btn');
+        const clearMarqueeBtn = document.getElementById('clear-marquee-btn');
+        const marqueeHelpText = document.getElementById('marquee-help-text');
+        const marqueeOverlay = document.getElementById('marquee-overlay');
+        const marqueeSvg = document.getElementById('marquee-svg');
+        const marqueePath = document.getElementById('marquee-path');
+        const canvasContainer = document.getElementById('canvas-container');
+        
+        if (marqueeToolBtn && clearMarqueeBtn && marqueeHelpText && marqueeOverlay && marqueeSvg && marqueePath && canvasContainer) {
+            // Toggle marquee mode
+            marqueeToolBtn.addEventListener('click', () => {
+                this.marqueeMode = !this.marqueeMode;
+                marqueeToolBtn.textContent = this.marqueeMode ? '✓ Marquee Active' : '📐 Marquee Tool';
+                marqueeToolBtn.style.background = this.marqueeMode ? '#16a34a' : '#1d4ed8';
+                marqueeOverlay.style.display = this.marqueeMode ? 'block' : 'none';
+                // Enable pointer events when marquee mode is active so we can start drawing
+                // But we'll check for UI elements in the mousedown handler
+                marqueeOverlay.style.pointerEvents = this.marqueeMode ? 'auto' : 'none';
+                clearMarqueeBtn.style.display = this.marqueeSelection ? 'block' : 'none';
+                marqueeHelpText.style.display = this.marqueeMode ? 'block' : 'none';
+                
+                // Reset drawing state when toggling off
+                if (!this.marqueeMode) {
+                    this.isDrawingMarquee = false;
+                    this.marqueePath = [];
+                    marqueePath.style.display = 'none';
+                }
+                
+                // Disable OrbitControls whenever marquee mode is active
+                if (this.controls) {
+                    this.controls.enabled = !this.marqueeMode;
+                }
+                
+                console.log(`📐 Marquee tool ${this.marqueeMode ? 'activated' : 'deactivated'}`);
+            });
+            
+            // Clear selection
+            clearMarqueeBtn.addEventListener('click', () => {
+                this.marqueeSelection = null;
+                this.marqueePath = [];
+                this.isDrawingMarquee = false;
+                marqueePath.style.display = 'none';
+                clearMarqueeBtn.style.display = 'none';
+                console.log('🗑️ Marquee selection cleared');
+                // Regenerate mesh without selection
+                if (this.heightfieldData) {
+                    this.createHeightfieldMesh(this.heightfieldData);
+                }
+            });
+            
+            const getCanvasCoordinates = (e) => {
+                const rect = canvasContainer.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                // Convert to normalized coordinates (0-1)
+                const u = Math.max(0, Math.min(1, x / rect.width));
+                const v = Math.max(0, Math.min(1, y / rect.height));
+                return { x, y, u, v };
+            };
+            
+            const updateMarqueePath = () => {
+                if (this.marqueePath.length === 0) {
+                    marqueePath.style.display = 'none';
+                    return;
+                }
+                
+                marqueePath.style.display = 'block';
+                const rect = canvasContainer.getBoundingClientRect();
+                
+                // Build SVG path string
+                let pathString = '';
+                for (let i = 0; i < this.marqueePath.length; i++) {
+                    const point = this.marqueePath[i];
+                    const x = point.u * rect.width;
+                    const y = point.v * rect.height;
+                    if (i === 0) {
+                        pathString += `M ${x} ${y}`;
+                    } else {
+                        pathString += ` L ${x} ${y}`;
+                    }
+                }
+                
+                // Close the path if we have a selection (completed drawing)
+                if (this.marqueeSelection && this.marqueeSelection.length > 0) {
+                    pathString += ' Z';
+                }
+                
+                marqueePath.setAttribute('d', pathString);
+            };
+            
+            const closePath = () => {
+                if (this.marqueePath.length >= 3) {
+                    // Close the path by connecting to the start
+                    this.marqueeSelection = [...this.marqueePath];
+                    this.isDrawingMarquee = false;
+                    updateMarqueePath();
+                    clearMarqueeBtn.style.display = 'block';
+                    
+                    // Disable pointer events on overlay so UI elements are clickable
+                    // The overlay will still be visible to show the selection, but won't block clicks
+                    marqueeOverlay.style.pointerEvents = 'none';
+                    
+                    // Re-enable OrbitControls after selection is complete
+                    if (this.controls) {
+                        this.controls.enabled = true;
+                    }
+                    
+                    // Automatically exit marquee mode after completing selection
+                    // This makes it clear that selection is done and other features are available
+                    this.marqueeMode = false;
+                    marqueeToolBtn.textContent = '📐 Marquee Tool';
+                    marqueeToolBtn.style.background = '#1d4ed8';
+                    
+                    // Debug: log selection bounds
+                    const uCoords = this.marqueeSelection.map(p => p.u).filter(u => u !== undefined);
+                    const vCoords = this.marqueeSelection.map(p => p.v).filter(v => v !== undefined);
+                    if (uCoords.length > 0 && vCoords.length > 0) {
+                        console.log('📐 Marquee selection bounds:', {
+                            uMin: Math.min(...uCoords),
+                            uMax: Math.max(...uCoords),
+                            vMin: Math.min(...vCoords),
+                            vMax: Math.max(...vCoords),
+                            points: this.marqueeSelection.length
+                        });
+                    } else {
+                        console.warn('⚠️ Marquee selection missing u/v coordinates:', this.marqueeSelection[0]);
+                    }
+                    console.log('📐 Marquee mode auto-exited - you can now use other features');
+                    console.log('📐 Current relief blend factor:', this.reliefBlendFactor);
+                    
+                    // Regenerate mesh with selection
+                    if (this.heightfieldData) {
+                        this.createHeightfieldMesh(this.heightfieldData);
+                    }
+                }
+            };
+            
+            // Mouse event handlers
+            marqueeOverlay.addEventListener('mousedown', (e) => {
+                if (!this.marqueeMode) return;
+                
+                // Check if clicking on a UI element (button, slider, etc.)
+                const target = e.target;
+                const clickedElement = document.elementFromPoint(e.clientX, e.clientY);
+                if (clickedElement && (
+                    clickedElement.closest('button') || 
+                    clickedElement.closest('input[type="range"]') || 
+                    clickedElement.closest('#relief-blend-controls') ||
+                    clickedElement.closest('#marquee-tool-btn') ||
+                    clickedElement.closest('#clear-marquee-btn')
+                )) {
+                    // Don't interfere with UI elements - let the click pass through
+                    return;
+                }
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const coords = getCanvasCoordinates(e);
+                
+                // Start new path or continue existing
+                if (!this.isDrawingMarquee) {
+                    this.marqueePath = [coords];
+                    this.isDrawingMarquee = true;
+                } else {
+                    // Add point to path
+                    this.marqueePath.push(coords);
+                }
+                
+                updateMarqueePath();
+                console.log('📐 Marquee drawing started/continued, points:', this.marqueePath.length);
+            });
+            
+            marqueeOverlay.addEventListener('mousemove', (e) => {
+                if (!this.marqueeMode || !this.isDrawingMarquee) return;
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const coords = getCanvasCoordinates(e);
+                
+                // Update the last point or add new one if mouse moved significantly
+                if (this.marqueePath.length > 0) {
+                    const lastPoint = this.marqueePath[this.marqueePath.length - 1];
+                    const dist = Math.sqrt(
+                        Math.pow(coords.x - lastPoint.x, 2) + 
+                        Math.pow(coords.y - lastPoint.y, 2)
+                    );
+                    
+                    // Only add point if moved at least 3 pixels (reduces noise)
+                    if (dist > 3) {
+                        this.marqueePath.push(coords);
+                        updateMarqueePath();
+                    }
+                }
+            });
+            
+            marqueeOverlay.addEventListener('mouseup', (e) => {
+                if (!this.marqueeMode || !this.isDrawingMarquee) return;
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Don't close on mouseup - let user continue drawing or double-click to close
+            });
+            
+            // Double-click to close the path
+            marqueeOverlay.addEventListener('dblclick', (e) => {
+                if (!this.marqueeMode || !this.isDrawingMarquee) return;
+                e.preventDefault();
+                e.stopPropagation();
+                closePath();
+            });
+            
+            // Also handle mouseup on document in case mouse leaves overlay
+            document.addEventListener('mouseup', (e) => {
+                if (!this.marqueeMode || !this.isDrawingMarquee) return;
+                // Don't close on document mouseup - let user continue or double-click
+            });
+            
+            // Touch support for mobile
+            marqueeOverlay.addEventListener('touchstart', (e) => {
+                if (!this.marqueeMode) return;
+                
+                // Check if touching a UI element
+                const touch = e.touches[0];
+                const clickedElement = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (clickedElement && (
+                    clickedElement.closest('button') || 
+                    clickedElement.closest('input[type="range"]') || 
+                    clickedElement.closest('#relief-blend-controls') ||
+                    clickedElement.closest('#marquee-tool-btn') ||
+                    clickedElement.closest('#clear-marquee-btn')
+                )) {
+                    return;
+                }
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const coords = getCanvasCoordinates(touch);
+                
+                if (!this.isDrawingMarquee) {
+                    this.marqueePath = [coords];
+                    this.isDrawingMarquee = true;
+                } else {
+                    this.marqueePath.push(coords);
+                }
+                
+                updateMarqueePath();
+                console.log('📐 Marquee touch started, points:', this.marqueePath.length);
+            });
+            
+            marqueeOverlay.addEventListener('touchmove', (e) => {
+                if (!this.marqueeMode || !this.isDrawingMarquee) return;
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const touch = e.touches[0];
+                const coords = getCanvasCoordinates(touch);
+                
+                if (this.marqueePath.length > 0) {
+                    const lastPoint = this.marqueePath[this.marqueePath.length - 1];
+                    const dist = Math.sqrt(
+                        Math.pow(coords.x - lastPoint.x, 2) + 
+                        Math.pow(coords.y - lastPoint.y, 2)
+                    );
+                    
+                    if (dist > 3) {
+                        this.marqueePath.push(coords);
+                        updateMarqueePath();
+                    }
+                }
+            });
+            
+            marqueeOverlay.addEventListener('touchend', (e) => {
+                if (!this.marqueeMode || !this.isDrawingMarquee) return;
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Close path on touch end if we have enough points
+                if (this.marqueePath.length >= 3) {
+                    closePath();
+                }
+            });
+            
+            // Ensure overlay is always on top when active
+            const ensureOverlayOnTop = () => {
+                if (this.marqueeMode && marqueeOverlay.parentElement) {
+                    canvasContainer.appendChild(marqueeOverlay);
+                }
+            };
+            
+            marqueeToolBtn.addEventListener('click', ensureOverlayOnTop);
+        }
+        
         // Export STL button
         const exportStlBtn = document.getElementById('export-stl-btn');
         if (exportStlBtn) {
@@ -2577,14 +3000,16 @@ class HeightfieldViewer {
                             const pixelY = heightfieldData.height - 1 - Math.floor(v * (heightfieldData.height - 1));
                             const pixelIndex = (pixelY * heightfieldData.width + pixelX) * 4;
                             const gray = this.readGrayscaleFromHeightfield(heightfieldData, pixelIndex);
+                            // Apply reverse relief mapping if enabled (pass u, v for marquee selection)
+                            const effectiveGray = this.applyReliefMapping(gray, u, v);
                             // Apply depth scaling - depth controls relief intensity
                             // Relief Z coordinates: 0 = base top, depth = relief top
                             // The depth value directly scales the relief pattern
-                            // For exceeded values (gray > 1.0), we add additional depth beyond the base
-                            if (gray > 1.0) {
-                                z = this.depth + (gray - 1.0) * this.depth; // Can exceed up to 2x depth
+                            // For exceeded values (effectiveGray > 1.0), we add additional depth beyond the base
+                            if (effectiveGray > 1.0) {
+                                z = this.depth + (effectiveGray - 1.0) * this.depth; // Can exceed up to 2x depth
                             } else {
-                                z = gray * this.depth;
+                                z = effectiveGray * this.depth;
                             }
                             // Ensure z is never negative (relief is always on top of base)
                             z = Math.max(0, z);
@@ -3199,13 +3624,15 @@ class HeightfieldViewer {
                             const pixelY = heightfieldData.height - 1 - Math.floor(v * (heightfieldData.height - 1));
                             const pixelIndex = (pixelY * heightfieldData.width + pixelX) * 4;
                             const gray = this.readGrayscaleFromHeightfield(heightfieldData, pixelIndex);
+                            // Apply reverse relief mapping if enabled (pass u, v for marquee selection)
+                            const effectiveGray = this.applyReliefMapping(gray, u, v);
                             // Apply depth scaling - depth controls relief intensity
                             // The depth value directly scales the relief pattern
-                            // For exceeded values (gray > 1.0), we add additional depth beyond the base
-                            if (gray > 1.0) {
-                                z = this.depth + (gray - 1.0) * this.depth; // Can exceed up to 2x depth
+                            // For exceeded values (effectiveGray > 1.0), we add additional depth beyond the base
+                            if (effectiveGray > 1.0) {
+                                z = this.depth + (effectiveGray - 1.0) * this.depth; // Can exceed up to 2x depth
                             } else {
-                                z = gray * this.depth;
+                                z = effectiveGray * this.depth;
                             }
                         }
                         grid.push({ px, py, z, u, v, inCircle: dist <= radius });
@@ -3485,13 +3912,15 @@ class HeightfieldViewer {
 
             // Convert RGB to grayscale
             const gray = this.readGrayscaleFromHeightfield(heightfieldData, pixelIndex);
+            // Apply reverse relief mapping if enabled (pass u, v for marquee selection)
+            const effectiveGray = this.applyReliefMapping(gray, u, v);
 
             // Apply height - depth directly controls relief depth
-            // For exceeded values (gray > 1.0), we add additional depth beyond the base
-            if (gray > 1.0) {
-                positions[i + 2] = this.depth + (gray - 1.0) * this.depth; // Can exceed up to 2x depth
+            // For exceeded values (effectiveGray > 1.0), we add additional depth beyond the base
+            if (effectiveGray > 1.0) {
+                positions[i + 2] = this.depth + (effectiveGray - 1.0) * this.depth; // Can exceed up to 2x depth
             } else {
-                positions[i + 2] = gray * this.depth;
+                positions[i + 2] = effectiveGray * this.depth;
             }
         }
 
@@ -4729,9 +5158,11 @@ class HeightfieldViewer {
                                 const gray = (data[pixelIndex] * 0.299 +
                                     data[pixelIndex + 1] * 0.587 +
                                     data[pixelIndex + 2] * 0.114) / 255;
+                                // Apply reverse relief mapping if enabled
+                                const effectiveGray = this.applyReliefMapping(gray);
                                 // Apply depth scaling - use this.depth directly for consistency
                                 // Relief Z coordinates: 0 = base top, depth = relief top
-                                z = gray * this.depth;
+                                z = effectiveGray * this.depth;
                             }
                             
                             grid.push({ px, py, z, u, v, inCircle: dist <= effectiveRadius });
@@ -4952,9 +5383,11 @@ class HeightfieldViewer {
                                 const gray = (data[pixelIndex] * 0.299 +
                                     data[pixelIndex + 1] * 0.587 +
                                     data[pixelIndex + 2] * 0.114) / 255;
+                                // Apply reverse relief mapping if enabled
+                                const effectiveGray = this.applyReliefMapping(gray);
                                 // Apply depth scaling - use this.depth directly for consistency
                                 // Relief Z coordinates: 0 = base top, depth = relief top
-                                z = gray * this.depth;
+                                z = effectiveGray * this.depth;
                             }
                             
                             reliefPositions.push(px, py, z);
