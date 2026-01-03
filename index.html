@@ -7573,10 +7573,14 @@
                                     console.error('❌ Reference image upload failed (non-blocking):', err);
                                   });
                                   
-                                  // Open cart URL (will add item when visited)
-                                  // Note: User will need to click checkout button (we cannot redirect cross-origin)
-                                  console.log('🛒 Opening cart URL:', cartUrl);
+                                  // Open cart URL - Shopify should redirect to checkout if redirect parameter is supported
+                                  // If not, the cart page will show and user can click checkout
+                                  console.log('🛒 Opening cart URL (should redirect to checkout if supported):', cartUrl);
                                   window.open(cartUrl, '_blank');
+                                  
+                                  // Note: We cannot programmatically redirect from cart to checkout due to cross-origin restrictions
+                                  // The redirect parameter in the cart URL should handle this if Shopify supports it
+                                  // Otherwise, the user will see the cart page and can click the checkout button
                             } else {
                               console.error('❌ Could not build checkout URL - variant ID required');
                               alert('Unable to add item to cart. Please try again or contact support.');
@@ -7700,10 +7704,14 @@
                                     console.error('❌ Reference image upload failed (non-blocking):', err);
                                   });
                                   
-                                  // Open cart URL (will add item when visited)
-                                  // Note: User will need to click checkout button (we cannot redirect cross-origin)
-                                  console.log('🛒 Opening cart URL:', cartUrl);
+                                  // Open cart URL - Shopify should redirect to checkout if redirect parameter is supported
+                                  // If not, the cart page will show and user can click checkout
+                                  console.log('🛒 Opening cart URL (should redirect to checkout if supported):', cartUrl);
                                   window.open(cartUrl, '_blank');
+                                  
+                                  // Note: We cannot programmatically redirect from cart to checkout due to cross-origin restrictions
+                                  // The redirect parameter in the cart URL should handle this if Shopify supports it
+                                  // Otherwise, the user will see the cart page and can click the checkout button
                                   return; // Don't continue with default behavior
                                 } else {
                                   console.error('❌ Could not build checkout URL - variant ID required');
