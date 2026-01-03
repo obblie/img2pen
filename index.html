@@ -7503,6 +7503,8 @@
                                     console.warn('⚠️ captureAndUploadReferenceImage function not available');
                                   }
                                   
+                                  // Set flag to redirect from cart to checkout
+                                  sessionStorage.setItem('redirectToCheckout', 'true');
                                   window.open(cartUrl, '_blank');
                             } else {
                               console.error('❌ Could not build cart permalink - variant ID required');
@@ -7647,6 +7649,8 @@
                                     console.warn('⚠️ captureAndUploadReferenceImage function not available');
                                   }
                                   
+                                  // Set flag to redirect from cart to checkout
+                                  sessionStorage.setItem('redirectToCheckout', 'true');
                                   window.open(cartUrl, '_blank');
                                   return; // Don't continue with default behavior
                                 } else {

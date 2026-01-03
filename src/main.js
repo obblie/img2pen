@@ -821,15 +821,53 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         return checkoutUrl.toString();
         
     } catch (error) {
-        console.error('❌ Error adding item to cart:', error);
-        // Fallback: return cart URL if Cart API fails
-        console.log('⚠️ Falling back to cart URL method...');
-        const cartUrl = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
+        console.error('❌ Error adding item to cart via Cart API:', error);
+        // Even if Cart API fails, try to redirect to checkout
+        // The cart permalink method will add the item, then we can redirect
+        console.log('⚠️ Cart API failed, using cart permalink method then redirecting to checkout...');
+        
+        // Fallback: Use cart permalink in hidden iframe to add item to current window's cart
+        // Then return checkout URL - the item will be in the cart when checkout opens
+        console.log('⚠️ Using cart permalink fallback (hidden iframe method)...');
+        
+        const cartPermalink = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
         if (sessionUUID) {
-            cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
+            cartPermalink.searchParams.set('attributes[Session UUID]', sessionUUID);
         }
-        cartUrl.searchParams.set('storefront', 'true');
-        return cartUrl.toString();
+        cartPermalink.searchParams.set('storefront', 'true');
+        
+        // Add item to cart via hidden iframe in current window (shares cart with new tab)
+        const hiddenFrame = document.createElement('iframe');
+        hiddenFrame.style.display = 'none';
+        hiddenFrame.style.width = '0';
+        hiddenFrame.style.height = '0';
+        hiddenFrame.style.position = 'absolute';
+        hiddenFrame.src = cartPermalink.toString();
+        document.body.appendChild(hiddenFrame);
+        
+        // Wait a moment for item to be added to cart, then remove iframe
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (document.body.contains(hiddenFrame)) {
+            document.body.removeChild(hiddenFrame);
+        }
+        
+        // Add attributes to cart
+        if (sessionUUID) {
+            try {
+                await addAttributesToShopifyCart();
+            } catch (attrError) {
+                console.warn('⚠️ Failed to add attributes, continuing anyway:', attrError);
+            }
+        }
+        
+        // Always return checkout URL (item is now in cart)
+        const fallbackCheckoutUrl = new URL('https://z0u750-mb.myshopify.com/checkout');
+        if (sessionUUID) {
+            fallbackCheckoutUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
+        }
+        
+        console.log('🛒 Returning checkout URL (item added via iframe):', fallbackCheckoutUrl.toString());
+        return fallbackCheckoutUrl.toString();
     }
 }
 
