@@ -7468,6 +7468,13 @@
                               }
                             }
                           }
+                          
+                          // If still no variant ID, log warning and use Storefront API fallback
+                          if (!variantId) {
+                            console.warn('⚠️ Could not get variant ID from iframe/component, will use Storefront API fallback');
+                          } else {
+                            console.log('✅ Final variant ID before checkout:', variantId);
+                          }
                         } catch (err) {
                           console.warn('⚠️ Could not access iframe for variant ID:', err);
                         }
@@ -7475,6 +7482,7 @@
                             // Build cart permalink and open in new tab IMMEDIATELY
                             try {
                               if (typeof window.buildCartPermalinkWithAttributes === 'function') {
+                                console.log('🛒 Building cart URL with variant ID:', variantId);
                                 const cartUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
                                 if (cartUrl) {
                                   console.log('🛒 Opening cart in new tab immediately...');

@@ -713,11 +713,42 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819') {
                 
                 // Success - process the data
                 if (data.data && data.data.product && data.data.product.variants && data.data.product.variants.edges.length > 0) {
-                    // Get the first variant (default variant)
-                    const variantGlobalId = data.data.product.variants.edges[0].node.id;
+                    // Try to get variant based on current metal type selection
+                    // Map metal types to variant titles
+                    const metalTypeMap = {
+                        'silver': 'Sterling Silver',
+                        'gold': '14K Yellow Gold',
+                        'rose-gold': 'Rose Gold 14K'
+                    };
+                    
+                    // Get current metal type from viewer if available
+                    let targetVariantTitle = null;
+                    if (window.viewer && window.viewer.currentMetalType) {
+                        const metalType = window.viewer.currentMetalType;
+                        targetVariantTitle = metalTypeMap[metalType] || metalTypeMap['silver']; // Default to silver
+                        console.log(`🔍 Looking for variant matching metal type: ${metalType} -> ${targetVariantTitle}`);
+                    }
+                    
+                    // Find matching variant or use first one
+                    let selectedVariant = null;
+                    if (targetVariantTitle) {
+                        selectedVariant = data.data.product.variants.edges.find(edge => 
+                            edge.node.title && edge.node.title.includes(targetVariantTitle)
+                        );
+                    }
+                    
+                    // Fallback to first variant if no match found
+                    if (!selectedVariant) {
+                        selectedVariant = data.data.product.variants.edges[0];
+                        console.log(`⚠️ No variant match found for ${targetVariantTitle}, using first variant: ${selectedVariant.node.title}`);
+                    } else {
+                        console.log(`✅ Found matching variant: ${selectedVariant.node.title}`);
+                    }
+                    
+                    const variantGlobalId = selectedVariant.node.id;
                     // Extract numeric ID from global ID: gid://shopify/ProductVariant/123456789 -> 123456789
                     const variantId = variantGlobalId.replace('gid://shopify/ProductVariant/', '');
-                    console.log(`✅ Got variant ID from Storefront API ${apiVersion}:`, variantId, '(extracted from global ID:', variantGlobalId + ')');
+                    console.log(`✅ Got variant ID from Storefront API ${apiVersion}:`, variantId, `(${selectedVariant.node.title}, extracted from global ID: ${variantGlobalId})`);
                     return variantId;
                 } else {
                     console.warn(`⚠️ No variants found in Storefront API ${apiVersion} response`);
@@ -926,8 +957,10 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         
         if (!cartVerified) {
             console.error('❌ Cart verification failed after', maxRetries, 'attempts');
-            console.warn('⚠️ Returning cart permalink as fallback - user will see cart page');
-            return cartPermalink.toString();
+            console.warn('⚠️ Cart.js verification may be blocked by CORS - proceeding with checkout anyway');
+            console.warn('⚠️ Item should be in cart from iframe - if checkout redirects to home, cart is empty');
+            // Still try to return checkout URL - if cart is empty, Shopify will redirect to home
+            // This is better than always showing cart page
         }
         
         // Step 3: Add attributes to cart
@@ -4646,6 +4679,9 @@ class HeightfieldViewer {
 
         console.log('Updating metal material to:', metalType);
         console.log('Available materials:', Object.keys(METAL_MATERIALS));
+        
+        // Store current metal type for variant ID lookup
+        this.currentMetalType = metalType;
 
         const materialProps = METAL_MATERIALS[metalType];
         
