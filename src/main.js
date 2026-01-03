@@ -181,7 +181,15 @@ function getSessionUUID() {
 }
 
 // Helper function to get directory name with date/time prefix
+// Caches the directory in sessionStorage so all files in the same session use the same timestamp
 function getSessionDirectory() {
+    // Check if we already have a cached directory for this session
+    let sessionDirectory = sessionStorage.getItem('sessionDirectory');
+    if (sessionDirectory) {
+        return sessionDirectory;
+    }
+    
+    // Generate new directory with current timestamp (only once per session)
     const sessionUUID = getSessionUUID();
     // Format: YYYY-MM-DD_HH-MM-SS_sessionUUID
     const now = new Date();
@@ -192,7 +200,13 @@ function getSessionDirectory() {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
     const dateTimePrefix = `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`;
-    return `${dateTimePrefix}_${sessionUUID}`;
+    sessionDirectory = `${dateTimePrefix}_${sessionUUID}`;
+    
+    // Cache it in sessionStorage for reuse
+    sessionStorage.setItem('sessionDirectory', sessionDirectory);
+    console.log('📁 Generated session directory:', sessionDirectory);
+    
+    return sessionDirectory;
 }
 
 // Function to upload image to S3 (updated from GitHub)
@@ -2170,9 +2184,28 @@ class HeightfieldViewer {
             try {
                 console.log('📸 Capturing reference image (front view)...');
                 
-                // Store current camera position to restore later
+                // Store current camera position and settings to restore later
                 const originalPosition = this.camera.position.clone();
                 const originalTarget = new THREE.Vector3(0, 0, 0);
+                const originalAspect = this.camera.aspect;
+                const originalSize = {
+                    width: this.renderer.getSize(new THREE.Vector2()).x,
+                    height: this.renderer.getSize(new THREE.Vector2()).y
+                };
+                
+                // Set up for square capture (perfect circle)
+                const captureSize = 1024; // High resolution square image
+                this.camera.aspect = 1.0; // Square aspect ratio
+                this.camera.updateProjectionMatrix();
+                
+                // Create temporary renderer for square capture
+                const tempRenderer = new THREE.WebGLRenderer({ 
+                    antialias: true, 
+                    alpha: true,
+                    preserveDrawingBuffer: true 
+                });
+                tempRenderer.setSize(captureSize, captureSize);
+                tempRenderer.setClearColor(0x000000, 0); // Transparent background
                 
                 // Position camera for front-facing view
                 this.camera.position.copy(this.frontCameraPosition);
@@ -2184,23 +2217,54 @@ class HeightfieldViewer {
                     this.controls.update();
                 }
                 
-                // Render the scene from front view
-                this.renderer.render(this.scene, this.camera);
+                // Render the scene from front view to temporary renderer
+                tempRenderer.render(this.scene, this.camera);
                 
-                // Capture screenshot
-                const dataURL = this.renderer.domElement.toDataURL('image/png');
+                // Get the square image data
+                const squareDataURL = tempRenderer.domElement.toDataURL('image/png');
                 
-                // Restore original camera position
+                // Create a canvas to crop to perfect circle
+                const circleCanvas = document.createElement('canvas');
+                circleCanvas.width = captureSize;
+                circleCanvas.height = captureSize;
+                const circleCtx = circleCanvas.getContext('2d');
+                
+                // Load the square image and crop to circle
+                const img = new Image();
+                await new Promise((resolve, reject) => {
+                    img.onload = () => {
+                        // Draw square image
+                        circleCtx.drawImage(img, 0, 0, captureSize, captureSize);
+                        
+                        // Create circular mask
+                        circleCtx.globalCompositeOperation = 'destination-in';
+                        circleCtx.beginPath();
+                        circleCtx.arc(captureSize / 2, captureSize / 2, captureSize / 2, 0, 2 * Math.PI);
+                        circleCtx.fill();
+                        
+                        resolve();
+                    };
+                    img.onerror = reject;
+                    img.src = squareDataURL;
+                });
+                
+                // Convert circular canvas to blob
+                const blob = await new Promise(resolve => {
+                    circleCanvas.toBlob(resolve, 'image/png');
+                });
+                
+                // Clean up temporary renderer
+                tempRenderer.dispose();
+                
+                // Restore original camera position and settings
                 this.camera.position.copy(originalPosition);
                 this.camera.lookAt(originalTarget);
+                this.camera.aspect = originalAspect;
+                this.camera.updateProjectionMatrix();
                 if (this.controls) {
                     this.controls.target.set(0, 0, 0);
                     this.controls.update();
                 }
-                
-                // Convert data URL to blob
-                const response = await fetch(dataURL);
-                const blob = await response.blob();
                 
                 // Get session UUID and directory
                 const sessionUUID = getSessionUUID();

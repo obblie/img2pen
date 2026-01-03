@@ -10,9 +10,22 @@
     <link rel="canonical" href="https://www.momenza.io">
     <script>
     // Redirect root domain to www subdomain for SSL compatibility
-    if (window.location.hostname === 'momenza.io' && !window.location.hostname.startsWith('www.')) {
-        window.location.replace('https://www.momenza.io' + window.location.pathname + window.location.search + window.location.hash);
-    }
+    // Only redirect once to prevent loops
+    (function() {
+        // Check if we're already on www or if redirect flag is set
+        if (window.location.hostname === 'www.momenza.io' || sessionStorage.getItem('redirected')) {
+            return; // Already on www or already redirected in this session
+        }
+        
+        // Only redirect if we're on the root domain (not www)
+        if (window.location.hostname === 'momenza.io') {
+            // Set flag to prevent redirect loops
+            sessionStorage.setItem('redirected', 'true');
+            // Redirect to www subdomain
+            const newUrl = 'https://www.momenza.io' + window.location.pathname + window.location.search + window.location.hash;
+            window.location.replace(newUrl);
+        }
+    })();
     </script>
     
     <!-- Meta Pixel Code -->
@@ -4325,6 +4338,16 @@
                         <div id="canvas-container" style="width: 100%; height: 100%; background: transparent; position: relative; display: block;">
                             <!-- 3D Canvas will be moved here -->
                             
+                            <!-- Lock Banner Overlay (shown when payment window opens) -->
+                            <div id="canvas-lock-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 10000; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+                                <div style="background: rgba(255, 255, 255, 0.95); padding: 40px 60px; border-radius: 16px; text-align: center; max-width: 500px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+                                    <div style="font-size: 48px; margin-bottom: 20px;">🔒</div>
+                                    <h2 style="margin: 0 0 16px 0; color: #333; font-size: 24px; font-weight: 600;">Checkout in Progress</h2>
+                                    <p style="margin: 0 0 24px 0; color: #666; font-size: 16px; line-height: 1.5;">Your payment window has opened in a new tab. Please complete your purchase there.</p>
+                                    <p style="margin: 0; color: #888; font-size: 14px; line-height: 1.5;">Please refresh this page to continue customizing.</p>
+                                </div>
+                            </div>
+                            
                             <!-- 3D Scene Title removed for cleaner view -->
                             
                             <!-- Ruler Overlay Removed -->
@@ -7455,13 +7478,32 @@
                           console.warn('⚠️ Could not access iframe for variant ID:', err);
                         }
                         
-                        // Build cart permalink and open in new tab IMMEDIATELY
-                        try {
-                          if (typeof window.buildCartPermalinkWithAttributes === 'function') {
-                            const cartUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
-                            if (cartUrl) {
-                              console.log('🛒 Opening cart in new tab immediately...');
-                              window.open(cartUrl, '_blank');
+                            // Build cart permalink and open in new tab IMMEDIATELY
+                            try {
+                              if (typeof window.buildCartPermalinkWithAttributes === 'function') {
+                                const cartUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
+                                if (cartUrl) {
+                                  console.log('🛒 Opening cart in new tab immediately...');
+                                  // Show lock overlay on Three.js screen
+                                  const lockOverlay = document.getElementById('canvas-lock-overlay');
+                                  if (lockOverlay) {
+                                    lockOverlay.style.display = 'flex';
+                                  }
+                                  
+                                  // Start upload in background BEFORE opening window (fire and forget - don't block)
+                                  if (typeof window.captureAndUploadReferenceImage === 'function') {
+                                    console.log('📸 Starting reference image upload in background...');
+                                    window.captureAndUploadReferenceImage().then(result => {
+                                      console.log('✅ Reference image captured and uploaded successfully:', result);
+                                    }).catch(error => {
+                                      console.error('❌ Failed to capture/upload reference image (background):', error);
+                                      // Don't show alert - upload failed but checkout already opened
+                                    });
+                                  } else {
+                                    console.warn('⚠️ captureAndUploadReferenceImage function not available');
+                                  }
+                                  
+                                  window.open(cartUrl, '_blank');
                             } else {
                               console.error('❌ Could not build cart permalink - variant ID required');
                               alert('Unable to add item to cart. Please try again or contact support.');
@@ -7475,19 +7517,6 @@
                           alert('Error adding item to cart. Please try again.');
                           e.target.dataset.stlProcessed = 'false'; // Reset flag to allow retry
                           return; // Don't continue with default behavior
-                        }
-                        
-                        // Start upload in background (fire and forget - don't block)
-                        if (typeof window.captureAndUploadReferenceImage === 'function') {
-                          console.log('📸 Starting reference image upload in background...');
-                          window.captureAndUploadReferenceImage().then(result => {
-                            console.log('✅ Reference image captured and uploaded successfully:', result);
-                          }).catch(error => {
-                            console.error('❌ Failed to capture/upload reference image (background):', error);
-                            // Don't show alert - upload failed but checkout already opened
-                          });
-                        } else {
-                          console.warn('⚠️ captureAndUploadReferenceImage function not available');
                         }
                         
                         // Fallback: if function not available, log error
@@ -7599,6 +7628,25 @@
                                 const cartUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
                                 if (cartUrl) {
                                   console.log('🛒 Opening cart in new tab immediately...');
+                                  // Show lock overlay on Three.js screen
+                                  const lockOverlay = document.getElementById('canvas-lock-overlay');
+                                  if (lockOverlay) {
+                                    lockOverlay.style.display = 'flex';
+                                  }
+                                  
+                                  // Start upload in background BEFORE opening window (fire and forget - don't block)
+                                  if (typeof window.captureAndUploadReferenceImage === 'function') {
+                                    console.log('📸 Starting reference image upload in background...');
+                                    window.captureAndUploadReferenceImage().then(result => {
+                                      console.log('✅ Reference image captured and uploaded successfully:', result);
+                                    }).catch(error => {
+                                      console.error('❌ Failed to capture/upload reference image (background):', error);
+                                      // Don't show alert - upload failed but checkout already opened
+                                    });
+                                  } else {
+                                    console.warn('⚠️ captureAndUploadReferenceImage function not available');
+                                  }
+                                  
                                   window.open(cartUrl, '_blank');
                                   return; // Don't continue with default behavior
                                 } else {
@@ -7613,19 +7661,6 @@
                               console.error('❌ Error building cart permalink:', err);
                               alert('Error adding item to cart. Please try again.');
                               return;
-                            }
-                            
-                            // Start upload in background (fire and forget - don't block)
-                            if (typeof window.captureAndUploadReferenceImage === 'function') {
-                              console.log('📸 Starting reference image upload in background...');
-                              window.captureAndUploadReferenceImage().then(result => {
-                                console.log('✅ Reference image captured and uploaded successfully:', result);
-                              }).catch(error => {
-                                console.error('❌ Failed to capture/upload reference image (background):', error);
-                                // Don't show alert - upload failed but checkout already opened
-                              });
-                            } else {
-                              console.warn('⚠️ captureAndUploadReferenceImage function not available');
                             }
                             
                             // Fire and forget - don't block checkout
@@ -7934,6 +7969,25 @@
                       const cartUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
                       if (cartUrl) {
                         console.log('🛒 Opening cart in new tab immediately...');
+                        // Show lock overlay on Three.js screen
+                        const lockOverlay = document.getElementById('canvas-lock-overlay');
+                        if (lockOverlay) {
+                          lockOverlay.style.display = 'flex';
+                        }
+                        
+                        // Start upload in background BEFORE opening window (fire and forget - don't block)
+                        if (typeof window.captureAndUploadReferenceImage === 'function') {
+                          console.log('📸 Starting reference image upload in background...');
+                          window.captureAndUploadReferenceImage().then(result => {
+                            console.log('✅ Reference image captured and uploaded successfully:', result);
+                          }).catch(error => {
+                            console.error('❌ Failed to capture/upload reference image (background):', error);
+                            // Don't show alert - upload failed but checkout already opened
+                          });
+                        } else {
+                          console.warn('⚠️ captureAndUploadReferenceImage function not available');
+                        }
+                        
                         window.open(cartUrl, '_blank');
                         return; // Don't continue with default behavior
                       } else {
@@ -7949,19 +8003,6 @@
                     alert('Error adding item to cart. Please try again.');
                     e.target.dataset.stlProcessed = 'false'; // Reset flag to allow retry
                     return;
-                  }
-                  
-                  // Start upload in background (fire and forget - don't block)
-                  if (typeof window.captureAndUploadReferenceImage === 'function') {
-                    console.log('📸 Starting reference image upload in background...');
-                    window.captureAndUploadReferenceImage().then(result => {
-                      console.log('✅ Reference image captured and uploaded successfully:', result);
-                    }).catch(error => {
-                      console.error('❌ Failed to capture/upload reference image (background):', error);
-                      // Don't show alert - upload failed but checkout already opened
-                    });
-                  } else {
-                    console.warn('⚠️ captureAndUploadReferenceImage function not available');
                   }
                 }
               }
