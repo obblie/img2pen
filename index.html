@@ -7491,16 +7491,22 @@
                                   }
                                   
                                   // Start upload in background BEFORE opening window (fire and forget - don't block)
+                                  console.log('📸 Checking for captureAndUploadReferenceImage function...');
+                                  console.log('📸 window.captureAndUploadReferenceImage:', typeof window.captureAndUploadReferenceImage);
+                                  console.log('📸 window.viewer:', window.viewer ? 'exists' : 'missing');
                                   if (typeof window.captureAndUploadReferenceImage === 'function') {
                                     console.log('📸 Starting reference image upload in background...');
                                     window.captureAndUploadReferenceImage().then(result => {
                                       console.log('✅ Reference image captured and uploaded successfully:', result);
                                     }).catch(error => {
                                       console.error('❌ Failed to capture/upload reference image (background):', error);
+                                      console.error('❌ Error details:', error.message || error);
                                       // Don't show alert - upload failed but checkout already opened
                                     });
                                   } else {
-                                    console.warn('⚠️ captureAndUploadReferenceImage function not available');
+                                    console.error('❌ captureAndUploadReferenceImage function not available');
+                                    console.error('❌ window.viewer:', window.viewer);
+                                    console.error('❌ window.viewer.captureAndUploadReferenceImage:', window.viewer?.captureAndUploadReferenceImage ? 'exists' : 'missing');
                                   }
                                   
                                   // Set flag to redirect from cart to checkout
@@ -7637,16 +7643,22 @@
                                   }
                                   
                                   // Start upload in background BEFORE opening window (fire and forget - don't block)
+                                  console.log('📸 Checking for captureAndUploadReferenceImage function...');
+                                  console.log('📸 window.captureAndUploadReferenceImage:', typeof window.captureAndUploadReferenceImage);
+                                  console.log('📸 window.viewer:', window.viewer ? 'exists' : 'missing');
                                   if (typeof window.captureAndUploadReferenceImage === 'function') {
                                     console.log('📸 Starting reference image upload in background...');
                                     window.captureAndUploadReferenceImage().then(result => {
                                       console.log('✅ Reference image captured and uploaded successfully:', result);
                                     }).catch(error => {
                                       console.error('❌ Failed to capture/upload reference image (background):', error);
+                                      console.error('❌ Error details:', error.message || error);
                                       // Don't show alert - upload failed but checkout already opened
                                     });
                                   } else {
-                                    console.warn('⚠️ captureAndUploadReferenceImage function not available');
+                                    console.error('❌ captureAndUploadReferenceImage function not available');
+                                    console.error('❌ window.viewer:', window.viewer);
+                                    console.error('❌ window.viewer.captureAndUploadReferenceImage:', window.viewer?.captureAndUploadReferenceImage ? 'exists' : 'missing');
                                   }
                                   
                                   // Set flag to redirect from cart to checkout
