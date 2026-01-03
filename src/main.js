@@ -852,7 +852,7 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         
     } catch (error) {
         console.error('❌ Error adding item to cart via Cart API:', error);
-        // Fallback: Use cart permalink in hidden iframe to add item, then redirect to checkout
+        // Fallback: Use cart permalink in hidden iframe to add item, then verify and redirect to checkout
         console.log('⚠️ Cart API failed, using cart permalink + iframe method...');
         
         const cartPermalink = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
@@ -862,7 +862,7 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         cartPermalink.searchParams.set('storefront', 'true');
         
         // Add item to cart via hidden iframe in current window (shares cookies with new tab)
-        console.log('🛒 Adding item to cart via hidden iframe...');
+        console.log('🛒 Step 1: Adding item to cart via hidden iframe...');
         const hiddenFrame = document.createElement('iframe');
         hiddenFrame.style.display = 'none';
         hiddenFrame.style.width = '0';
@@ -871,30 +871,84 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         hiddenFrame.src = cartPermalink.toString();
         document.body.appendChild(hiddenFrame);
         
-        // Wait for item to be added (iframe loads cart page which adds item)
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Give it 2 seconds to add item
+        // Wait longer for item to be added (iframe loads cart page which adds item)
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Give it 3 seconds to add item
         
         // Remove iframe
         if (document.body.contains(hiddenFrame)) {
             document.body.removeChild(hiddenFrame);
         }
         
-        // Add attributes to cart
+        // Step 2: Verify cart has items before proceeding
+        console.log('🛒 Step 2: Verifying item is in cart...');
+        let cartVerified = false;
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (!cartVerified && retryCount < maxRetries) {
+            try {
+                const cartCheckResponse = await fetch('https://z0u750-mb.myshopify.com/cart.js', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (cartCheckResponse.ok) {
+                    const cartCheck = await cartCheckResponse.json();
+                    console.log('🛒 Cart verification attempt', retryCount + 1, ':', cartCheck);
+                    
+                    if (cartCheck.items && cartCheck.items.length > 0) {
+                        console.log('✅ Cart verification passed - item is in cart');
+                        cartVerified = true;
+                        break;
+                    } else {
+                        console.warn('⚠️ Cart is empty, retrying...');
+                        retryCount++;
+                        if (retryCount < maxRetries) {
+                            // Wait a bit more and try again
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        }
+                    }
+                } else {
+                    console.warn('⚠️ Cart verification request failed, retrying...');
+                    retryCount++;
+                    if (retryCount < maxRetries) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
+                }
+            } catch (verifyError) {
+                console.warn('⚠️ Cart verification error, retrying...', verifyError);
+                retryCount++;
+                if (retryCount < maxRetries) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+        }
+        
+        if (!cartVerified) {
+            console.error('❌ Cart verification failed after', maxRetries, 'attempts');
+            console.warn('⚠️ Returning cart permalink as fallback - user will see cart page');
+            return cartPermalink.toString();
+        }
+        
+        // Step 3: Add attributes to cart
         if (sessionUUID) {
+            console.log('🛒 Step 3: Adding attributes to cart...');
             try {
                 await addAttributesToShopifyCart();
+                console.log('✅ Attributes added to cart');
             } catch (attrError) {
                 console.warn('⚠️ Failed to add attributes:', attrError);
             }
         }
         
-        // Now return checkout URL - item should be in cart
+        // Step 4: Build checkout URL (item is confirmed in cart)
+        console.log('🛒 Step 4: Building checkout URL (item confirmed in cart)...');
         const checkoutUrl = new URL('https://z0u750-mb.myshopify.com/checkout');
         if (sessionUUID) {
             checkoutUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
         }
         
-        console.log('🛒 Returning checkout URL (item added via iframe):', checkoutUrl.toString());
+        console.log('✅ Checkout URL built (item verified in cart):', checkoutUrl.toString());
         return checkoutUrl.toString();
     }
 }
