@@ -18,8 +18,8 @@ AWS.config.update({
 const s3 = new AWS.S3();
 const BUCKET_NAME = process.env.S3_BUCKET_NAME;
 
-// Add CORS middleware
-app.use(cors({
+// Add CORS middleware with explicit preflight handling
+const corsOptions = {
     origin: [
         'https://obblie.github.io',      // GitHub Pages domain
         'https://img2pen.onrender.com',  // Render frontend domain
@@ -28,10 +28,17 @@ app.use(cors({
         'http://localhost:5173',         // For local development
         'http://localhost:3000'          // For local development
     ],
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: false
-}));
+    methods: ['GET', 'POST', 'OPTIONS', 'PUT'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: false,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+
+// Explicit OPTIONS handler for preflight requests
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 // Add request logging middleware
