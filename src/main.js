@@ -643,7 +643,7 @@ function redirectToCheckoutWithAttributes() {
 }
 
 // Function to get variant ID from Shopify Storefront API (fallback)
-async function getVariantIdFromStorefrontAPI(productId = '10066983190819') {
+async function getVariantIdFromStorefrontAPI(productId = '10066983190819', selectedMetalType = null) {
     try {
         console.log('🔍 Fetching variant ID from Storefront API for product:', productId);
         
@@ -721,12 +721,23 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819') {
                         'rose-gold': 'Rose Gold 14K'
                     };
                     
-                    // Get current metal type from viewer if available
+                    // Get current metal type from viewer or parameter
                     let targetVariantTitle = null;
-                    if (window.viewer && window.viewer.currentMetalType) {
+                    if (selectedMetalType) {
+                        // Map the selectedMetalType parameter to variant title
+                        targetVariantTitle = metalTypeMap[selectedMetalType] || metalTypeMap['silver'];
+                        console.log(`🔍 Looking for variant matching metal type (from parameter): ${selectedMetalType} -> ${targetVariantTitle}`);
+                    } else if (window.viewer && window.viewer.currentMetalType) {
                         const metalType = window.viewer.currentMetalType;
-                        targetVariantTitle = metalTypeMap[metalType] || metalTypeMap['silver']; // Default to silver
-                        console.log(`🔍 Looking for variant matching metal type: ${metalType} -> ${targetVariantTitle}`);
+                        // Map viewer metal types to API metal types
+                        const viewerToApiMap = {
+                            'sterling-silver': 'silver',
+                            'gold-14k': 'gold',
+                            'rose-gold-14k': 'rose-gold'
+                        };
+                        const apiMetalType = viewerToApiMap[metalType] || 'silver';
+                        targetVariantTitle = metalTypeMap[apiMetalType] || metalTypeMap['silver'];
+                        console.log(`🔍 Looking for variant matching metal type (from viewer): ${metalType} -> ${apiMetalType} -> ${targetVariantTitle}`);
                     }
                     
                     // Find matching variant or use first one
@@ -779,9 +790,24 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     // This is REQUIRED - we cannot add items to cart without a variant ID
     if (!variantId) {
         console.log('⚠️ No variant ID provided, trying Storefront API...');
+        
+        // Get selected metal type from viewer
+        let selectedMetalType = null;
+        if (window.viewer && window.viewer.currentMetalType) {
+            const viewerMetalType = window.viewer.currentMetalType;
+            // Map viewer metal types to API metal types
+            const viewerToApiMap = {
+                'sterling-silver': 'silver',
+                'gold-14k': 'gold',
+                'rose-gold-14k': 'rose-gold'
+            };
+            selectedMetalType = viewerToApiMap[viewerMetalType] || 'silver';
+            console.log(`🔍 Using metal type from viewer: ${viewerMetalType} -> ${selectedMetalType}`);
+        }
+        
         try {
             variantId = await Promise.race([
-                getVariantIdFromStorefrontAPI(),
+                getVariantIdFromStorefrontAPI('10066983190819', selectedMetalType),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Storefront API timeout')), 5000))
             ]);
             if (variantId) {
@@ -809,18 +835,19 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     }
     
     // Shopify blocks Cart API and iframes from custom domains (CORS/CSP)
-    // Use cart permalink directly - it will add the item when visited
-    console.log('🛒 Building cart permalink (Shopify blocks Cart API/iframes from custom domains)...');
-    console.log('ℹ️ Cart permalink will add item when visited, then user can proceed to checkout');
+    // Use checkout permalink directly - it will add the item and redirect to checkout automatically
+    console.log('🛒 Building checkout permalink (Shopify blocks Cart API/iframes from custom domains)...');
+    console.log('ℹ️ Checkout permalink will add item when visited and go directly to checkout');
     
-    const cartPermalink = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
+    // Use /checkout/variantId:quantity format - this adds item and goes directly to checkout
+    const checkoutUrl = new URL(`https://z0u750-mb.myshopify.com/checkout/${variantId}:${quantity}`);
     if (sessionUUID) {
-        cartPermalink.searchParams.set('attributes[Session UUID]', sessionUUID);
+        checkoutUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
     }
-    cartPermalink.searchParams.set('storefront', 'true');
+    checkoutUrl.searchParams.set('storefront', 'true');
     
-    console.log('✅ Cart permalink built:', cartPermalink.toString());
-    return cartPermalink.toString();
+    console.log('✅ Checkout URL built (will add item and go to checkout):', checkoutUrl.toString());
+    return checkoutUrl.toString();
 }
 
 // Expose functions globally
