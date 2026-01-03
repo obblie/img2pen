@@ -7494,23 +7494,40 @@
                                   console.log('📸 Checking for captureAndUploadReferenceImage function...');
                                   console.log('📸 window.captureAndUploadReferenceImage:', typeof window.captureAndUploadReferenceImage);
                                   console.log('📸 window.viewer:', window.viewer ? 'exists' : 'missing');
-                                  if (typeof window.captureAndUploadReferenceImage === 'function') {
-                                    console.log('📸 Starting reference image upload in background...');
-                                    window.captureAndUploadReferenceImage().then(result => {
-                                      console.log('✅ Reference image captured and uploaded successfully:', result);
-                                    }).catch(error => {
+                                  
+                                  // Try to upload reference image
+                                  const uploadReferenceImage = async () => {
+                                    try {
+                                      if (typeof window.captureAndUploadReferenceImage === 'function') {
+                                        console.log('📸 Starting reference image upload in background...');
+                                        const result = await window.captureAndUploadReferenceImage();
+                                        console.log('✅ Reference image captured and uploaded successfully:', result);
+                                        return result;
+                                      } else if (window.viewer && typeof window.viewer.captureAndUploadReferenceImage === 'function') {
+                                        console.log('📸 Starting reference image upload via viewer instance...');
+                                        const result = await window.viewer.captureAndUploadReferenceImage();
+                                        console.log('✅ Reference image captured and uploaded successfully:', result);
+                                        return result;
+                                      } else {
+                                        console.error('❌ captureAndUploadReferenceImage function not available');
+                                        console.error('❌ window.viewer:', window.viewer);
+                                        console.error('❌ window.viewer.captureAndUploadReferenceImage:', window.viewer?.captureAndUploadReferenceImage ? 'exists' : 'missing');
+                                        throw new Error('Function not available');
+                                      }
+                                    } catch (error) {
                                       console.error('❌ Failed to capture/upload reference image (background):', error);
                                       console.error('❌ Error details:', error.message || error);
-                                      // Don't show alert - upload failed but checkout already opened
-                                    });
-                                  } else {
-                                    console.error('❌ captureAndUploadReferenceImage function not available');
-                                    console.error('❌ window.viewer:', window.viewer);
-                                    console.error('❌ window.viewer.captureAndUploadReferenceImage:', window.viewer?.captureAndUploadReferenceImage ? 'exists' : 'missing');
-                                  }
+                                      throw error;
+                                    }
+                                  };
                                   
-                                  // Set flag to redirect from cart to checkout
-                                  sessionStorage.setItem('redirectToCheckout', 'true');
+                                  // Fire and forget - don't block checkout
+                                  uploadReferenceImage().catch(err => {
+                                    console.error('❌ Reference image upload failed (non-blocking):', err);
+                                  });
+                                  
+                                  // Open checkout URL (should already have item in cart from buildCartPermalinkWithAttributes)
+                                  console.log('🛒 Opening checkout URL:', cartUrl);
                                   window.open(cartUrl, '_blank');
                             } else {
                               console.error('❌ Could not build cart permalink - variant ID required');
@@ -7646,23 +7663,40 @@
                                   console.log('📸 Checking for captureAndUploadReferenceImage function...');
                                   console.log('📸 window.captureAndUploadReferenceImage:', typeof window.captureAndUploadReferenceImage);
                                   console.log('📸 window.viewer:', window.viewer ? 'exists' : 'missing');
-                                  if (typeof window.captureAndUploadReferenceImage === 'function') {
-                                    console.log('📸 Starting reference image upload in background...');
-                                    window.captureAndUploadReferenceImage().then(result => {
-                                      console.log('✅ Reference image captured and uploaded successfully:', result);
-                                    }).catch(error => {
+                                  
+                                  // Try to upload reference image
+                                  const uploadReferenceImage = async () => {
+                                    try {
+                                      if (typeof window.captureAndUploadReferenceImage === 'function') {
+                                        console.log('📸 Starting reference image upload in background...');
+                                        const result = await window.captureAndUploadReferenceImage();
+                                        console.log('✅ Reference image captured and uploaded successfully:', result);
+                                        return result;
+                                      } else if (window.viewer && typeof window.viewer.captureAndUploadReferenceImage === 'function') {
+                                        console.log('📸 Starting reference image upload via viewer instance...');
+                                        const result = await window.viewer.captureAndUploadReferenceImage();
+                                        console.log('✅ Reference image captured and uploaded successfully:', result);
+                                        return result;
+                                      } else {
+                                        console.error('❌ captureAndUploadReferenceImage function not available');
+                                        console.error('❌ window.viewer:', window.viewer);
+                                        console.error('❌ window.viewer.captureAndUploadReferenceImage:', window.viewer?.captureAndUploadReferenceImage ? 'exists' : 'missing');
+                                        throw new Error('Function not available');
+                                      }
+                                    } catch (error) {
                                       console.error('❌ Failed to capture/upload reference image (background):', error);
                                       console.error('❌ Error details:', error.message || error);
-                                      // Don't show alert - upload failed but checkout already opened
-                                    });
-                                  } else {
-                                    console.error('❌ captureAndUploadReferenceImage function not available');
-                                    console.error('❌ window.viewer:', window.viewer);
-                                    console.error('❌ window.viewer.captureAndUploadReferenceImage:', window.viewer?.captureAndUploadReferenceImage ? 'exists' : 'missing');
-                                  }
+                                      throw error;
+                                    }
+                                  };
                                   
-                                  // Set flag to redirect from cart to checkout
-                                  sessionStorage.setItem('redirectToCheckout', 'true');
+                                  // Fire and forget - don't block checkout
+                                  uploadReferenceImage().catch(err => {
+                                    console.error('❌ Reference image upload failed (non-blocking):', err);
+                                  });
+                                  
+                                  // Open checkout URL (should already have item in cart from buildCartPermalinkWithAttributes)
+                                  console.log('🛒 Opening checkout URL:', cartUrl);
                                   window.open(cartUrl, '_blank');
                                   return; // Don't continue with default behavior
                                 } else {
