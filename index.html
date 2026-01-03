@@ -3354,13 +3354,13 @@
             margin: 0 auto;
         }
 
-        /* Floating action buttons container */
+        /* Floating action buttons container - HIDDEN */
         .floating-action-buttons {
+            display: none !important;
             position: fixed;
             bottom: 14px;
             left: 50%;
             transform: translateX(-50%);
-            display: none;
             align-items: center;
             justify-content: center;
             gap: 12px;
@@ -3656,18 +3656,15 @@
         </ul>
     </nav>
 
-    <!-- Floating action buttons container -->
-    <div class="floating-action-buttons" id="floating-action-buttons">
-        <!-- Mobile persistent add-photo/Buy Now button -->
+    <!-- Floating action buttons container - REMOVED -->
+    <!-- <div class="floating-action-buttons" id="floating-action-buttons">
         <button id="mobile-add-photo-fab" class="mobile-add-photo-fab" aria-label="Add a photo">
             📷 Add a Photo
         </button>
-        
-        <!-- Re-crop floating button -->
         <button id="recrop-fab" class="recrop-fab" aria-label="Re-crop image" style="display:none;">
             ✂️ Re-crop
         </button>
-    </div>
+    </div> -->
 
     <!-- Main Site Container -->
     <div id="main-site-container" style="width: 100%; min-height: 100vh; position: relative; margin: 0; padding: 0; overflow-x: hidden;">
@@ -3843,11 +3840,11 @@
                 }
                 
                 if (hasImage && (isMobile || isDesktop)) {
-                    // Show "Buy Now" button when image is present (both mobile and desktop)
-                    fabContainer.style.display = 'flex';
-                    fab.style.display = 'flex';
-                    fab.innerHTML = '🛒 Buy Now';
-                    fab.setAttribute('aria-label', 'Buy Now');
+                    // Floating buttons removed - keep hidden
+                    fabContainer.style.display = 'none';
+                    fab.style.display = 'none';
+                    // fab.innerHTML = '🛒 Buy Now';
+                    // fab.setAttribute('aria-label', 'Buy Now');
                     fab.onclick = function(e) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -3905,11 +3902,11 @@
                         return false;
                     };
                 } else if (!hasImage && isMobile) {
-                    // Show "Add a Photo" button when no image
-                    fabContainer.style.display = 'flex';
-                    fab.style.display = 'flex';
-                    fab.innerHTML = '📷 Add a Photo';
-                    fab.setAttribute('aria-label', 'Add a photo');
+                    // Floating buttons removed - keep hidden
+                    fabContainer.style.display = 'none';
+                    fab.style.display = 'none';
+                    // fab.innerHTML = '📷 Add a Photo';
+                    // fab.setAttribute('aria-label', 'Add a photo');
                     // Set up click handler - use onclick for better mobile compatibility
                     fab.onclick = function(e) {
                         e.preventDefault();
@@ -3998,15 +3995,12 @@
                     recropBtn.style.display = 'none';
                 }
                 
-                // Show floating button if there's a real user image (not default/demo images) on both mobile and desktop
-                if (hasImage && (isMobile || isDesktop)) {
-                    recropFab.style.display = 'flex';
-                    // Ensure container is visible
-                    if (fabContainer) {
-                        fabContainer.style.display = 'flex';
-                    }
-                } else {
+                // Floating buttons removed - keep hidden
+                if (recropFab) {
                     recropFab.style.display = 'none';
+                }
+                if (fabContainer) {
+                    fabContainer.style.display = 'none';
                 }
             }
 
