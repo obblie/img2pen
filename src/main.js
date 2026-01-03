@@ -892,17 +892,18 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     }
     
     console.log('🔍 Building cart URL with variant ID:', variantIdStr, '(type:', typeof variantIdStr + ')');
-    // Use /cart/variantId:quantity to add item, then redirect to /checkout
+    // Use /cart/variantId:quantity format to add item to cart
+    // This format: /cart/123456789:1 will add variant 123456789 with quantity 1
     const cartUrl = new URL(`https://z0u750-mb.myshopify.com/cart/${variantIdStr}:${quantity}`);
+    
+    // Add redirect parameter BEFORE other params (Shopify processes redirect first)
+    // Use absolute URL for redirect to checkout
+    cartUrl.searchParams.set('redirect', 'https://z0u750-mb.myshopify.com/checkout');
     
     if (sessionUUID) {
         cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
     }
     cartUrl.searchParams.set('storefront', 'true');
-    
-    // Add redirect parameter to go to checkout after item is added
-    // Note: Shopify may not support this, so we'll also handle redirect in JavaScript
-    cartUrl.searchParams.set('redirect', '/checkout');
     
     console.log('✅ Cart URL built (will add item to cart, then redirect to checkout):', cartUrl.toString());
     console.log('🔍 Full URL breakdown:', {
