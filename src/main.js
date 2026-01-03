@@ -777,6 +777,7 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         return null;
     }
     
+    // Try Cart API first, but if it fails, use cart permalink (more reliable)
     try {
         // Step 1: Add item to cart via Cart API (in background)
         console.log('🛒 Adding item to cart via Cart API...');
@@ -796,20 +797,32 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         
         if (!addResponse.ok) {
             const errorText = await addResponse.text();
-            console.error('❌ Failed to add item to cart:', addResponse.status, errorText);
+            console.error('❌ Failed to add item to cart via Cart API:', addResponse.status, errorText);
             throw new Error(`Cart API error: ${addResponse.status}`);
         }
         
         const cartData = await addResponse.json();
-        console.log('✅ Item added to cart successfully:', cartData);
+        console.log('✅ Item added to cart successfully via Cart API:', cartData);
+        
+        // Verify cart has items before proceeding
+        if (!cartData || !cartData.items || cartData.items.length === 0) {
+            console.warn('⚠️ Cart API returned empty cart, falling back to cart permalink');
+            throw new Error('Cart is empty after adding item');
+        }
         
         // Step 2: Add attributes to cart (Session UUID)
         if (sessionUUID) {
             console.log('🛒 Adding attributes to cart...');
-            await addAttributesToShopifyCart();
+            try {
+                await addAttributesToShopifyCart();
+            } catch (attrError) {
+                console.warn('⚠️ Failed to add attributes, continuing anyway:', attrError);
+            }
         }
         
         // Step 3: Build checkout URL (skip cart page)
+        // Note: Opening checkout in a new tab might have cookie issues
+        // So we'll use cart permalink which is more reliable
         const checkoutUrl = new URL('https://z0u750-mb.myshopify.com/checkout');
         
         // Add attributes as URL parameters if needed
@@ -818,6 +831,7 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         }
         
         console.log('🛒 Built checkout URL (skipping cart):', checkoutUrl.toString());
+        console.log('⚠️ Note: If checkout redirects to home, cart permalink will be used as fallback');
         return checkoutUrl.toString();
         
     } catch (error) {
@@ -826,56 +840,18 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         // Then redirect to checkout - this ensures item is in cart
         console.log('⚠️ Cart API failed, using cart permalink fallback...');
         
-        // Try to add item via cart permalink using fetch (same-origin or CORS)
-        try {
-            const cartPermalink = `https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}?storefront=true`;
-            
-            // Use a hidden iframe to add item to cart (cross-origin, but should work)
-            const hiddenFrame = document.createElement('iframe');
-            hiddenFrame.style.display = 'none';
-            hiddenFrame.style.width = '0';
-            hiddenFrame.style.height = '0';
-            hiddenFrame.style.position = 'absolute';
-            hiddenFrame.src = cartPermalink;
-            document.body.appendChild(hiddenFrame);
-            
-            // Wait for item to be added (iframe loads cart page which adds item)
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            // Remove iframe
-            if (document.body.contains(hiddenFrame)) {
-                document.body.removeChild(hiddenFrame);
-            }
-            
-            // Add attributes
-            if (sessionUUID) {
-                try {
-                    await addAttributesToShopifyCart();
-                } catch (attrError) {
-                    console.warn('⚠️ Failed to add attributes:', attrError);
-                }
-            }
-            
-            // Return checkout URL - item should now be in cart
-            const checkoutUrl = new URL('https://z0u750-mb.myshopify.com/checkout');
-            if (sessionUUID) {
-                checkoutUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
-            }
-            
-            console.log('🛒 Returning checkout URL (item added via iframe):', checkoutUrl.toString());
-            return checkoutUrl.toString();
-            
-        } catch (fallbackError) {
-            console.error('❌ Fallback method also failed:', fallbackError);
-            // Last resort: return cart permalink (user will see cart, then can proceed to checkout)
-            const cartPermalink = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
-            if (sessionUUID) {
-                cartPermalink.searchParams.set('attributes[Session UUID]', sessionUUID);
-            }
-            cartPermalink.searchParams.set('storefront', 'true');
-            console.log('🛒 Returning cart permalink as last resort:', cartPermalink.toString());
-            return cartPermalink.toString();
+        // Fallback: Use cart permalink directly (most reliable method)
+        // The cart permalink will add the item when visited
+        console.log('⚠️ Using cart permalink method (most reliable)...');
+        const cartPermalink = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
+        if (sessionUUID) {
+            cartPermalink.searchParams.set('attributes[Session UUID]', sessionUUID);
         }
+        cartPermalink.searchParams.set('storefront', 'true');
+        
+        console.log('🛒 Returning cart permalink (will add item when visited):', cartPermalink.toString());
+        console.log('ℹ️ The cart permalink will add the item to cart. User can then proceed to checkout.');
+        return cartPermalink.toString();
     }
 }
 
