@@ -740,7 +740,7 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819') {
     }
 }
 
-// Function to build cart permalink URL with attributes (Shopify recommended approach)
+// Function to add item to cart via Cart API and redirect to checkout
 async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     const sessionUUID = getSessionUUID();
     
@@ -764,11 +764,9 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         }
         
         // If we still don't have a variant ID, we cannot proceed
-        // The cart permalink format REQUIRES a variant ID to add items
         if (!variantId) {
-            console.error('❌ CRITICAL: Cannot build cart permalink without variant ID. Item will not be added to cart.');
+            console.error('❌ CRITICAL: Cannot add item to cart without variant ID.');
             console.error('❌ Please check Storefront API configuration and product ID.');
-            // Return null to indicate failure - the caller should handle this
             return null;
         }
     }
@@ -779,19 +777,60 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         return null;
     }
     
-    // Build cart permalink URL: /cart/VARIANT_ID:QUANTITY?attributes[key]=value&storefront=true
-    const cartUrl = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
-    
-    // Add attributes as URL parameters (only Session UUID)
-    if (sessionUUID) {
-        cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
+    try {
+        // Step 1: Add item to cart via Cart API (in background)
+        console.log('🛒 Adding item to cart via Cart API...');
+        const addResponse = await fetch('https://z0u750-mb.myshopify.com/cart/add.js', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include', // Important: include cookies for cart token
+            body: JSON.stringify({
+                items: [{
+                    id: variantId,
+                    quantity: quantity
+                }]
+            })
+        });
+        
+        if (!addResponse.ok) {
+            const errorText = await addResponse.text();
+            console.error('❌ Failed to add item to cart:', addResponse.status, errorText);
+            throw new Error(`Cart API error: ${addResponse.status}`);
+        }
+        
+        const cartData = await addResponse.json();
+        console.log('✅ Item added to cart successfully:', cartData);
+        
+        // Step 2: Add attributes to cart (Session UUID)
+        if (sessionUUID) {
+            console.log('🛒 Adding attributes to cart...');
+            await addAttributesToShopifyCart();
+        }
+        
+        // Step 3: Build checkout URL (skip cart page)
+        const checkoutUrl = new URL('https://z0u750-mb.myshopify.com/checkout');
+        
+        // Add attributes as URL parameters if needed
+        if (sessionUUID) {
+            checkoutUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
+        }
+        
+        console.log('🛒 Built checkout URL (skipping cart):', checkoutUrl.toString());
+        return checkoutUrl.toString();
+        
+    } catch (error) {
+        console.error('❌ Error adding item to cart:', error);
+        // Fallback: return cart URL if Cart API fails
+        console.log('⚠️ Falling back to cart URL method...');
+        const cartUrl = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
+        if (sessionUUID) {
+            cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
+        }
+        cartUrl.searchParams.set('storefront', 'true');
+        return cartUrl.toString();
     }
-    
-    // Add storefront=true to ensure customers land on cart page
-    cartUrl.searchParams.set('storefront', 'true');
-    
-    console.log('🛒 Built cart permalink with attributes:', cartUrl.toString());
-    return cartUrl.toString();
 }
 
 // Expose functions globally
