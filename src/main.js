@@ -835,19 +835,21 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     }
     
     // Shopify blocks Cart API and iframes from custom domains (CORS/CSP)
-    // Use checkout permalink directly - it will add the item and redirect to checkout automatically
-    console.log('🛒 Building checkout permalink (Shopify blocks Cart API/iframes from custom domains)...');
-    console.log('ℹ️ Checkout permalink will add item when visited and go directly to checkout');
+    // Use cart permalink - it will add the item when visited
+    // Note: We can't automatically redirect to checkout from cross-origin, so user will see cart page
+    console.log('🛒 Building cart permalink (Shopify blocks Cart API/iframes from custom domains)...');
+    console.log('ℹ️ Cart permalink will add item when visited');
+    console.log('ℹ️ User will need to click checkout button on cart page (we cannot redirect cross-origin)');
     
-    // Use /checkout/variantId:quantity format - this adds item and goes directly to checkout
-    const checkoutUrl = new URL(`https://z0u750-mb.myshopify.com/checkout/${variantId}:${quantity}`);
+    // Use /cart/variantId:quantity format - this adds item to cart
+    const cartUrl = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
     if (sessionUUID) {
-        checkoutUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
+        cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
     }
-    checkoutUrl.searchParams.set('storefront', 'true');
+    cartUrl.searchParams.set('storefront', 'true');
     
-    console.log('✅ Checkout URL built (will add item and go to checkout):', checkoutUrl.toString());
-    return checkoutUrl.toString();
+    console.log('✅ Cart URL built (will add item to cart):', cartUrl.toString());
+    return cartUrl.toString();
 }
 
 // Expose functions globally

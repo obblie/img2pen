@@ -7520,10 +7520,10 @@
                             // Build cart permalink and open in new tab IMMEDIATELY
                             try {
                               if (typeof window.buildCartPermalinkWithAttributes === 'function') {
-                                console.log('🛒 Building checkout URL with variant ID:', variantId);
-                                const checkoutUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
-                                if (checkoutUrl) {
-                                  console.log('🛒 Opening checkout in new tab immediately...');
+                                console.log('🛒 Building cart URL with variant ID:', variantId);
+                                const cartUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
+                                if (cartUrl) {
+                                  console.log('🛒 Opening cart in new tab immediately...');
                                   // Show lock overlay on Three.js screen
                                   const lockOverlay = document.getElementById('canvas-lock-overlay');
                                   if (lockOverlay) {
@@ -7566,9 +7566,10 @@
                                     console.error('❌ Reference image upload failed (non-blocking):', err);
                                   });
                                   
-                                  // Open checkout URL (will add item when visited and go directly to checkout)
-                                  console.log('🛒 Opening checkout URL:', checkoutUrl);
-                                  window.open(checkoutUrl, '_blank');
+                                  // Open cart URL (will add item when visited)
+                                  // Note: User will need to click checkout button (we cannot redirect cross-origin)
+                                  console.log('🛒 Opening cart URL:', cartUrl);
+                                  window.open(cartUrl, '_blank');
                             } else {
                               console.error('❌ Could not build checkout URL - variant ID required');
                               alert('Unable to add item to cart. Please try again or contact support.');
@@ -7647,8 +7648,8 @@
                             // Build checkout URL and open in new tab IMMEDIATELY
                             try {
                               if (typeof window.buildCartPermalinkWithAttributes === 'function') {
-                                const checkoutUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
-                                if (checkoutUrl) {
+                                const cartUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
+                                if (cartUrl) {
                                   console.log('🛒 Opening cart in new tab immediately...');
                                   // Show lock overlay on Three.js screen
                                   const lockOverlay = document.getElementById('canvas-lock-overlay');
@@ -7692,9 +7693,10 @@
                                     console.error('❌ Reference image upload failed (non-blocking):', err);
                                   });
                                   
-                                  // Open checkout URL (will add item when visited and go directly to checkout)
-                                  console.log('🛒 Opening checkout URL:', checkoutUrl);
-                                  window.open(checkoutUrl, '_blank');
+                                  // Open cart URL (will add item when visited)
+                                  // Note: User will need to click checkout button (we cannot redirect cross-origin)
+                                  console.log('🛒 Opening cart URL:', cartUrl);
+                                  window.open(cartUrl, '_blank');
                                   return; // Don't continue with default behavior
                                 } else {
                                   console.error('❌ Could not build checkout URL - variant ID required');
@@ -7976,9 +7978,9 @@
                   // Build cart permalink and open in new tab IMMEDIATELY
                   try {
                     if (typeof window.buildCartPermalinkWithAttributes === 'function') {
-                                const checkoutUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
-                                if (checkoutUrl) {
-                                  console.log('🛒 Opening checkout in new tab immediately...');
+                                const cartUrl = await window.buildCartPermalinkWithAttributes(variantId, 1);
+                                if (cartUrl) {
+                                  console.log('🛒 Opening cart in new tab immediately...');
                         // Show lock overlay on Three.js screen
                         const lockOverlay = document.getElementById('canvas-lock-overlay');
                         if (lockOverlay) {
@@ -7998,7 +8000,7 @@
                           console.warn('⚠️ captureAndUploadReferenceImage function not available');
                         }
                         
-                        window.open(checkoutUrl, '_blank');
+                        window.open(cartUrl, '_blank');
                         return; // Don't continue with default behavior
                       } else {
                         console.error('❌ Could not build cart permalink - variant ID required');
