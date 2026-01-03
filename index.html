@@ -7223,16 +7223,23 @@
               }
             }
             
-            // Last resort: try Shopify component's selected variant
-            const shopifyComponent = window.shopifyProductComponent || component;
-            if (shopifyComponent && shopifyComponent.model) {
-              const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
-              if (selectedVariant) {
-                variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
-                console.log('✅ Got variant ID from component model:', variantId);
-                return variantId;
+              // Last resort: try Shopify component's selected variant
+              const shopifyComponent = window.shopifyProductComponent || component;
+              if (shopifyComponent && shopifyComponent.model) {
+                const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
+                if (selectedVariant) {
+                  let rawVariantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
+                  // Extract numeric ID from global ID if needed
+                  if (typeof rawVariantId === 'string' && rawVariantId.includes('gid://shopify/ProductVariant/')) {
+                    variantId = rawVariantId.replace('gid://shopify/ProductVariant/', '');
+                    console.log('✅ Extracted numeric variant ID from global ID:', variantId, '(from:', rawVariantId + ')');
+                  } else {
+                    variantId = rawVariantId;
+                  }
+                  console.log('✅ Got variant ID from component model:', variantId);
+                  return variantId;
+                }
               }
-            }
             
             return null;
           }

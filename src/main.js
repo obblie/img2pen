@@ -782,9 +782,41 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819', selec
     }
 }
 
+// Helper function to extract numeric variant ID from various formats
+function extractNumericVariantId(variantId) {
+    if (!variantId) {
+        return null;
+    }
+    
+    // If it's already a number, return it as string
+    if (typeof variantId === 'number') {
+        return String(variantId);
+    }
+    
+    // If it's a string, check if it's a global ID
+    if (typeof variantId === 'string') {
+        // Extract from global ID format: gid://shopify/ProductVariant/123456789
+        if (variantId.includes('gid://shopify/ProductVariant/')) {
+            const numericId = variantId.replace('gid://shopify/ProductVariant/', '');
+            console.log('🔍 Extracted numeric variant ID from global ID:', numericId, '(from:', variantId + ')');
+            return numericId;
+        }
+        // If it's already numeric, return as-is
+        if (!isNaN(variantId) && variantId.trim() !== '') {
+            return variantId.trim();
+        }
+    }
+    
+    console.warn('⚠️ Could not extract numeric variant ID from:', variantId, '(type:', typeof variantId + ')');
+    return null;
+}
+
 // Function to add item to cart via Cart API and redirect to checkout
 async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     const sessionUUID = getSessionUUID();
+    
+    // Extract numeric variant ID from various formats
+    variantId = extractNumericVariantId(variantId);
     
     // If no variant ID provided, try to get it from Storefront API
     // This is REQUIRED - we cannot add items to cart without a variant ID
@@ -841,14 +873,38 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
     console.log('ℹ️ Cart permalink will add item when visited');
     console.log('ℹ️ User will need to click checkout button on cart page (we cannot redirect cross-origin)');
     
+    // Validate variant ID before building URL
+    if (!variantId || isNaN(variantId)) {
+        console.error('❌ Invalid variant ID:', variantId);
+        console.error('❌ Variant ID must be a valid number');
+        return null;
+    }
+    
     // Use /cart/variantId:quantity format - this adds item to cart
-    const cartUrl = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
+    // Ensure variantId is a string for URL construction
+    const variantIdStr = String(variantId).trim();
+    if (!variantIdStr || variantIdStr === 'null' || variantIdStr === 'undefined') {
+        console.error('❌ Variant ID is null or undefined after conversion');
+        return null;
+    }
+    
+    console.log('🔍 Building cart URL with variant ID:', variantIdStr, '(type:', typeof variantIdStr + ')');
+    const cartUrl = new URL(`https://z0u750-mb.myshopify.com/cart/${variantIdStr}:${quantity}`);
+    
     if (sessionUUID) {
         cartUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
     }
     cartUrl.searchParams.set('storefront', 'true');
     
     console.log('✅ Cart URL built (will add item to cart):', cartUrl.toString());
+    console.log('🔍 Full URL breakdown:', {
+        base: 'https://z0u750-mb.myshopify.com/cart/',
+        variantId: variantIdStr,
+        quantity: quantity,
+        fullPath: `/${variantIdStr}:${quantity}`,
+        searchParams: Object.fromEntries(cartUrl.searchParams)
+    });
+    
     return cartUrl.toString();
 }
 
