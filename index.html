@@ -7149,6 +7149,94 @@
           console.log('Shopify product component initialized and stored');
           console.log('🔧 Component stored:', !!window.shopifyProductComponent);
           
+          // Helper function to get variant ID based on current metal type
+          function getVariantIdFromMetalType(iframeDoc, component) {
+            let variantId = null;
+            
+            // First, try to get variant ID based on current metal type from viewer
+            if (window.viewer && window.viewer.currentMetalType) {
+              const metalType = window.viewer.currentMetalType;
+              console.log('🔍 Getting variant ID for metal type:', metalType);
+              
+              // Map metal types to variant titles
+              const metalTypeMap = {
+                'sterling-silver': 'Sterling Silver',
+                'gold-14k': '14K Yellow Gold',
+                'rose-gold-14k': 'Rose Gold 14K'
+              };
+              
+              const targetVariantTitle = metalTypeMap[metalType] || metalTypeMap['sterling-silver'];
+              console.log('🔍 Looking for variant with title:', targetVariantTitle);
+              
+              // Try to get variant from Shopify component
+              const shopifyComponent = window.shopifyProductComponent || component;
+              if (shopifyComponent && shopifyComponent.model && shopifyComponent.model.variants) {
+                const matchingVariant = shopifyComponent.model.variants.find(variant => {
+                  const title = variant.title || '';
+                  return title.includes(targetVariantTitle) || 
+                         targetVariantTitle.includes(title) ||
+                         title.toLowerCase() === targetVariantTitle.toLowerCase();
+                });
+                
+                if (matchingVariant) {
+                  variantId = typeof matchingVariant === 'object' ? matchingVariant.id : matchingVariant;
+                  console.log('✅ Got variant ID from component based on metal type:', variantId, `(${matchingVariant.title})`);
+                  return variantId;
+                }
+              }
+            }
+            
+            // If not found by metal type, try iframe selectors
+            if (iframeDoc) {
+              const variantSelectors = [
+                'select[name*="id"]',
+                'select[id*="variant"]',
+                'select[data-variant-id]',
+                'select',
+                'input[name*="id"]',
+                'input[type="hidden"][name*="id"]'
+              ];
+              
+              for (const selector of variantSelectors) {
+                const element = iframeDoc.querySelector(selector);
+                if (element) {
+                  const value = element.value || element.getAttribute('value') || element.getAttribute('data-variant-id');
+                  if (value && value !== '' && !isNaN(value)) {
+                    variantId = value;
+                    console.log(`✅ Got variant ID from ${selector}:`, variantId);
+                    return variantId;
+                  }
+                }
+              }
+              
+              // Try form
+              const form = iframeDoc.querySelector('form');
+              if (form) {
+                const formData = new FormData(form);
+                for (const [key, value] of formData.entries()) {
+                  if (key.includes('id') && value && !isNaN(value)) {
+                    variantId = value;
+                    console.log(`✅ Got variant ID from form field ${key}:`, variantId);
+                    return variantId;
+                  }
+                }
+              }
+            }
+            
+            // Last resort: try Shopify component's selected variant
+            const shopifyComponent = window.shopifyProductComponent || component;
+            if (shopifyComponent && shopifyComponent.model) {
+              const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
+              if (selectedVariant) {
+                variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
+                console.log('✅ Got variant ID from component model:', variantId);
+                return variantId;
+              }
+            }
+            
+            return null;
+          }
+          
           // Intercept Buy Now button click to generate and upload STL
           function setupBuyNowInterceptor() {
             console.log('🔧 setupBuyNowInterceptor called');
@@ -7416,60 +7504,10 @@
                           console.log('🆔 Order ID generated and added to checkout:', orderId);
                         }
                         
-                        // Get variant ID from the iframe select element FIRST (before upload)
+                        // Get variant ID using helper function
                         let variantId = null;
-                        
                         try {
-                          // Try multiple selectors to find the variant select element
-                          const variantSelectors = [
-                            'select[name*="id"]',
-                            'select[id*="variant"]',
-                            'select[data-variant-id]',
-                            'select',
-                            'input[name*="id"]',
-                            'input[type="hidden"][name*="id"]'
-                          ];
-                          
-                          for (const selector of variantSelectors) {
-                            const element = iframeDoc.querySelector(selector);
-                            if (element) {
-                              const value = element.value || element.getAttribute('value') || element.getAttribute('data-variant-id');
-                              if (value && value !== '' && !isNaN(value)) {
-                                variantId = value;
-                                console.log(`✅ Got variant ID from ${selector}:`, variantId);
-                                break;
-                              }
-                            }
-                          }
-                          
-                          // If still no variant ID, try to get it from the form
-                          if (!variantId) {
-                            const form = iframeDoc.querySelector('form');
-                            if (form) {
-                              const formData = new FormData(form);
-                              for (const [key, value] of formData.entries()) {
-                                if (key.includes('id') && value && !isNaN(value)) {
-                                  variantId = value;
-                                  console.log(`✅ Got variant ID from form field ${key}:`, variantId);
-                                  break;
-                                }
-                              }
-                            }
-                          }
-                          
-                          // Last resort: try to get it from the Shopify component
-                          if (!variantId) {
-                            const shopifyComponent = window.shopifyProductComponent || component;
-                            if (shopifyComponent && shopifyComponent.model) {
-                              const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
-                              if (selectedVariant) {
-                                variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
-                                console.log('✅ Got variant ID from component model:', variantId);
-                              }
-                            }
-                          }
-                          
-                          // If still no variant ID, log warning and use Storefront API fallback
+                          variantId = getVariantIdFromMetalType(iframeDoc, component);
                           if (!variantId) {
                             console.warn('⚠️ Could not get variant ID from iframe/component, will use Storefront API fallback');
                           } else {
@@ -7593,57 +7631,14 @@
                               window.generateStlOrderId();
                             }
                             
-                            // Get variant ID from the iframe select element FIRST (before upload)
+                            // Get variant ID using helper function
                             let variantId = null;
-                            
                             try {
-                              // Try multiple selectors to find the variant select element
-                              const variantSelectors = [
-                                'select[name*="id"]',
-                                'select[id*="variant"]',
-                                'select[data-variant-id]',
-                                'select',
-                                'input[name*="id"]',
-                                'input[type="hidden"][name*="id"]'
-                              ];
-                              
-                              for (const selector of variantSelectors) {
-                                const element = iframeDoc.querySelector(selector);
-                                if (element) {
-                                  const value = element.value || element.getAttribute('value') || element.getAttribute('data-variant-id');
-                                  if (value && value !== '' && !isNaN(value)) {
-                                    variantId = value;
-                                    console.log(`✅ Got variant ID from ${selector}:`, variantId);
-                                    break;
-                                  }
-                                }
-                              }
-                              
-                              // If still no variant ID, try to get it from the form
+                              variantId = getVariantIdFromMetalType(iframeDoc, component);
                               if (!variantId) {
-                                const form = iframeDoc.querySelector('form');
-                                if (form) {
-                                  const formData = new FormData(form);
-                                  for (const [key, value] of formData.entries()) {
-                                    if (key.includes('id') && value && !isNaN(value)) {
-                                      variantId = value;
-                                      console.log(`✅ Got variant ID from form field ${key}:`, variantId);
-                                      break;
-                                    }
-                                  }
-                                }
-                              }
-                              
-                              // Last resort: try to get it from the Shopify component
-                              if (!variantId) {
-                                const shopifyComponent = window.shopifyProductComponent || component;
-                                if (shopifyComponent && shopifyComponent.model) {
-                                  const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
-                                  if (selectedVariant) {
-                                    variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
-                                    console.log('✅ Got variant ID from component model:', variantId);
-                                  }
-                                }
+                                console.warn('⚠️ Could not get variant ID from iframe/component, will use Storefront API fallback');
+                              } else {
+                                console.log('✅ Final variant ID before checkout:', variantId);
                               }
                             } catch (err) {
                               console.warn('⚠️ Could not access iframe for variant ID:', err);
@@ -7944,54 +7939,18 @@
                     console.log('🆔 Order ID already exists:', sessionStorage.getItem('stlOrderId'));
                   }
                   
-                  // Get variant ID from the iframe select element FIRST (before upload)
+                  // Get variant ID using helper function
                   let variantId = null;
-                  
                   try {
                     const productNode = document.getElementById('product-component-1764405426589');
                     const iframes = productNode ? productNode.querySelectorAll('iframe') : [];
                     
+                    // Try each iframe
                     for (let iframe of iframes) {
                       try {
                         const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
                         if (iframeDoc) {
-                          // Try multiple selectors to find the variant select element
-                          const variantSelectors = [
-                            'select[name*="id"]',
-                            'select[id*="variant"]',
-                            'select[data-variant-id]',
-                            'select',
-                            'input[name*="id"]',
-                            'input[type="hidden"][name*="id"]'
-                          ];
-                          
-                          for (const selector of variantSelectors) {
-                            const element = iframeDoc.querySelector(selector);
-                            if (element) {
-                              const value = element.value || element.getAttribute('value') || element.getAttribute('data-variant-id');
-                              if (value && value !== '' && !isNaN(value)) {
-                                variantId = value;
-                                console.log(`✅ Got variant ID from ${selector}:`, variantId);
-                                break;
-                              }
-                            }
-                          }
-                          
-                          // If still no variant ID, try to get it from the form
-                          if (!variantId) {
-                            const form = iframeDoc.querySelector('form');
-                            if (form) {
-                              const formData = new FormData(form);
-                              for (const [key, value] of formData.entries()) {
-                                if (key.includes('id') && value && !isNaN(value)) {
-                                  variantId = value;
-                                  console.log(`✅ Got variant ID from form field ${key}:`, variantId);
-                                  break;
-                                }
-                              }
-                            }
-                          }
-                          
+                          variantId = getVariantIdFromMetalType(iframeDoc, component);
                           if (variantId) break;
                         }
                       } catch (err) {
@@ -8000,16 +7959,15 @@
                       }
                     }
                     
-                    // Last resort: try to get it from the Shopify component
+                    // If still no variant ID, try without iframe
                     if (!variantId) {
-                      const shopifyComponent = window.shopifyProductComponent || component;
-                      if (shopifyComponent && shopifyComponent.model) {
-                        const selectedVariant = shopifyComponent.model.selectedVariant || shopifyComponent.model.selectedVariantId;
-                        if (selectedVariant) {
-                          variantId = typeof selectedVariant === 'object' ? selectedVariant.id : selectedVariant;
-                          console.log('✅ Got variant ID from component model:', variantId);
-                        }
-                      }
+                      variantId = getVariantIdFromMetalType(null, component);
+                    }
+                    
+                    if (!variantId) {
+                      console.warn('⚠️ Could not get variant ID, will use Storefront API fallback');
+                    } else {
+                      console.log('✅ Final variant ID before checkout:', variantId);
                     }
                   } catch (err) {
                     console.warn('⚠️ Could not get variant ID:', err);
