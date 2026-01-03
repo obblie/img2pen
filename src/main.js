@@ -808,182 +808,19 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
         return null;
     }
     
-    // Step 1: Add item to cart via Cart API and verify it's there BEFORE redirecting
-    try {
-        console.log('🛒 Step 1: Adding item to cart via Cart API...');
-        const addResponse = await fetch('https://z0u750-mb.myshopify.com/cart/add.js', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include', // Important: include cookies for cart token
-            body: JSON.stringify({
-                items: [{
-                    id: variantId,
-                    quantity: quantity
-                }]
-            })
-        });
-        
-        if (!addResponse.ok) {
-            const errorText = await addResponse.text();
-            console.error('❌ Failed to add item to cart via Cart API:', addResponse.status, errorText);
-            throw new Error(`Cart API error: ${addResponse.status}`);
-        }
-        
-        const cartData = await addResponse.json();
-        console.log('✅ Item added to cart via Cart API:', cartData);
-        
-        // Step 2: Verify cart has items before proceeding
-        console.log('🛒 Step 2: Verifying item is in cart...');
-        if (!cartData || !cartData.items || cartData.items.length === 0) {
-            console.warn('⚠️ Cart API returned empty cart, verifying with cart.js...');
-            // Double-check using cart.js
-            const cartCheckResponse = await fetch('https://z0u750-mb.myshopify.com/cart.js', {
-                method: 'GET',
-                credentials: 'include'
-            });
-            
-            if (cartCheckResponse.ok) {
-                const cartCheck = await cartCheckResponse.json();
-                console.log('🛒 Cart verification result:', cartCheck);
-                if (!cartCheck.items || cartCheck.items.length === 0) {
-                    throw new Error('Cart is empty after adding item - verification failed');
-                }
-                console.log('✅ Cart verification passed - item is in cart');
-            } else {
-                throw new Error('Could not verify cart - cart.js request failed');
-            }
-        } else {
-            console.log('✅ Cart has items - verification passed');
-        }
-        
-        // Step 3: Add attributes to cart (Session UUID)
-        if (sessionUUID) {
-            console.log('🛒 Step 3: Adding attributes to cart...');
-            try {
-                await addAttributesToShopifyCart();
-                console.log('✅ Attributes added to cart');
-            } catch (attrError) {
-                console.warn('⚠️ Failed to add attributes, continuing anyway:', attrError);
-            }
-        }
-        
-        // Step 4: Build checkout URL (item is confirmed in cart)
-        console.log('🛒 Step 4: Building checkout URL (item confirmed in cart)...');
-        const checkoutUrl = new URL('https://z0u750-mb.myshopify.com/checkout');
-        
-        // Add attributes as URL parameters if needed
-        if (sessionUUID) {
-            checkoutUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
-        }
-        
-        console.log('✅ Checkout URL built (item is in cart):', checkoutUrl.toString());
-        return checkoutUrl.toString();
-        
-    } catch (error) {
-        console.error('❌ Error adding item to cart via Cart API:', error);
-        // Fallback: Use cart permalink in hidden iframe to add item, then verify and redirect to checkout
-        console.log('⚠️ Cart API failed, using cart permalink + iframe method...');
-        
-        const cartPermalink = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
-        if (sessionUUID) {
-            cartPermalink.searchParams.set('attributes[Session UUID]', sessionUUID);
-        }
-        cartPermalink.searchParams.set('storefront', 'true');
-        
-        // Add item to cart via hidden iframe in current window (shares cookies with new tab)
-        console.log('🛒 Step 1: Adding item to cart via hidden iframe...');
-        const hiddenFrame = document.createElement('iframe');
-        hiddenFrame.style.display = 'none';
-        hiddenFrame.style.width = '0';
-        hiddenFrame.style.height = '0';
-        hiddenFrame.style.position = 'absolute';
-        hiddenFrame.src = cartPermalink.toString();
-        document.body.appendChild(hiddenFrame);
-        
-        // Wait longer for item to be added (iframe loads cart page which adds item)
-        await new Promise(resolve => setTimeout(resolve, 3000)); // Give it 3 seconds to add item
-        
-        // Remove iframe
-        if (document.body.contains(hiddenFrame)) {
-            document.body.removeChild(hiddenFrame);
-        }
-        
-        // Step 2: Verify cart has items before proceeding
-        console.log('🛒 Step 2: Verifying item is in cart...');
-        let cartVerified = false;
-        let retryCount = 0;
-        const maxRetries = 3;
-        
-        while (!cartVerified && retryCount < maxRetries) {
-            try {
-                const cartCheckResponse = await fetch('https://z0u750-mb.myshopify.com/cart.js', {
-                    method: 'GET',
-                    credentials: 'include'
-                });
-                
-                if (cartCheckResponse.ok) {
-                    const cartCheck = await cartCheckResponse.json();
-                    console.log('🛒 Cart verification attempt', retryCount + 1, ':', cartCheck);
-                    
-                    if (cartCheck.items && cartCheck.items.length > 0) {
-                        console.log('✅ Cart verification passed - item is in cart');
-                        cartVerified = true;
-                        break;
-                    } else {
-                        console.warn('⚠️ Cart is empty, retrying...');
-                        retryCount++;
-                        if (retryCount < maxRetries) {
-                            // Wait a bit more and try again
-                            await new Promise(resolve => setTimeout(resolve, 1000));
-                        }
-                    }
-                } else {
-                    console.warn('⚠️ Cart verification request failed, retrying...');
-                    retryCount++;
-                    if (retryCount < maxRetries) {
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                    }
-                }
-            } catch (verifyError) {
-                console.warn('⚠️ Cart verification error, retrying...', verifyError);
-                retryCount++;
-                if (retryCount < maxRetries) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-            }
-        }
-        
-        if (!cartVerified) {
-            console.error('❌ Cart verification failed after', maxRetries, 'attempts');
-            console.warn('⚠️ Cart.js verification may be blocked by CORS - proceeding with checkout anyway');
-            console.warn('⚠️ Item should be in cart from iframe - if checkout redirects to home, cart is empty');
-            // Still try to return checkout URL - if cart is empty, Shopify will redirect to home
-            // This is better than always showing cart page
-        }
-        
-        // Step 3: Add attributes to cart
-        if (sessionUUID) {
-            console.log('🛒 Step 3: Adding attributes to cart...');
-            try {
-                await addAttributesToShopifyCart();
-                console.log('✅ Attributes added to cart');
-            } catch (attrError) {
-                console.warn('⚠️ Failed to add attributes:', attrError);
-            }
-        }
-        
-        // Step 4: Build checkout URL (item is confirmed in cart)
-        console.log('🛒 Step 4: Building checkout URL (item confirmed in cart)...');
-        const checkoutUrl = new URL('https://z0u750-mb.myshopify.com/checkout');
-        if (sessionUUID) {
-            checkoutUrl.searchParams.set('attributes[Session UUID]', sessionUUID);
-        }
-        
-        console.log('✅ Checkout URL built (item verified in cart):', checkoutUrl.toString());
-        return checkoutUrl.toString();
+    // Shopify blocks Cart API and iframes from custom domains (CORS/CSP)
+    // Use cart permalink directly - it will add the item when visited
+    console.log('🛒 Building cart permalink (Shopify blocks Cart API/iframes from custom domains)...');
+    console.log('ℹ️ Cart permalink will add item when visited, then user can proceed to checkout');
+    
+    const cartPermalink = new URL(`https://z0u750-mb.myshopify.com/cart/${variantId}:${quantity}`);
+    if (sessionUUID) {
+        cartPermalink.searchParams.set('attributes[Session UUID]', sessionUUID);
     }
+    cartPermalink.searchParams.set('storefront', 'true');
+    
+    console.log('✅ Cart permalink built:', cartPermalink.toString());
+    return cartPermalink.toString();
 }
 
 // Expose functions globally

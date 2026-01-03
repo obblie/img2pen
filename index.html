@@ -7566,9 +7566,15 @@
                                     console.error('❌ Reference image upload failed (non-blocking):', err);
                                   });
                                   
-                                  // Open checkout URL (should already have item in cart from buildCartPermalinkWithAttributes)
-                                  console.log('🛒 Opening checkout URL:', cartUrl);
-                                  window.open(cartUrl, '_blank');
+                                  // Open cart URL (will add item when visited)
+                                  console.log('🛒 Opening cart URL:', cartUrl);
+                                  const newWindow = window.open(cartUrl, '_blank');
+                                  if (!newWindow) {
+                                    console.error('❌ Pop-up blocker may have prevented window.open');
+                                    alert('Please allow pop-ups for this site to open the cart page.');
+                                  } else {
+                                    console.log('✅ New window opened successfully');
+                                  }
                             } else {
                               console.error('❌ Could not build cart permalink - variant ID required');
                               alert('Unable to add item to cart. Please try again or contact support.');
@@ -7692,9 +7698,15 @@
                                     console.error('❌ Reference image upload failed (non-blocking):', err);
                                   });
                                   
-                                  // Open checkout URL (should already have item in cart from buildCartPermalinkWithAttributes)
-                                  console.log('🛒 Opening checkout URL:', cartUrl);
-                                  window.open(cartUrl, '_blank');
+                                  // Open cart URL (will add item when visited)
+                                  console.log('🛒 Opening cart URL:', cartUrl);
+                                  const newWindow = window.open(cartUrl, '_blank');
+                                  if (!newWindow) {
+                                    console.error('❌ Pop-up blocker may have prevented window.open');
+                                    alert('Please allow pop-ups for this site to open the cart page.');
+                                  } else {
+                                    console.log('✅ New window opened successfully');
+                                  }
                                   return; // Don't continue with default behavior
                                 } else {
                                   console.error('❌ Could not build cart permalink - variant ID required');
