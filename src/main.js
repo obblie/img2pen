@@ -1468,6 +1468,8 @@ class HeightfieldViewer {
         
         // Sprue text system
         this.sprueTextObjects = [];
+        // Back engraving system for quality stamps
+        this.backEngravingObjects = [];
         
         // Load default font
         this.loadEngravingFont(this.defaultFontName);
@@ -1608,7 +1610,8 @@ class HeightfieldViewer {
         // Setup event listeners and UI controls
         this.setupEventListeners();
         this.setupUIControls();
-        this.setupDepthPainting();
+        // Depth painting disabled
+        // this.setupDepthPainting();
         
         // Setup back to upload button
         const backButton = document.getElementById('back-to-upload');
@@ -2839,6 +2842,14 @@ class HeightfieldViewer {
                     });
                 }
                 
+                // Add back engraving objects
+                if (this.backEngravingObjects && this.backEngravingObjects.length > 0) {
+                    console.log('Adding back engraving objects to STL export:', this.backEngravingObjects.length);
+                    this.backEngravingObjects.forEach((textObj, index) => {
+                        group.add(textObj.clone());
+                    });
+                }
+                
                 // Add platform/ground plane
                 const groundPlane = this.scene.children.find(child => child.userData && child.userData.isGroundPlane);
                 if (groundPlane) {
@@ -3295,6 +3306,9 @@ class HeightfieldViewer {
             this.redLayer.material.dispose();
             this.redLayer = null;
         }
+        
+        // Clear previous back engraving
+        this.clearBackEngraving();
         // Store heightfield data for shape updates
         this.heightfieldData = heightfieldData;
 
@@ -3942,6 +3956,10 @@ class HeightfieldViewer {
                 
                 this.scene.add(mesh);
                 this.heightfield = mesh;
+                
+                // Create back engraving for quality stamp
+                const currentMetalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+                this.updateBackEngraving(currentMetalType);
                 
                 // Create platform at the bottom edge of the pendant
                 this.createPlatform();
@@ -4655,6 +4673,10 @@ class HeightfieldViewer {
         // Update sprue text when metal type changes
         console.log('Calling updateSprueText for metal type:', metalType);
         this.updateSprueText(metalType);
+        
+        // Update back engraving when metal type changes
+        console.log('Calling updateBackEngraving for metal type:', metalType);
+        this.updateBackEngraving(metalType);
     }
     
     clearSprueText() {
@@ -4789,6 +4811,155 @@ class HeightfieldViewer {
         );
     }
 
+    clearBackEngraving() {
+        console.log('Clearing back engraving objects. Count:', this.backEngravingObjects.length);
+        // Remove existing back engraving objects from scene
+        this.backEngravingObjects.forEach(textObj => {
+            this.scene.remove(textObj);
+            if (textObj.geometry) textObj.geometry.dispose();
+            if (textObj.material) textObj.material.dispose();
+        });
+        this.backEngravingObjects = [];
+        console.log('Back engraving objects cleared');
+    }
+    
+    updateBackEngraving(metalType) {
+        // Only create engraving for circular pendants
+        if (this.currentObjectType !== 'circular-pendant' || !this.heightfield) {
+            console.log('Skipping back engraving - not a circular pendant or no heightfield');
+            return;
+        }
+        
+        // Determine the correct text content based on metal type
+        let textContent = '';
+        switch (metalType) {
+            case 'gold-14k':
+            case 'rose-gold-14k':
+                textContent = '14k';
+                break;
+            case 'sterling-silver':
+            default:
+                textContent = '.925';
+                break;
+            case 'stl':
+                // No engraving for STL
+                this.clearBackEngraving();
+                return;
+        }
+        
+        console.log('Creating/updating back engraving with text:', textContent);
+        
+        // Clear existing engraving
+        this.clearBackEngraving();
+        
+        // Get pendant dimensions and position
+        const diameter = this.pendantDiameter;
+        const effectiveRadius = (diameter / 2) - this.borderThickness;
+        const thickness = this.getEffectiveBaseThickness();
+        
+        // Position on the back of the pendant
+        // The back is at z = -thickness in local mesh coordinates
+        // The mesh is positioned at y = thickness, so back is at y = 0 in world coordinates
+        // We want the text centered on the back, embossed inward (toward positive z in local coords, which is negative y in world)
+        const engravingDepth = 0.3; // 0.3mm embossed depth
+        const textSize = 2.0; // 2mm font size
+        const textHeight = 0.5; // 0.5mm extrusion depth
+        
+        // Position: centered on back, 3mm above bottom edge
+        // In local mesh coordinates: x=0 (center), y=0 (center), z = -thickness + engravingDepth (embossed inward)
+        // After mesh positioning: world y = thickness + (-thickness + engravingDepth) = engravingDepth
+        const textX = 0; // Centered horizontally
+        const textY = -effectiveRadius + 3; // 3mm above bottom edge (bottom edge is at -effectiveRadius)
+        const textZ = -thickness + engravingDepth; // Embossed inward from back surface
+        
+        // Store the current metal properties for the text material
+        const materialProps = METAL_MATERIALS[metalType] || METAL_MATERIALS['sterling-silver'];
+        
+        // Create text using FontLoader
+        const loader = new FontLoader();
+        
+        loader.load(
+            'https://threejs.org/examples/fonts/helvetiker_bold.typeface.json',
+            (font) => {
+                // Success: create proper extruded text
+                console.log('Font loaded successfully, creating back engraving:', textContent);
+                
+                const textGeometry = new TextGeometry(textContent, {
+                    font: font,
+                    size: textSize, // 2mm tall font
+                    height: textHeight, // 0.5mm extrusion depth
+                    curveSegments: 12,
+                    bevelEnabled: false
+                });
+                
+                // Center the text geometry
+                textGeometry.computeBoundingBox();
+                const textBox = textGeometry.boundingBox;
+                const textWidth = textBox.max.x - textBox.min.x;
+                const textHeight_bbox = textBox.max.y - textBox.min.y;
+                
+                // Center the text
+                textGeometry.translate(-textWidth / 2, -textHeight_bbox / 2, 0);
+                
+                const textMesh = new THREE.Mesh(textGeometry, new THREE.MeshStandardMaterial({
+                    color: materialProps.color,
+                    metalness: materialProps.metalness,
+                    roughness: materialProps.roughness,
+                    envMapIntensity: materialProps.envMapIntensity
+                }));
+                
+                // Position the text on the back of the pendant
+                textMesh.position.set(textX, textY, textZ);
+                
+                // Rotate 180 degrees around Y axis to face backward (toward the back of pendant)
+                textMesh.rotation.y = Math.PI;
+                
+                this.backEngravingObjects.push(textMesh);
+                this.scene.add(textMesh);
+                console.log('Back engraving created:', textContent, 'at position:', textMesh.position);
+            },
+            (progress) => {
+                console.log('Font loading progress for back engraving:', progress);
+            },
+            (error) => {
+                // Fallback: create simple text using basic shapes
+                console.log('Font loading failed, using fallback shapes for back engraving:', textContent);
+                
+                const charWidth = 1.5;
+                const charHeight = 2.0;
+                const charDepth = textHeight;
+                const charSpacing = 1.8;
+                
+                // Calculate starting position to center the text
+                const totalWidth = (textContent.length - 1) * charSpacing + charWidth;
+                const startX = textX - totalWidth / 2;
+                
+                for (let i = 0; i < textContent.length; i++) {
+                    const char = textContent[i];
+                    if (char === ' ') continue; // Skip spaces
+                    
+                    const charBox = new THREE.BoxGeometry(charWidth * 0.8, charHeight, charDepth);
+                    const charMesh = new THREE.Mesh(charBox, new THREE.MeshStandardMaterial({
+                        color: materialProps.color,
+                        metalness: materialProps.metalness,
+                        roughness: materialProps.roughness,
+                        envMapIntensity: materialProps.envMapIntensity
+                    }));
+                    
+                    const charX = startX + i * charSpacing;
+                    charMesh.position.set(charX, textY, textZ);
+                    
+                    // Rotate to face backward
+                    charMesh.rotation.y = Math.PI;
+                    
+                    this.backEngravingObjects.push(charMesh);
+                    this.scene.add(charMesh);
+                }
+                console.log('Fallback back engraving shapes created for:', textContent);
+            }
+        );
+    }
+    
     updateMetalFinish(finish) {
         if (!this.heightfield) return;
 
@@ -4875,6 +5046,9 @@ class HeightfieldViewer {
     }
 
     setupDepthPainting() {
+        // Depth painting feature is disabled
+        return;
+        
         // Add mouse event listeners for depth painting
         const canvas = this.renderer.domElement;
         const brushCursor = document.getElementById('brush-cursor');

@@ -112,7 +112,7 @@
             transition: all 0.2s ease;
             padding: 14px 10px;
             display: grid;
-            grid-template-columns: auto 1fr;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
             gap: 12px;
             overflow: visible;
@@ -150,6 +150,40 @@
             align-items: center;
             justify-content: flex-end;
             width: 100%;
+        }
+        
+        .navbar-theme-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+        
+        .navbar-theme-selector label {
+            font-family: 'Inter', 'JetBrains Mono', 'Courier New', monospace;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #4b5563;
+            white-space: nowrap;
+        }
+        
+        .navbar-theme-selector select {
+            padding: 6px 10px;
+            border: 1px solid rgba(43,43,43,0.2);
+            border-radius: 8px;
+            background: var(--bg-stone, #f5f5f5);
+            color: var(--ink, #1f2937);
+            font-weight: 600;
+            font-size: 0.9em;
+            min-width: 180px;
+            font-family: 'Inter', 'JetBrains Mono', 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .navbar-theme-selector select:hover {
+            border-color: rgba(43,43,43,0.4);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         .navbar-nav a {
@@ -191,6 +225,8 @@
         @media (max-width: 768px) {
             .navbar {
                 padding: 12px 16px;
+                grid-template-columns: auto 1fr; /* Two columns for brand and nav */
+                grid-template-rows: auto auto; /* Two rows: brand/nav, then theme */
             }
             
             .navbar.shrink {
@@ -207,6 +243,15 @@
             
             .navbar-nav a {
                 font-size: 1.1em;
+            }
+            
+            /* Center theme selector on mobile - place it on second row, centered */
+            .navbar-theme-selector {
+                grid-column: 1 / -1; /* Span full width across both columns */
+                grid-row: 2; /* Place on second row */
+                justify-self: center; /* Center horizontally */
+                margin: 8px auto 0 auto; /* Center with top margin */
+                width: auto; /* Let it size naturally */
             }
             
             body {
@@ -227,17 +272,39 @@
         .hero-title {
             font-weight: 800;
             font-size: 3.5em;
-            margin-bottom: 20px;
+            margin-bottom: 16px !important; /* Reduced bottom margin to bring subtitle closer */
             line-height: 1.1;
             color: var(--ink);
             max-width: 400px;
             word-wrap: break-word;
             text-align: center !important;
+            overflow: visible !important; /* Prevent clipping of logo */
+        }
+        
+        /* Ensure hero logo is never cropped - base styles */
+        .hero-logo {
+            width: 480px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            object-fit: contain !important; /* Never crop the image */
+            object-position: center;
+            overflow: visible !important;
+        }
+        
+        /* Ensure all parent containers allow overflow */
+        .hero-container,
+        .hero-container > div,
+        .hero-grid,
+        .hero-text-col {
+            overflow: visible !important; /* Prevent any clipping */
         }
         
         .hero-subtitle {
             font-size: 1.4em;
             margin-bottom: 30px;
+            margin-top: -8px !important; /* Move subtitle up closer to title */
             opacity: 0.9;
             line-height: 1.6;
             color: var(--ink);
@@ -1855,7 +1922,7 @@
         @media (max-width: 480px) {
             /* Small Mobile Container Layout */
             .hero-container {
-                padding: 60px 20px 40px 20px;
+                padding: 100px 20px 40px 20px; /* Increased top padding to prevent logo cutoff */
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: center !important;
@@ -1933,15 +2000,59 @@
                 font-size: 2.2em !important;
                 margin-bottom: 20px !important;
                 max-width: 100% !important;
+                width: 100% !important;
                 text-align: center !important;
                 line-height: 1.1 !important;
                 font-weight: 800 !important;
                 color: white !important;
+                overflow: visible !important;
+                padding: 0 10px !important;
+                box-sizing: border-box !important;
+            }
+            
+            .hero-logo {
+                width: min(480px, 75vw) !important; /* Scale down on mobile - more conservative to prevent cutoff */
+                max-width: 100% !important;
+                height: auto !important;
+                display: block !important;
+                margin: 40px auto 0 auto !important; /* Add top margin to prevent top cutoff */
+                object-fit: contain !important; /* Never crop the image */
+                object-position: center !important;
+            }
+            
+            .hero-title img.hero-logo {
+                width: min(480px, 75vw) !important; /* Override inline style for mobile */
+                max-width: 100% !important;
+                object-fit: contain !important; /* Never crop the image */
+                object-position: center !important;
+                margin-top: 40px !important; /* Add top margin to prevent top cutoff */
+            }
+            
+            .hero-title {
+                padding: 0 !important; /* Remove padding that might cause cutoff */
+                margin: 0 auto !important;
+                margin-top: 0 !important; /* Ensure title itself doesn't have top margin */
+                box-sizing: border-box !important;
+            }
+            
+            .hero-text-col {
+                padding: 0 20px !important; /* Add padding to parent container instead */
+                box-sizing: border-box !important;
+                overflow: visible !important;
+            }
+            
+            .hero-container > div {
+                overflow: visible !important;
+            }
+            
+            .hero-container {
+                overflow: visible !important;
             }
             
             .hero-subtitle {
                 font-size: 1.1em !important;
                 margin-bottom: 30px !important;
+                margin-top: -8px !important; /* Move subtitle up closer to title on mobile */
                 max-width: 100% !important;
                 text-align: center !important;
                 line-height: 1.5 !important;
@@ -3535,8 +3646,29 @@
                 font-size: clamp(1rem, 2.2vw, 1.3rem);
             }
             .hero-logo {
-                margin-top: 18px;
+                margin-top: 40px !important; /* Add top margin to prevent top cutoff on tablet */
                 margin-bottom: 8px;
+                width: min(480px, 85vw) !important; /* Scale down on tablet but keep full logo visible */
+                max-width: calc(100% - 20px) !important; /* Account for padding */
+                height: auto !important;
+                object-fit: contain !important; /* Never crop the image */
+                object-position: center !important;
+            }
+            
+            .hero-title {
+                max-width: 100% !important;
+                width: 100% !important;
+                overflow: visible !important;
+                padding: 0 15px !important; /* Ensure enough padding for logo */
+                box-sizing: border-box !important;
+            }
+            
+            .hero-title img.hero-logo {
+                width: min(480px, 85vw) !important; /* Override inline style for tablet */
+                max-width: calc(100% - 20px) !important; /* Account for padding */
+                object-fit: contain !important; /* Never crop the image */
+                object-position: center !important;
+                margin-top: 40px !important; /* Add top margin to prevent top cutoff on tablet */
             }
         }
 
@@ -3548,6 +3680,43 @@
                 padding: 8px 6px !important;
                 gap: clamp(8px, 1.8vw, 14px);
                 max-width: 100% !important;
+            }
+            .hero-logo {
+                width: min(480px, 75vw) !important; /* Scale down on mobile - more conservative to prevent cutoff */
+                max-width: 100% !important;
+                height: auto !important;
+                display: block !important;
+                margin: 0 auto !important;
+                object-fit: contain !important; /* Never crop the image */
+                object-position: center !important;
+            }
+            .hero-title {
+                max-width: 100% !important;
+                width: 100% !important;
+                overflow: visible !important;
+                padding: 0 !important; /* Remove padding that might cause cutoff */
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
+            }
+            .hero-title img.hero-logo {
+                width: min(480px, 75vw) !important; /* Override inline style for mobile */
+                max-width: 100% !important;
+                object-fit: contain !important; /* Never crop the image */
+                object-position: center !important;
+            }
+            
+            .hero-text-col {
+                padding: 0 20px !important; /* Add padding to parent container instead */
+                box-sizing: border-box !important;
+                overflow: visible !important;
+            }
+            
+            .hero-container > div {
+                overflow: visible !important;
+            }
+            
+            .hero-container {
+                overflow: visible !important;
             }
             .hero-image-row {
                 flex-direction: row;
@@ -3654,6 +3823,19 @@
             <li><a href="#" onclick="event.preventDefault(); scrollToSection('scene-container'); return false;">Studio</a></li>
             <li><a href="#" onclick="event.preventDefault(); scrollToSection('upload-container'); return false;">Process</a></li>
         </ul>
+        <div class="navbar-theme-selector">
+            <label for="theme-selector">Theme</label>
+            <select id="theme-selector">
+                <option value="studio-moss">Studio Moss (Current)</option>
+                <option value="heritage-navy">Heritage Navy (Previous)</option>
+                <option value="rose-gold">Rose Gold & Ivory</option>
+                <option value="emerald-gold">Emerald & Gold</option>
+                <option value="onyx-gold">Onyx & Gold</option>
+                <option value="pearl-champagne">Pearl & Champagne</option>
+                <option value="sapphire-silver">Sapphire & Silver</option>
+                <option value="charcoal-sand">Charcoal & Sand</option>
+            </select>
+        </div>
     </nav>
 
     <!-- Floating action buttons container - REMOVED -->
@@ -3674,23 +3856,10 @@
             <div class="hero-grid">
                 <!-- Left: Text Content -->
                 <div class="hero-text-col">
-                    <h1 class="hero-title" style="max-width: 520px; text-align: center; margin: 0 auto;">
-                        <img class="hero-logo" src="/momenzaLogo_transparent.png" alt="Momenza" style="width: 360px; max-width: 100%; height: auto; display: block; margin: 0 auto;" loading="lazy" decoding="async">
+                    <h1 class="hero-title" style="max-width: 520px; text-align: center; margin: 0 auto 16px;">
+                        <img class="hero-logo" src="/momenzaLogo_transparent.png" alt="Momenza" style="width: 480px; max-width: 100%; height: auto; display: block; margin: 0 auto; object-fit: contain; object-position: center;" loading="lazy" decoding="async">
                     </h1>
-                    <p class="hero-subtitle" style="max-width: 550px; text-align: center; margin: 12px auto 0;">Upload your cherished memories and transform them into stunning, wearable jewelry. Make <span style="background: var(--highlight); color: var(--ink); padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">once in a lifetime</span> last <em>forever.</em></p>
-                    <div style="margin: 16px auto 8px; text-align: center;">
-                        <label for="theme-selector" style="font-weight: 700; color: var(--ink); margin-right: 8px;">Theme</label>
-                        <select id="theme-selector" style="padding: 10px 12px; border: 1px solid rgba(43,43,43,0.2); border-radius: 10px; background: var(--bg-stone); color: var(--ink); font-weight: 600; min-width: 220px; box-shadow: 0 6px 14px rgba(0,0,0,0.08);">
-                            <option value="studio-moss">Studio Moss (Current)</option>
-                            <option value="heritage-navy">Heritage Navy (Previous)</option>
-                            <option value="rose-gold">Rose Gold & Ivory</option>
-                            <option value="emerald-gold">Emerald & Gold</option>
-                            <option value="onyx-gold">Onyx & Gold</option>
-                            <option value="pearl-champagne">Pearl & Champagne</option>
-                            <option value="sapphire-silver">Sapphire & Silver</option>
-                            <option value="charcoal-sand">Charcoal & Sand</option>
-                        </select>
-                    </div>
+                    <p class="hero-subtitle" style="max-width: 550px; text-align: center; margin: -8px auto 32px;">Upload your cherished memories and transform them into stunning, wearable jewelry. Make <span style="background: var(--highlight); color: var(--ink); padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">once in a lifetime</span> last <em>forever.</em></p>
                     <div class="hero-cta-stack">
                         <div class="hero-highlights">
                             <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
