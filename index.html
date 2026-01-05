@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Momenza - Create 3D Jewelry from Your Photos</title>
+    <title>Momenza: Create 3D Jewelry from Your Photos</title>
     <link rel="icon" type="image/x-icon" href="/momenzafav.ico">
     
     <!-- Canonical URL and Redirect: Prefer www subdomain -->
@@ -6676,6 +6676,25 @@
                     if (!prompt) {
                         alert('Please enter a prompt to generate an image');
                         return;
+                    }
+                    
+                    // Check rate limit before proceeding
+                    if (typeof checkAIGenerationLimit === 'function' && typeof promptForBypassPassword === 'function') {
+                        let limitCheck = checkAIGenerationLimit();
+                        if (!limitCheck.allowed) {
+                            // Prompt for bypass password
+                            const bypassed = await promptForBypassPassword();
+                            if (!bypassed) {
+                                const errorMessage = `You've reached the limit of ${AI_GENERATION_LIMIT} AI generation${AI_GENERATION_LIMIT > 1 ? 's' : ''} per 24 hours. Please try again later.`;
+                                alert(errorMessage);
+                                return;
+                            }
+                            
+                            // Re-check after bypass
+                            limitCheck = checkAIGenerationLimit();
+                            console.log('✅ Bypass password accepted, generation allowed');
+                        }
+                        console.log(`✅ AI generation limit check passed. Remaining: ${limitCheck.remaining === Infinity ? 'unlimited (bypassed)' : limitCheck.remaining} generations`);
                     }
                     
                     // Show loading overlay IMMEDIATELY - no delay

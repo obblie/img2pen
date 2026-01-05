@@ -1532,21 +1532,33 @@ class HeightfieldViewer {
             }
         });
 
-        // Use Poly Haven HDRI for environment map
-        const rgbeLoader = new RGBELoader();
-        rgbeLoader.load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/venice_sunset_1k.hdr', (texture) => {
+        // Use newSkybox.png for environment map
+        const textureLoader = new THREE.TextureLoader();
+        const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+        pmremGenerator.compileEquirectangularShader();
+        
+        textureLoader.load('/newSkybox.png', (texture) => {
             texture.mapping = THREE.EquirectangularReflectionMapping;
-            this.scene.environment = texture;
-            // Set background to solid color slightly darker than main page (#f8f9fa -> #e8e9ea)
-            // Keep HDRI for environment reflections but use solid color for background
-            this.scene.background = new THREE.Color(0xe8e9ea);
+            texture.encoding = THREE.sRGBEncoding;
+            
+            // Generate environment map from equirectangular texture
+            const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+            this.scene.environment = envMap;
+            
+            // Set background to the skybox texture
+            this.scene.background = texture;
             this.scene.backgroundBlurriness = 0;
+            
+            // Clean up PMREM generator (texture is kept for background)
+            pmremGenerator.dispose();
+            
             this.envMapLoaded = true;
             if (this.heightfield) {
                 this.heightfield.material.metalness = 1.0;
                 this.heightfield.material.roughness = 0.1;
                 this.heightfield.material.envMapIntensity = 1.5;
             }
+            console.log('✅ Skybox environment map loaded successfully');
         }, undefined, (err) => {
             this.envMapLoaded = false;
             if (this.heightfield) {
@@ -1554,7 +1566,7 @@ class HeightfieldViewer {
                 this.heightfield.material.roughness = 0.7;
                 this.heightfield.material.envMapIntensity = 0.0;
             }
-            console.warn('HDRI environment map failed to load. Falling back to non-metallic material.');
+            console.warn('Skybox environment map failed to load. Falling back to non-metallic material.', err);
         });
 
         // Enhanced lighting setup for showcasing shine
@@ -1788,6 +1800,26 @@ class HeightfieldViewer {
                     showNotification('Please enter a prompt to generate an image', 'error');
                     return;
                 }
+                
+                // Check rate limit before proceeding
+                let limitCheck = checkAIGenerationLimit();
+                if (!limitCheck.allowed) {
+                    console.warn('⚠️ AI generation limit reached:', limitCheck);
+                    
+                    // Prompt for bypass password
+                    const bypassed = await promptForBypassPassword();
+                    if (!bypassed) {
+                        const errorMessage = `You've reached the limit of ${AI_GENERATION_LIMIT} AI generation${AI_GENERATION_LIMIT > 1 ? 's' : ''} per 24 hours. Please try again later.`;
+                        showNotification(errorMessage, 'error');
+                        return;
+                    }
+                    
+                    // Re-check after bypass
+                    limitCheck = checkAIGenerationLimit();
+                    console.log('✅ Bypass password accepted, generation allowed');
+                }
+                
+                console.log(`✅ AI generation limit check passed. Remaining: ${limitCheck.remaining === Infinity ? 'unlimited (bypassed)' : limitCheck.remaining} generations`);
 
                 // Show loading overlay IMMEDIATELY - no delay
                 showLoadingOverlay();
@@ -7014,6 +7046,13 @@ function initializeViewer() {
             window.viewer.uploadDalleImageToS3 = uploadDalleImageToS3;
         }
         
+        // Make rate limiting functions and constants globally available
+        window.checkAIGenerationLimit = checkAIGenerationLimit;
+        window.getAIGenerationCount = getAIGenerationCount;
+        window.promptForBypassPassword = promptForBypassPassword;
+        window.checkAIGenerationBypass = checkAIGenerationBypass;
+        window.AI_GENERATION_LIMIT = AI_GENERATION_LIMIT;
+        
         // Load default image after viewer is initialized
         loadDefaultImage();
     } catch (error) {
@@ -7220,9 +7259,138 @@ function showMobileDebug(info, isError = false) {
     }
 }
 
+// Cookie-based rate limiting for AI generations
+const AI_GENERATION_LIMIT = 1; // Maximum generations per 24 hours
+const AI_GENERATION_COOKIE_NAME = 'ai_generation_count';
+const AI_GENERATION_COOKIE_EXPIRY_HOURS = 24;
+const AI_GENERATION_BYPASS_PASSWORD = 'password';
+const AI_GENERATION_BYPASS_COOKIE = 'ai_generation_bypass';
+
+// Cookie utility functions
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
+function setCookie(name, value, hours) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + (hours * 60 * 60 * 1000));
+    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+}
+
+function getAIGenerationCount() {
+    const cookieValue = getCookie(AI_GENERATION_COOKIE_NAME);
+    if (!cookieValue) return 0;
+    
+    try {
+        const data = JSON.parse(cookieValue);
+        // Check if the cookie has expired (older than 24 hours)
+        const now = new Date().getTime();
+        if (now - data.timestamp > AI_GENERATION_COOKIE_EXPIRY_HOURS * 60 * 60 * 1000) {
+            // Cookie expired, reset count
+            setCookie(AI_GENERATION_COOKIE_NAME, JSON.stringify({ count: 0, timestamp: now }), AI_GENERATION_COOKIE_EXPIRY_HOURS);
+            return 0;
+        }
+        return data.count || 0;
+    } catch (e) {
+        console.error('Error parsing AI generation cookie:', e);
+        return 0;
+    }
+}
+
+function incrementAIGenerationCount() {
+    const currentCount = getAIGenerationCount();
+    const newCount = currentCount + 1;
+    const timestamp = new Date().getTime();
+    setCookie(AI_GENERATION_COOKIE_NAME, JSON.stringify({ count: newCount, timestamp: timestamp }), AI_GENERATION_COOKIE_EXPIRY_HOURS);
+    return newCount;
+}
+
+function checkAIGenerationBypass() {
+    const bypassCookie = getCookie(AI_GENERATION_BYPASS_COOKIE);
+    if (!bypassCookie) return false;
+    
+    try {
+        const data = JSON.parse(bypassCookie);
+        const now = new Date().getTime();
+        // Bypass expires after 24 hours
+        if (now - data.timestamp > AI_GENERATION_COOKIE_EXPIRY_HOURS * 60 * 60 * 1000) {
+            return false;
+        }
+        return data.bypassed === true;
+    } catch (e) {
+        return false;
+    }
+}
+
+function setAIGenerationBypass() {
+    const timestamp = new Date().getTime();
+    setCookie(AI_GENERATION_BYPASS_COOKIE, JSON.stringify({ bypassed: true, timestamp: timestamp }), AI_GENERATION_COOKIE_EXPIRY_HOURS);
+}
+
+function checkAIGenerationLimit() {
+    // Check if bypass is active
+    if (checkAIGenerationBypass()) {
+        return {
+            allowed: true,
+            remaining: Infinity,
+            used: getAIGenerationCount(),
+            bypassed: true
+        };
+    }
+    
+    const currentCount = getAIGenerationCount();
+    return {
+        allowed: currentCount < AI_GENERATION_LIMIT,
+        remaining: Math.max(0, AI_GENERATION_LIMIT - currentCount),
+        used: currentCount,
+        bypassed: false
+    };
+}
+
+function promptForBypassPassword() {
+    return new Promise((resolve) => {
+        const password = prompt(`You've reached the limit of ${AI_GENERATION_LIMIT} AI generation${AI_GENERATION_LIMIT > 1 ? 's' : ''} per 24 hours.\n\nEnter password to bypass limit:`);
+        if (password === AI_GENERATION_BYPASS_PASSWORD) {
+            setAIGenerationBypass();
+            resolve(true);
+        } else if (password !== null) {
+            // User entered something but it was wrong
+            alert('Incorrect password.');
+            resolve(false);
+        } else {
+            // User cancelled
+            resolve(false);
+        }
+    });
+}
+
 // Function to generate image using backend OpenAI proxy
 async function generateImageWithOpenAI(prompt) {
     console.log('🚀 generateImageWithOpenAI called with prompt:', prompt);
+    
+    // Check rate limit before proceeding
+    let limitCheck = checkAIGenerationLimit();
+    if (!limitCheck.allowed) {
+        console.warn('⚠️ AI generation limit reached:', limitCheck);
+        
+        // Prompt for bypass password
+        const bypassed = await promptForBypassPassword();
+        if (!bypassed) {
+            const errorMessage = `You've reached the limit of ${AI_GENERATION_LIMIT} AI generation${AI_GENERATION_LIMIT > 1 ? 's' : ''} per 24 hours. Please try again later.`;
+            showNotification(errorMessage, 'error');
+            hideLoadingOverlay();
+            throw new Error(errorMessage);
+        }
+        
+        // Re-check after bypass
+        limitCheck = checkAIGenerationLimit();
+        console.log('✅ Bypass password accepted, generation allowed');
+    }
+    
+    console.log(`✅ AI generation limit check passed. Remaining: ${limitCheck.remaining === Infinity ? 'unlimited (bypassed)' : limitCheck.remaining} generations`);
     
     // Show loading overlay IMMEDIATELY - no delay
     showLoadingOverlay();
@@ -7399,6 +7567,11 @@ async function generateImageWithOpenAI(prompt) {
         
         hideLoadingOverlay();
         console.log('✅ generateImageWithOpenAI completed successfully');
+        
+        // Increment generation count only on success
+        const newCount = incrementAIGenerationCount();
+        console.log(`📊 AI generation count updated: ${newCount}/${AI_GENERATION_LIMIT}`);
+        
         return dataUrl;
         
     } catch (error) {
