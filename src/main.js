@@ -1532,33 +1532,21 @@ class HeightfieldViewer {
             }
         });
 
-        // Use newSkybox.png for environment map
-        const textureLoader = new THREE.TextureLoader();
-        const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
-        pmremGenerator.compileEquirectangularShader();
-        
-        textureLoader.load('/newSkybox.png', (texture) => {
+        // Use Poly Haven HDRI for environment map
+        const rgbeLoader = new RGBELoader();
+        rgbeLoader.load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/venice_sunset_1k.hdr', (texture) => {
             texture.mapping = THREE.EquirectangularReflectionMapping;
-            texture.encoding = THREE.sRGBEncoding;
-            
-            // Generate environment map from equirectangular texture
-            const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-            this.scene.environment = envMap;
-            
-            // Set background to the skybox texture
-            this.scene.background = texture;
+            this.scene.environment = texture;
+            // Set background to solid color slightly darker than main page (#f8f9fa -> #e8e9ea)
+            // Keep HDRI for environment reflections but use solid color for background
+            this.scene.background = new THREE.Color(0xe8e9ea);
             this.scene.backgroundBlurriness = 0;
-            
-            // Clean up PMREM generator (texture is kept for background)
-            pmremGenerator.dispose();
-            
             this.envMapLoaded = true;
             if (this.heightfield) {
                 this.heightfield.material.metalness = 1.0;
                 this.heightfield.material.roughness = 0.1;
                 this.heightfield.material.envMapIntensity = 1.5;
             }
-            console.log('✅ Skybox environment map loaded successfully');
         }, undefined, (err) => {
             this.envMapLoaded = false;
             if (this.heightfield) {
@@ -1566,7 +1554,7 @@ class HeightfieldViewer {
                 this.heightfield.material.roughness = 0.7;
                 this.heightfield.material.envMapIntensity = 0.0;
             }
-            console.warn('Skybox environment map failed to load. Falling back to non-metallic material.', err);
+            console.warn('HDRI environment map failed to load. Falling back to non-metallic material.');
         });
 
         // Enhanced lighting setup for showcasing shine
