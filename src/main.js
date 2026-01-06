@@ -1690,7 +1690,13 @@ class HeightfieldViewer {
         fileInput.addEventListener('change', async (e) => {
             console.log('File input change event triggered');
             const file = e.target.files[0];
+            const fileInputElement = e.target; // Store reference to reset later
             console.log('Selected file:', file);
+            
+            // Reset file input value immediately to allow same file to be selected again
+            // This must be done after capturing the file reference but before processing
+            fileInputElement.value = '';
+            
             if (file) {
                 console.log('File type:', file.type);
                 
