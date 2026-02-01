@@ -234,9 +234,9 @@
         <div class="instructions">
             <h2>Drop your image here</h2>
             <p>or</p>
-            <input type="file" id="file-input" accept="image/*" style="display: none;">
+            <input type="file" id="file-input" accept="image/*,.heic,.heif" style="display: none;">
             <button onclick="document.getElementById('file-input').click()">Select Image</button>
-            <p>Supported formats: JPG, PNG, BMP</p>
+            <p>Supported formats: JPG, PNG, BMP, HEIC</p>
             
             <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid rgba(255,255,255,0.3);">
                 <p style="font-size: 1.1em; margin-bottom: 20px;">Or... write a prompt of a scene, or memory</p>
@@ -516,6 +516,8 @@
     <!-- Deployment GUID Display -->
     <div id="deployment-guid" style="position:fixed;bottom:12px;left:12px;background:rgba(0,0,0,0.7);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.95em;z-index:5000;pointer-events:none;user-select:text;">Loading version...</div>
 
+    <!-- HEIC conversion library - load before main.js -->
+    <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
     <!-- Cropper.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <!-- Add this in the <head> or before the closing </body> tag -->

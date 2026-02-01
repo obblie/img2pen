@@ -5,3 +5,7 @@ numpy==2.0.1
 requests==2.32.3
 scipy==1.14.0
 trimesh==4.4.9
+torch>=2.0.0
+torchvision>=0.15.0
+opencv-python>=4.8.0
+transformers>=4.30.0

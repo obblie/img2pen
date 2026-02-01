@@ -153,7 +153,8 @@
         }
         
         .navbar-theme-selector {
-            display: flex;
+            display: none !important;
+            visibility: hidden;
             align-items: center;
             gap: 8px;
             margin-left: auto;
@@ -3155,6 +3156,8 @@
            ====================================== */
         
         .imagine-section {
+            display: none !important;
+            visibility: hidden;
             margin-top: 24px;
             padding: 14px;
             background: var(--bg-stone);
@@ -3823,7 +3826,7 @@
             <li><a href="#" onclick="event.preventDefault(); scrollToSection('scene-container'); return false;">Studio</a></li>
             <li><a href="#" onclick="event.preventDefault(); scrollToSection('upload-container'); return false;">Process</a></li>
         </ul>
-        <div class="navbar-theme-selector">
+        <div class="navbar-theme-selector" style="display: none !important; visibility: hidden;">
             <label for="theme-selector">Theme</label>
             <select id="theme-selector">
                 <option value="studio-moss">Studio Moss (Current)</option>
@@ -3868,16 +3871,16 @@
                             <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
                                 <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🚀 Fast Delivery</span>
                             </div>
-                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
+                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08); display: none !important; visibility: hidden;">
                                 <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🥹 Precious Results</span>
                             </div>
                             <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
                                 <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🎨 Custom Design</span>
                             </div>
-                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
+                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08); display: none !important; visibility: hidden;">
                                 <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🔒 Secure Payment</span>
                             </div>
-                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
+                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08); display: none !important; visibility: hidden;">
                                 <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🌟 5-Star Reviews</span>
                             </div>
                         </div>
@@ -3888,10 +3891,10 @@
                 <div class="hero-media-col" style="text-align: center; margin-top: -10px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
                     <div class="hero-image-row">
                         <div style="position: relative; display: inline-block;">
-                            <img class="hero-sample-image" src="/sleddingScene_before.png" alt="Winter sledding scene" loading="lazy" decoding="async">
+                            <img class="hero-sample-image" src="/beachScene.jpg" alt="Winter sledding scene" loading="lazy" decoding="async">
                         </div>
                         <div style="position: relative; display: inline-block;">
-                            <img class="hero-sample-image" src="/samplePendant.png" alt="Sample Pendant Alternate View" loading="lazy" decoding="async">
+                            <img class="hero-sample-image" src="/woman_beach.png" alt="Sample Pendant Alternate View" loading="lazy" decoding="async">
                         </div>
                     </div>
                     <button class="hero-upload-btn" onclick="openUploadFromHero(); return false;">
@@ -4125,25 +4128,12 @@
                 const paintControls = document.getElementById('depth-painting-controls');
                 if (!depthControls) return;
                 
-                const hasImage = checkIfImageExists();
-                if (hasImage) {
-                    depthControls.style.display = 'flex';
-                    if (paintControls) {
-                        // Keep paint controls hidden
-                        paintControls.style.display = 'none';
-                    }
-                    // Update depth display if viewer is available
-                    if (window.viewer && window.viewer.depth !== undefined) {
-                        const depthDisplay = document.getElementById('depth-value-display');
-                        if (depthDisplay) {
-                            depthDisplay.textContent = window.viewer.depth.toFixed(1);
-                        }
-                    }
-                } else {
-                    depthControls.style.display = 'none';
-                    if (paintControls) {
-                        paintControls.style.display = 'none';
-                    }
+                // Always hide depth controls
+                depthControls.style.display = 'none';
+                depthControls.style.visibility = 'hidden';
+                if (paintControls) {
+                    // Keep paint controls hidden
+                    paintControls.style.display = 'none';
                 }
             }
 
@@ -4291,7 +4281,7 @@
                 const addPhotoBtn = document.getElementById('add-photo-btn');
                 const imagineBtn = document.getElementById('imagine-btn');
                 const themeSelector = document.getElementById('theme-selector');
-                let faqCollapsed = true;
+                let faqCollapsed = true; // Start collapsed but show first 3 questions
             const THEME_KEY = 'iks-theme';
             const getVar = (name, fallback) => {
                 const val = getComputedStyle(document.documentElement).getPropertyValue(name)?.trim();
@@ -4433,8 +4423,55 @@
             }
                 
                 const updateFaqVisibility = () => {
-                    const listDisplay = faqCollapsed ? 'none' : 'flex';
-                    if (faqList) faqList.style.display = listDisplay;
+                    // Always show the FAQ list, but limit visible questions when collapsed
+                    if (faqList) {
+                        faqList.style.display = 'flex';
+                        // Get all FAQ items using the .faq-item class
+                        const faqItems = faqList.querySelectorAll('.faq-item');
+                        const faqMoreBtn = document.getElementById('faq-more-btn');
+                        const faqMoreBtnText = faqMoreBtn ? faqMoreBtn.querySelector('span:first-child') : null;
+                        const faqMoreArrows = document.getElementById('faq-more-arrows');
+                        
+                        if (faqCollapsed) {
+                            // When collapsed, show only first 3 questions, hide the rest
+                            faqItems.forEach((item, index) => {
+                                if (index < 3) {
+                                    item.style.display = 'block';
+                                } else {
+                                    item.style.display = 'none';
+                                }
+                            });
+                            // Show "More" button after question 3 when collapsed
+                            if (faqMoreBtn) {
+                                faqMoreBtn.style.display = 'flex';
+                                // Move button to after question 3
+                                if (faqItems.length >= 3) {
+                                    faqItems[2].parentNode.insertBefore(faqMoreBtn, faqItems[2].nextSibling);
+                                }
+                            }
+                            if (faqMoreBtnText) faqMoreBtnText.textContent = 'More';
+                            if (faqMoreArrows) {
+                                faqMoreArrows.textContent = '↓';
+                                faqMoreArrows.style.transform = 'rotate(0deg)';
+                            }
+                        } else {
+                            // When expanded, show all questions
+                            faqItems.forEach(item => {
+                                item.style.display = 'block';
+                            });
+                            // Show "Less" button at the bottom when expanded
+                            if (faqMoreBtn) {
+                                faqMoreBtn.style.display = 'flex';
+                                // Move button to the end of the list
+                                faqList.appendChild(faqMoreBtn);
+                            }
+                            if (faqMoreBtnText) faqMoreBtnText.textContent = 'Less';
+                            if (faqMoreArrows) {
+                                faqMoreArrows.textContent = '↑';
+                                faqMoreArrows.style.transform = 'rotate(0deg)';
+                            }
+                        }
+                    }
                     if (faqSubtext) faqSubtext.style.display = faqCollapsed ? 'none' : 'block';
                     if (faqContainer) faqContainer.setAttribute('aria-expanded', faqCollapsed ? 'false' : 'true');
                     if (faqToggleAllBtn) {
@@ -4460,28 +4497,49 @@
                 faqButtons.forEach(btn => {
                     btn.addEventListener('click', () => {
                         const answer = btn.nextElementSibling;
+                        const toggleIcon = btn.querySelector('span[aria-hidden="true"]');
+                        const faqItem = btn.closest('.faq-item');
                         const isOpen = answer && answer.style.display === 'block';
-                        // Close all
-                        faqButtons.forEach(b => {
-                            const a = b.nextElementSibling;
-                            if (a) {
-                                a.style.display = 'none';
-                                b.querySelector('span[aria-hidden="true"]').textContent = '+';
-                            }
-                        });
-                        // Toggle current
+                        
+                        // Toggle current (allow multiple FAQs open)
                         if (answer) {
-                            answer.style.display = isOpen ? 'none' : 'block';
-                            btn.querySelector('span[aria-hidden="true"]').textContent = isOpen ? '+' : '–';
+                            if (isOpen) {
+                                answer.style.display = 'none';
+                                answer.style.maxHeight = '0';
+                                answer.style.paddingTop = '0';
+                                answer.style.paddingBottom = '0';
+                                toggleIcon.textContent = '+';
+                                toggleIcon.style.transform = 'rotate(0deg)';
+                                if (faqItem) faqItem.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+                            } else {
+                                answer.style.display = 'block';
+                                answer.style.maxHeight = answer.scrollHeight + 'px';
+                                answer.style.paddingTop = '0';
+                                answer.style.paddingBottom = '20px';
+                                toggleIcon.textContent = '−';
+                                toggleIcon.style.transform = 'rotate(180deg)';
+                                if (faqItem) faqItem.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
+                            }
                         }
                     });
                 });
                 
+                // Handle both the old toggle button and the new "More" button
+                const faqMoreBtn = document.getElementById('faq-more-btn');
+                const faqMoreArrows = document.getElementById('faq-more-arrows');
+                
+                const toggleFaq = () => {
+                    faqCollapsed = !faqCollapsed;
+                    updateFaqVisibility();
+                    // Arrow direction is handled in updateFaqVisibility
+                };
+                
                 if (faqToggleAllBtn) {
-                    faqToggleAllBtn.addEventListener('click', () => {
-                        faqCollapsed = !faqCollapsed;
-                        updateFaqVisibility();
-                    });
+                    faqToggleAllBtn.addEventListener('click', toggleFaq);
+                }
+                
+                if (faqMoreBtn) {
+                    faqMoreBtn.addEventListener('click', toggleFaq);
                 }
                 
                 updateFaqVisibility();
@@ -4553,7 +4611,7 @@
                             </div>
                             
                             <!-- Depth Adjustment Controls -->
-                            <div id="depth-adjustment-controls" style="position: absolute; bottom: 16px; right: 16px; z-index: 1001; background: rgba(255, 255, 255, 0.95); border: 2px solid rgba(0, 0, 0, 0.2); border-radius: 12px; padding: 12px; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); display: none; flex-direction: column; align-items: center; gap: 8px; min-width: 120px;">
+                            <div id="depth-adjustment-controls" style="position: absolute; bottom: 16px; right: 16px; z-index: 1001; background: rgba(255, 255, 255, 0.95); border: 2px solid rgba(0, 0, 0, 0.2); border-radius: 12px; padding: 12px; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); display: none !important; flex-direction: column; align-items: center; gap: 8px; min-width: 120px; visibility: hidden;">
                                 <div style="font-size: 11px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Depth</div>
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <button id="depth-decrease-btn" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.3); background: rgba(255, 255, 255, 0.9); color: #333; font-size: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation;">
@@ -4602,7 +4660,7 @@
                             <div id="demo-message" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-stone); color: var(--ink); padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1100; pointer-events: auto; cursor: pointer; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); border: none; text-align: center; max-width: 400px; display: none;">
                                 <div style="margin-bottom: 4px;"><strong>WELCOME</strong></div>
                                 <div style="font-size: 12px; opacity: 0.9; line-height: 1.3;">
-                                    This is our interactive pendant designer. Upload a photo or use our AI generator below to get started.
+                                    This is our interactive pendant designer. Upload a photo to get started.
                                     <p>Click this message to continue.</p>
                                 </div>
                             </div>
@@ -4644,10 +4702,10 @@
                                 <p class="photo-help-text">Precious Moments Made Eternal</p>
                             </div>
                             
-                            <div class="imagine-section">
+                            <div class="imagine-section" style="display: none !important; visibility: hidden;">
                                 <button class="imagine-button" id="imagine-btn">
                                     <span class="button-icon">🦄</span>
-                                    <span class="button-text">Imagine with AI</span>
+                                    <span class="button-text">Create Design</span>
                                 </button>
                                 <p class="imagine-help-text">Dream It, Wear It</p>
                                 
@@ -4658,7 +4716,7 @@
                                         <div class="prompt-buttons">
                                             <button class="prompt-button primary" id="generate-ai-btn">
                                                 <span class="button-icon">🎨</span>
-                                                Generate
+                                                Create
                                             </button>
                                             <button class="prompt-button secondary" id="cancel-ai-btn">Cancel</button>
                                             </div>
@@ -4718,7 +4776,7 @@
     <!-- Upload Section -->
     <div id="upload-container" class="upload-container">
         <div id="drop-zone" style="padding: 20px 24px; width: 100%; max-width: 1100px; min-height: 80vh; margin: 0 auto; display: flex; flex-direction: column; box-sizing: border-box;">
-            <input type="file" id="file-input" accept="image/*" style="display: none;">
+            <input type="file" id="file-input" accept="image/*,.heic,.heif" style="display: none;">
             <!-- Main Content Section (2/3 height) -->
             <div style="flex: 2; width: 100%; overflow-y: visible; overflow-x: visible;">
                 <div style="width: 100%;">
@@ -4750,67 +4808,90 @@
             </div>
             
             <!-- FAQ Section (Process Panel) -->
-            <div id="faq-container" style="text-align: center; margin: 0 auto 24px auto; padding: 18px 18px; width: 100%; max-width: 960px; background: var(--bg-stone); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.08);">
-                <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 10px;">
-                    <h3 style="color: var(--ink); font-weight: 800; font-size: 1.6em; margin: 0;">FAQ</h3>
-                    <button id="faq-toggle-all" aria-label="Toggle FAQ" style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--ink); background: var(--bg-parchment); color: var(--ink); font-weight: 800; font-size: 1.1em; cursor: pointer; transition: all 0.2s ease; padding: 0;">–</button>
+            <div id="faq-container" style="text-align: center; margin: 0 auto 24px auto; padding: 32px 24px; width: 100%; max-width: 960px; background: linear-gradient(135deg, var(--bg-stone) 0%, var(--bg-parchment) 100%); border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.06); backdrop-filter: blur(10px);">
+                <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <h3 style="color: var(--ink); font-weight: 800; font-size: 2em; margin: 0; letter-spacing: -0.02em;">FAQ</h3>
+                    <button id="faq-toggle-all" aria-label="Toggle FAQ" style="display: none !important; visibility: hidden;"></button>
                 </div>
-                <p id="faq-subtext" style="color: rgba(43,43,43,0.8); font-size: 0.95em; margin: 0 0 14px 0;">Answers to the most common questions.</p>
-                <div id="faq-list" style="display: flex; flex-direction: column; gap: 10px;">
-                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                            <span>What metals do you offer?</span>
-                            <span aria-hidden="true">+</span>
+                <p id="faq-subtext" style="color: rgba(43,43,43,0.7); font-size: 1em; margin: 0 0 24px 0; font-weight: 500; display: none;">Answers to the most common questions</p>
+                <div id="faq-list" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 600; font-size: 1.05em; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s ease; text-align: left;">
+                            <span style="flex: 1; padding-right: 16px;">What metals do you offer?</span>
+                            <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
+                        <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
                             We currently offer .925 sterling silver and 14k yellow gold. If you have a specific metal in mind, please contact us and we will do our best to accommodate your request.
                         </div>
                     </div>
-                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                            <span>How long will it take to receive my order?</span>
-                            <span aria-hidden="true">+</span>
+                    <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 600; font-size: 1.05em; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s ease; text-align: left;">
+                            <span style="flex: 1; padding-right: 16px;">How long will it take to receive my order?</span>
+                            <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
-                            As each order is custom made-to-order, production time varies with average pieces shipping within 7 business days, with shipping times depending on your location. You’ll receive tracking information once your package has shipped.
+                        <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                            As each order is custom made-to-order, production time varies with average pieces shipping within 7 business days, with shipping times depending on your location. You'll receive tracking information once your package has shipped.
                         </div>
                     </div>
-                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                            <span>Can I preview the design before ordering?</span>
-                            <span aria-hidden="true">+</span>
+                    <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 600; font-size: 1.05em; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s ease; text-align: left;">
+                            <span style="flex: 1; padding-right: 16px;">Can I preview the design before ordering?</span>
+                            <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
+                        <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
                             Yes. You can adjust and preview the 3D model in the studio before adding it to your cart.
                         </div>
                     </div>
-                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                            <span>What if my photo isn’t perfect?</span>
-                            <span aria-hidden="true">+</span>
+                    <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 600; font-size: 1.05em; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s ease; text-align: left;">
+                            <span style="flex: 1; padding-right: 16px;">What if my photo isn't perfect?</span>
+                            <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
-                            We recommend clear, well-lit images. If we see issues, we’ll reach out with suggestions before production.
+                        <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                            We recommend clear, well-lit images. If we see issues, we'll reach out with suggestions before production.
                         </div>
                     </div>
-                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                            <span>What is your return policy?</span>
-                            <span aria-hidden="true">+</span>
+                    <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 600; font-size: 1.05em; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s ease; text-align: left;">
+                            <span style="flex: 1; padding-right: 16px;">What is your return policy?</span>
+                            <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
+                        <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
                             We accept returns on a case by case basis for items that do not meet your expectations. Please contact us within 72 hours of receiving your Momenza and we will work with you to resolve the issue.
                         </div>
                     </div>
-                    <div style="background: var(--bg-parchment); border: 1px solid rgba(43,43,43,0.1); border-radius: 12px; overflow: hidden; text-align: left;">
-                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 700; font-size: 1em; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;">
-                            <span>Do you offer design services?</span>
-                            <span aria-hidden="true">+</span>
+                    <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 600; font-size: 1.05em; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s ease; text-align: left;">
+                            <span style="flex: 1; padding-right: 16px;">Do you offer design services?</span>
+                            <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
                         </button>
-                        <div class="faq-answer" style="display: none; padding: 0 16px 14px 16px; color: rgba(43,43,43,0.9); font-size: 0.95em; line-height: 1.5;">
+                        <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
                             We do not formally offer design services, but we are happy to help you create a custom design for your Momenza. Please contact us and we will work with you to create a custom design that makes you happy :).
                         </div>
                     </div>
+                    <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 600; font-size: 1.05em; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s ease; text-align: left;">
+                            <span style="flex: 1; padding-right: 16px;">Do I need to own the rights to the photo that I submit?</span>
+                            <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
+                        </button>
+                        <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                            <p style="margin: 0 0 12px 0;">You may not submit content that includes, without explicit authorization:</p>
+                            <ul style="margin: 0; padding-left: 20px; list-style-type: disc;">
+                                <li style="margin-bottom: 8px;">Trademarks, logos, or brand identifiers</li>
+                                <li style="margin-bottom: 8px;">Copyrighted characters or media (e.g., movies, anime, games)</li>
+                                <li style="margin-bottom: 8px;">Celebrity likenesses or public figures</li>
+                                <li style="margin-bottom: 8px;">Professional photography you did not create or license</li>
+                                <li style="margin-bottom: 8px;">Images sourced from the internet, social media, or stock libraries without permission</li>
+                            </ul>
+                            <p style="margin: 12px 0 0 0;">We reserve the right to refuse or cancel any order that includes prohibited or questionable content.</p>
+                        </div>
+                    </div>
+                    <!-- More/Less button with motion arrows - positioned dynamically -->
+                    <button id="faq-more-btn" onmouseenter="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.12)'; this.querySelector('span:last-child').style.opacity='0.05';" onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.06)'; this.querySelector('span:last-child').style.opacity='0';" style="width: 100%; background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%); border: 2px solid rgba(43,43,43,0.1); border-radius: 16px; padding: 18px 24px; color: var(--ink); font-weight: 600; font-size: 1.05em; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); margin-top: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); backdrop-filter: blur(10px); position: relative; overflow: hidden;">
+                        <span style="position: relative; z-index: 1;">More</span>
+                        <span style="font-size: 1.3em; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; z-index: 1; display: inline-block;" id="faq-more-arrows">↓</span>
+                        <span style="position: absolute; inset: 0; background: linear-gradient(135deg, var(--oxblood) 0%, var(--oxblood-strong) 100%); opacity: 0; transition: opacity 0.3s ease;"></span>
+                    </button>
                 </div>
             </div>
             
@@ -4818,7 +4899,7 @@
         </div>
 
         <!-- Testimonials Section (1/3 height) -->
-        <div style="flex: 1; width: 100%; max-width: 100%; background: #f8f9fa; border-top: 2px solid #e2e8f0; padding: 20px; box-sizing: border-box; overflow: hidden;">
+        <div style="flex: 1; width: 100%; max-width: 100%; background: #f8f9fa; border-top: 2px solid #e2e8f0; padding: 20px; box-sizing: border-box; overflow: hidden; display: none !important; visibility: hidden;">
             <div style="text-align: center; margin-bottom: 20px; padding: 0 8px; box-sizing: border-box;">
                 <h3 style="color: #2d3748; font-weight: 700; font-size: 1.8em; margin-bottom: 10px;">What Our Customers Say</h3>
                 <p style="color: #718096; font-size: 1em;">Real experiences from happy customers</p>
@@ -4847,7 +4928,7 @@
                             <div style="color: #fbbf24; font-size: 1.1em;">★★★★★</div>
                         </div>
                     </div>
-                    <p style="color: #4a5568; line-height: 1.6; margin: 0; font-style: italic;">"The AI generation feature is mind-blowing! I described what I wanted and it created the perfect design. Highly recommend!"</p>
+                    <p style="color: #4a5568; line-height: 1.6; margin: 0; font-style: italic;">"The design process is amazing! I described what I wanted and it created the perfect design. Highly recommend!"</p>
                 </div>
 
                 <!-- Testimonial 3 -->
@@ -4924,7 +5005,7 @@
     <div id="ai-prompt-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:5000;backdrop-filter:blur(5px);">
         <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:15px;box-shadow:0 20px 40px rgba(0,0,0,0.3);max-width:500px;width:90%;">
             <div style="text-align:center;margin-bottom:20px;">
-                <h2 style="margin:0;color:#333;font-size:24px;">✨ Imagine with AI</h2>
+                <h2 style="margin:0;color:#333;font-size:24px;">✨ Create Your Design</h2>
                 <p style="margin:10px 0 0 0;color:#666;font-size:16px;">Describe your dream pendant and we'll create it for you</p>
             </div>
             
@@ -4934,7 +5015,7 @@
             
             <div style="display:flex;gap:10px;justify-content:center;">
                 <button id="generate-ai-btn-modal" style="background:#1d4ed8;color:white;border:none;padding:12px 24px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;">
-                    <span style="margin-right:8px;">🎨</span>Generate
+                    <span style="margin-right:8px;">🎨</span>Create
                 </button>
                 <button id="cancel-ai-btn-modal" style="background:#f5f5f5;color:#666;border:2px solid #e0e0e0;padding:12px 24px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:all 0.3s ease;">
                     Cancel
@@ -5070,6 +5151,8 @@
 <div id="deployment-guid" style="display:none;position:fixed;bottom:12px;left:12px;background:rgba(0,0,0,0.7);color:#fff;padding:6px 14px;border-radius:6px;font-size:0.95em;z-index:5000;pointer-events:none;user-select:text;">Loading version...</div>
 
     <script type="module" src="./src/main.js?v=4&t=1234567890"></script>
+    <!-- HEIC conversion library - load before main.js -->
+    <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
     <!-- Cropper.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     
@@ -6674,7 +6757,7 @@
                     const prompt = aiPromptInput.value.trim();
                     
                     if (!prompt) {
-                        alert('Please enter a prompt to generate an image');
+                        alert('Please enter a description to create a design');
                         return;
                     }
                     
@@ -6685,7 +6768,7 @@
                             // Prompt for bypass password
                             const bypassed = await promptForBypassPassword();
                             if (!bypassed) {
-                                const errorMessage = `You've reached the limit of ${AI_GENERATION_LIMIT} AI generation${AI_GENERATION_LIMIT > 1 ? 's' : ''} per 24 hours. Please try again later.`;
+                                const errorMessage = `You've reached the limit of ${AI_GENERATION_LIMIT} design${AI_GENERATION_LIMIT > 1 ? 's' : ''} per 24 hours. Please try again later.`;
                                 alert(errorMessage);
                                 return;
                             }
@@ -6702,7 +6785,7 @@
                         showLoadingOverlay();
                         const loadingStatus = document.getElementById('loading-status');
                         if (loadingStatus) {
-                            loadingStatus.textContent = 'Generating image with AI...';
+                            loadingStatus.textContent = 'Creating your design...';
                         }
                     }
                     
@@ -6753,7 +6836,7 @@
                                 throw genError;
                             }
                         } else {
-                            throw new Error('AI generation function not available. Please ensure the viewer is initialized.');
+                            throw new Error('Design creation function not available. Please ensure the viewer is initialized.');
                         }
                         
                         // If we got an image, show the cropper modal
@@ -6826,12 +6909,12 @@
                             }
                         } else {
                             console.error('❌ Image generation returned null/empty data URL');
-                            alert('Failed to generate image. Please try again.');
+                            alert('Failed to create design. Please try again.');
                         }
                         
                     } catch (error) {
                         console.error('❌ Error generating image:', error);
-                        alert(`Failed to generate image: ${error.message}`);
+                        alert(`Failed to create design: ${error.message}`);
                     }
                 });
                 
@@ -8268,7 +8351,7 @@
 
 <!-- Social Footer -->
 <div class="social-footer">
-    <div style="display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;">
+    <div style="display: none !important; visibility: hidden;">
         <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
             <img src="/fblogo.png" alt="Facebook" style="height: 56px; width: 56px; object-fit: contain;">
         </a>

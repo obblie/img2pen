@@ -41,6 +41,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { BoxGeometry, MeshBasicMaterial, Mesh, Scene as ThreeScene, PerspectiveCamera, WebGLRenderer, Raycaster, Vector2 } from 'three';
 import { STLExporter } from 'three/examples/jsm/exporters/STLExporter.js';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 // import { CSG } from 'three/addons/objects/CSG.js';
@@ -1651,8 +1652,37 @@ class HeightfieldViewer {
         dropZone.addEventListener('drop', async (e) => {
             e.preventDefault();
             dropZone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
+            let file = e.dataTransfer.files[0];
+            if (file && (file.type.startsWith('image/') || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif'))) {
+                // Check if it's a HEIC file and convert it first
+                const fileName = file.name?.toLowerCase() || '';
+                const fileType = file.type?.toLowerCase() || '';
+                const isHeic = fileName.endsWith('.heic') || 
+                              fileName.endsWith('.heif') || 
+                              fileType === 'image/heic' || 
+                              fileType === 'image/heif' ||
+                              fileType === 'image/x-heic' ||
+                              fileType === 'image/x-heif';
+                
+                if (isHeic && typeof heic2any !== 'undefined') {
+                    try {
+                        console.log('🔄 Converting dropped HEIC file...');
+                        const converted = await heic2any({
+                            blob: file,
+                            toType: 'image/jpeg',
+                            quality: 0.92
+                        });
+                        const jpegBlob = Array.isArray(converted) ? converted[0] : converted;
+                        // Create a new File object with JPEG extension
+                        file = new File([jpegBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+                        console.log('✅ HEIC file converted to JPEG');
+                    } catch (error) {
+                        console.error('❌ HEIC conversion failed:', error);
+                        alert('Failed to convert HEIC file. Please convert it to JPEG/PNG first.');
+                        return;
+                    }
+                }
+                
                 // Upload image to S3 immediately
                 console.log('📤 Uploading image to S3 immediately...');
                 uploadImageToS3(file).then(uploadResult => {
@@ -1689,7 +1719,7 @@ class HeightfieldViewer {
         // Handle file input
         fileInput.addEventListener('change', async (e) => {
             console.log('File input change event triggered');
-            const file = e.target.files[0];
+            let file = e.target.files[0];
             const fileInputElement = e.target; // Store reference to reset later
             console.log('Selected file:', file);
             
@@ -1699,6 +1729,35 @@ class HeightfieldViewer {
             
             if (file) {
                 console.log('File type:', file.type);
+                
+                // Check if it's a HEIC file and convert it first
+                const fileName = file.name?.toLowerCase() || '';
+                const fileType = file.type?.toLowerCase() || '';
+                const isHeic = fileName.endsWith('.heic') || 
+                              fileName.endsWith('.heif') || 
+                              fileType === 'image/heic' || 
+                              fileType === 'image/heif' ||
+                              fileType === 'image/x-heic' ||
+                              fileType === 'image/x-heif';
+                
+                if (isHeic && typeof heic2any !== 'undefined') {
+                    try {
+                        console.log('🔄 Converting selected HEIC file...');
+                        const converted = await heic2any({
+                            blob: file,
+                            toType: 'image/jpeg',
+                            quality: 0.92
+                        });
+                        const jpegBlob = Array.isArray(converted) ? converted[0] : converted;
+                        // Create a new File object with JPEG extension
+                        file = new File([jpegBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+                        console.log('✅ HEIC file converted to JPEG');
+                    } catch (error) {
+                        console.error('❌ HEIC conversion failed:', error);
+                        alert('Failed to convert HEIC file. Please convert it to JPEG/PNG first.');
+                        return;
+                    }
+                }
                 
                 // Track image upload event
                 if (typeof window.trackMetaEvent === 'function') {
@@ -1803,7 +1862,7 @@ class HeightfieldViewer {
                     // Prompt for bypass password
                     const bypassed = await promptForBypassPassword();
                     if (!bypassed) {
-                        const errorMessage = `You've reached the limit of ${AI_GENERATION_LIMIT} AI generation${AI_GENERATION_LIMIT > 1 ? 's' : ''} per 24 hours. Please try again later.`;
+                        const errorMessage = `You've reached the limit of ${AI_GENERATION_LIMIT} design${AI_GENERATION_LIMIT > 1 ? 's' : ''} per 24 hours. Please try again later.`;
                         showNotification(errorMessage, 'error');
                         return;
                     }
@@ -1819,7 +1878,7 @@ class HeightfieldViewer {
                 showLoadingOverlay();
                 const loadingStatus = document.getElementById('loading-status');
                 if (loadingStatus) {
-                    loadingStatus.textContent = 'Generating image with AI...';
+                    loadingStatus.textContent = 'Creating your design...';
                 }
 
                 // Track AI prompt submission event
@@ -1869,7 +1928,7 @@ class HeightfieldViewer {
                         
                         // Clear the prompt input
                         promptInput.value = '';
-                        showNotification('Image generated successfully! Please crop it to continue.', 'success');
+                        showNotification('Design created successfully! Please crop it to continue.', 'success');
                     } else {
                         console.error('❌ Image generation returned null/empty data URL');
                         showNotification('Failed to generate image. Please try again.', 'error');
@@ -2274,8 +2333,9 @@ class HeightfieldViewer {
                 }
                 if (viewerInstance.jumpring) {
                     console.log('📦 Cloning jumpring...');
-                    group.add(viewerInstance.jumpring.clone());
-                    console.log('📦 Jumpring cloned and added to group');
+                    // Jumpring excluded from export
+                    // group.add(viewerInstance.jumpring.clone());
+                    // console.log('📦 Jumpring cloned and added to group');
                 }
                 
                 console.log('📦 Group children count:', group.children.length);
@@ -2854,11 +2914,11 @@ class HeightfieldViewer {
                     group.add(this.heightfield.clone());
                 }
                 
-                // Add jumpring if it exists
-                if (this.jumpring) {
-                    console.log('Adding jumpring to STL export');
-                    group.add(this.jumpring.clone());
-                }
+                // Jumpring excluded from export
+                // if (this.jumpring) {
+                //     console.log('Adding jumpring to STL export');
+                //     group.add(this.jumpring.clone());
+                // }
                 
                 // Add sprue text objects
                 if (this.sprueTextObjects && this.sprueTextObjects.length > 0) {
@@ -3098,15 +3158,124 @@ class HeightfieldViewer {
         }
     }
 
-    loadImage(fileOrBlob) {
-        return new Promise((resolve) => {
+    async loadImage(fileOrBlob) {
+        // Handle data URLs - convert back to Blob if needed
+        let file = fileOrBlob;
+        if (typeof fileOrBlob === 'string' && fileOrBlob.startsWith('data:')) {
+            // It's a data URL, convert to Blob
+            const response = await fetch(fileOrBlob);
+            file = await response.blob();
+        }
+        
+        // Check if file is HEIC/HEIF format
+        const fileName = file.name?.toLowerCase() || '';
+        const fileType = file.type?.toLowerCase() || '';
+        const isHeic = fileName.endsWith('.heic') || 
+                      fileName.endsWith('.heif') || 
+                      fileType === 'image/heic' || 
+                      fileType === 'image/heif' ||
+                      fileType === 'image/x-heic' ||
+                      fileType === 'image/x-heif';
+        
+        console.log('📁 File info:', { fileName, fileType, isHeic, heic2anyAvailable: typeof heic2any !== 'undefined', fileSize: file.size });
+        
+        if (isHeic) {
+            // Wait for heic2any to be available if it's not loaded yet
+            if (typeof heic2any === 'undefined') {
+                console.warn('⚠️ heic2any library not loaded. Waiting...');
+                // Wait up to 3 seconds for the library to load
+                for (let i = 0; i < 30; i++) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    if (typeof heic2any !== 'undefined') {
+                        console.log('✅ heic2any library loaded');
+                        break;
+                    }
+                }
+            }
+            
+            if (typeof heic2any === 'undefined') {
+                console.error('❌ heic2any library failed to load');
+                throw new Error('HEIC conversion library not available. Please refresh the page and try again.');
+            }
+            
+            console.log('🔄 Converting HEIC file to JPEG...');
+            try {
+                // Ensure we have a Blob/File object
+                const blobToConvert = file instanceof Blob ? file : fileOrBlob;
+                
+                // Convert HEIC to JPEG using heic2any
+                const convertedBlob = await heic2any({
+                    blob: blobToConvert,
+                    toType: 'image/jpeg',
+                    quality: 0.92
+                });
+                
+                // heic2any returns an array, get the first item
+                const jpegBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+                
+                if (!jpegBlob) {
+                    throw new Error('Conversion returned empty result');
+                }
+                
+                console.log('✅ HEIC file converted successfully');
+                
+                // Load the converted JPEG
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            console.log('✅ Converted HEIC image loaded:', img.width, 'x', img.height);
+                            resolve(img);
+                        };
+                        img.onerror = (err) => {
+                            console.error('❌ Converted image failed to load:', err);
+                            reject(new Error('Failed to load converted image'));
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = (err) => {
+                        console.error('❌ FileReader error:', err);
+                        reject(new Error('Failed to read converted file'));
+                    };
+                    reader.readAsDataURL(jpegBlob);
+                });
+            } catch (error) {
+                console.error('❌ HEIC conversion failed:', error);
+                throw new Error(`Failed to convert HEIC file: ${error.message}. Please try converting it to JPEG/PNG first.`);
+            }
+        }
+        
+        // For non-HEIC files, use the original loading method
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => resolve(img);
+                img.onerror = (err) => {
+                    console.error('❌ Image loading failed:', err);
+                    reject(new Error('Failed to load image'));
+                };
                 img.src = e.target.result;
             };
-            reader.readAsDataURL(fileOrBlob);
+            reader.onerror = (err) => {
+                console.error('❌ FileReader error:', err);
+                reject(new Error('Failed to read file'));
+            };
+            // Use the file variable (which may have been converted from data URL)
+            const fileToRead = file instanceof Blob ? file : fileOrBlob;
+            if (typeof fileToRead === 'string') {
+                // It's already a data URL
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = (err) => {
+                    console.error('❌ Image loading failed:', err);
+                    reject(new Error('Failed to load image'));
+                };
+                img.src = fileToRead;
+            } else {
+                reader.readAsDataURL(fileToRead);
+            }
         });
     }
 
@@ -4943,6 +5112,9 @@ class HeightfieldViewer {
                 this.backEngravingObjects.push(textMesh);
                 this.scene.add(textMesh);
                 console.log('Back engraving created:', textContent, 'at position:', textMesh.position);
+                
+                // Load and position MMlogo.stl 2mm above the quality stamp
+                this.loadMMLogo(textX, textY, textZ, textHeight_bbox, materialProps);
             },
             (progress) => {
                 console.log('Font loading progress for back engraving:', progress);
@@ -4982,6 +5154,116 @@ class HeightfieldViewer {
                     this.scene.add(charMesh);
                 }
                 console.log('Fallback back engraving shapes created for:', textContent);
+                
+                // Load and position MMlogo.stl 2mm above the quality stamp (fallback case)
+                const fallbackTextHeight = 2.0; // charHeight from fallback
+                this.loadMMLogo(textX, textY, textZ, fallbackTextHeight, materialProps);
+            }
+        );
+    }
+    
+    loadMMLogo(centerX, stampY, stampZ, stampHeight, materialProps) {
+        // Only load logo for sterling-silver and gold-14k
+        const currentMetalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+        if (currentMetalType !== 'sterling-silver' && currentMetalType !== 'gold-14k') {
+            console.log('Skipping MMlogo - not sterling-silver or gold-14k');
+            return;
+        }
+        
+        console.log('Loading MMlogo.stl...');
+        console.log('Stamp position:', { centerX, stampY, stampZ, stampHeight });
+        const loader = new STLLoader();
+        
+        loader.load(
+            '/MMlogo.stl',
+            (geometry) => {
+                console.log('MMlogo.stl loaded successfully');
+                
+                // Compute bounding box to get logo dimensions
+                geometry.computeBoundingBox();
+                const logoBox = geometry.boundingBox;
+                const logoWidth = logoBox.max.x - logoBox.min.x;
+                const logoHeight = logoBox.max.y - logoBox.min.y;
+                const logoDepth = logoBox.max.z - logoBox.min.z;
+                
+                console.log('MMlogo dimensions:', { logoWidth, logoHeight, logoDepth });
+                
+                // Center the logo geometry
+                const centerOffsetX = -(logoBox.min.x + logoBox.max.x) / 2;
+                const centerOffsetY = -(logoBox.min.y + logoBox.max.y) / 2;
+                const centerOffsetZ = -(logoBox.min.z + logoBox.max.z) / 2;
+                geometry.translate(centerOffsetX, centerOffsetY, centerOffsetZ);
+                
+                // Create mesh with same material as quality stamp
+                // Temporarily using brighter material for debugging visibility
+                const logoMesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+                    color: materialProps.color,
+                    metalness: materialProps.metalness,
+                    roughness: materialProps.roughness,
+                    envMapIntensity: materialProps.envMapIntensity,
+                    // Make it more visible for debugging
+                    emissive: 0x000000,
+                    emissiveIntensity: 0
+                }));
+                
+                // Scale logo appropriately - make it visible and prominent
+                // Scale to be about 4-5mm wide to be clearly visible above the text
+                const targetWidth = 4.5; // 4.5mm width - larger for visibility
+                const scale = targetWidth / logoWidth;
+                console.log('Logo scale calculation:', { targetWidth, logoWidth, scale });
+                
+                // Apply scale - reduce X and Y by 35% (keep at 65% of original), reduce depth by 50% to prevent front protrusion
+                const xyScale = scale * 0.65; // Reduce X and Y by 35%
+                logoMesh.scale.set(xyScale, xyScale, scale * 0.5);
+                
+                // Position logo just above the "925" text
+                // The text is positioned at stampY (center Y), with height stampHeight
+                // So top of text is at: stampY + stampHeight/2
+                // We want logo centered just above the text with some spacing
+                const textTopY = stampY + (stampHeight / 2); // Top edge of text
+                const spacing = 1.5; // 1.5mm spacing above text
+                const scaledLogoHeight = logoHeight * xyScale; // Use reduced XY scale for height calculation
+                const logoY = textTopY + spacing + (scaledLogoHeight / 2); // Center Y of logo
+                const logoX = centerX; // Centered horizontally (same as stamp)
+                const logoZ = stampZ; // Same Z depth as stamp
+                
+                // Debug: Log all positioning values
+                console.log('Positioning logo:', {
+                    stampY,
+                    stampHeight,
+                    textTopY,
+                    spacing,
+                    scaledLogoHeight,
+                    logoY,
+                    logoX,
+                    logoZ,
+                    centerX
+                });
+                
+                logoMesh.position.set(logoX, logoY, logoZ);
+                
+                // Rotate 180 degrees around Y axis to face backward (same as quality stamp)
+                logoMesh.rotation.y = Math.PI;
+                
+                // Make sure logo is visible
+                logoMesh.visible = true;
+                logoMesh.castShadow = true;
+                logoMesh.receiveShadow = true;
+                
+                this.backEngravingObjects.push(logoMesh);
+                this.scene.add(logoMesh);
+                console.log('MMlogo positioned just above quality stamp');
+                console.log('Logo position:', logoMesh.position);
+                console.log('Logo scale:', scale);
+                console.log('Logo dimensions (scaled):', { width: logoWidth * scale, height: scaledLogoHeight });
+                console.log('Text position:', { stampY, stampHeight, textTopY });
+                console.log('Logo mesh visible:', logoMesh.visible);
+            },
+            (progress) => {
+                console.log('MMlogo loading progress:', progress);
+            },
+            (error) => {
+                console.error('Failed to load MMlogo.stl:', error);
             }
         );
     }
@@ -5726,17 +6008,86 @@ class HeightfieldViewer {
 
     exportSTL() {
         const exporter = new STLExporter();
-        // Create a group to export both pendant and jumpring
+        // Create a group to export pendant only (jumpring excluded)
         const group = new THREE.Group();
-        if (this.heightfield) group.add(this.heightfield.clone());
-        if (this.jumpring) group.add(this.jumpring.clone());
         
-        // Add earring jump rings if they exist
-        if (this.earringJumprings) {
-            this.earringJumprings.forEach(jumpring => {
-                group.add(jumpring.clone());
+        if (this.heightfield) {
+            // Create a clean clone of just the heightfield mesh
+            const heightfieldClone = this.heightfield.clone();
+            
+            // Remove all children that might be jumprings
+            const childrenToRemove = [];
+            heightfieldClone.traverse((child) => {
+                // Check if this is the jumpring or has jumpring userData
+                if (child === this.jumpring || 
+                    child.userData?.isJumpring === true ||
+                    child.userData?.jumpring === true ||
+                    (child.name && child.name.toLowerCase().includes('jumpring'))) {
+                    childrenToRemove.push(child);
+                }
             });
+            
+            // Remove identified jumpring objects
+            childrenToRemove.forEach(child => {
+                const parent = child.parent;
+                if (parent) {
+                    parent.remove(child);
+                }
+            });
+            
+            // Clear children array and re-add only non-jumpring children
+            const validChildren = [];
+            heightfieldClone.children.forEach(child => {
+                if (child !== this.jumpring && 
+                    child.userData?.isJumpring !== true &&
+                    !child.userData?.jumpring &&
+                    !(child.name && child.name.toLowerCase().includes('jumpring'))) {
+                    validChildren.push(child);
+                }
+            });
+            heightfieldClone.children = validChildren;
+            
+            group.add(heightfieldClone);
         }
+        
+        // Explicitly ensure jumpring is NOT added - double check
+        // Jumpring excluded from export
+        // if (this.jumpring) group.add(this.jumpring.clone());
+        
+        // Earring jump rings excluded from export
+        // if (this.earringJumprings) {
+        //     this.earringJumprings.forEach(jumpring => {
+        //         group.add(jumpring.clone());
+        //     });
+        // }
+        
+        // Final pass: traverse the entire group and remove any jumprings
+        const jumpringsToRemove = [];
+        group.traverse((object) => {
+            if (object === this.jumpring || 
+                object.userData?.isJumpring === true ||
+                object.userData?.jumpring === true ||
+                (object.name && object.name.toLowerCase().includes('jumpring'))) {
+                jumpringsToRemove.push(object);
+            }
+        });
+        
+        jumpringsToRemove.forEach(obj => {
+            const parent = obj.parent;
+            if (parent) {
+                parent.remove(obj);
+            }
+        });
+        
+        // Also filter the top-level children
+        group.children = group.children.filter(child => {
+            return child !== this.jumpring && 
+                   child.userData?.isJumpring !== true &&
+                   !child.userData?.jumpring &&
+                   !(child.name && child.name.toLowerCase().includes('jumpring'));
+        });
+        
+        console.log('Exporting STL with', group.children.length, 'objects (jumpring excluded)');
         
         const stlString = exporter.parse(group);
         const blob = new Blob([stlString], { type: 'text/plain' });
@@ -7373,7 +7724,7 @@ async function generateImageWithOpenAI(prompt) {
         // Prompt for bypass password
         const bypassed = await promptForBypassPassword();
         if (!bypassed) {
-            const errorMessage = `You've reached the limit of ${AI_GENERATION_LIMIT} AI generation${AI_GENERATION_LIMIT > 1 ? 's' : ''} per 24 hours. Please try again later.`;
+            const errorMessage = `You've reached the limit of ${AI_GENERATION_LIMIT} design${AI_GENERATION_LIMIT > 1 ? 's' : ''} per 24 hours. Please try again later.`;
             showNotification(errorMessage, 'error');
             hideLoadingOverlay();
             throw new Error(errorMessage);
@@ -7390,7 +7741,7 @@ async function generateImageWithOpenAI(prompt) {
     showLoadingOverlay();
     const loadingStatus = document.getElementById('loading-status');
     if (loadingStatus) {
-        loadingStatus.textContent = 'Generating image with AI...';
+        loadingStatus.textContent = 'Creating your design...';
     }
     
     try {
@@ -8410,15 +8761,9 @@ document.addEventListener('DOMContentLoaded', () => {
         function updateDepthControlsVisibility() {
             if (!depthControls) return;
             
-            // Check if viewer has heightfield data (image is loaded)
-            const hasImage = window.viewer && window.viewer.heightfieldData && window.viewer.heightfield;
-            
-            if (hasImage) {
-                depthControls.style.display = 'flex';
-                updateDepthDisplay();
-            } else {
-                depthControls.style.display = 'none';
-            }
+            // Always hide depth controls
+            depthControls.style.display = 'none';
+            depthControls.style.visibility = 'hidden';
         }
         
         // Monitor for image loading
@@ -8451,4 +8796,3 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('⚠️ Depth adjustment controls not found');
     }
 });
-

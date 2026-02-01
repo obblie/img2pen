@@ -163,11 +163,12 @@ function setupS3SubmitOrder(viewer) {
             const email = prompt('Enter your email:');
             if (!email) return showNotification('Email is required.', 'error');
             
-            // Generate STL
+            // Generate STL (jumpring excluded)
             const exporter = new STLExporter();
             const group = new THREE.Group();
             if (viewer.heightfield) group.add(viewer.heightfield.clone());
-            if (viewer.jumpring) group.add(viewer.jumpring.clone());
+            // Jumpring excluded from export
+            // if (viewer.jumpring) group.add(viewer.jumpring.clone());
             const stlString = exporter.parse(group);
             
             // Upload to S3
