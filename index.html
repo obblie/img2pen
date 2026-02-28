@@ -349,6 +349,134 @@
             animation: none;
         }
 
+        /* Onboarding overlay for Three.js viewer */
+        #onboarding-overlay {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1200;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(3px);
+        }
+
+        #onboarding-overlay.active {
+            display: flex;
+        }
+
+        .onboarding-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 16px;
+            padding: 22px 24px;
+            max-width: 420px;
+            width: min(92vw, 420px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .onboarding-card h3 {
+            margin: 0 0 10px;
+            font-size: 1.25em;
+            color: #111827;
+        }
+
+        .onboarding-card p {
+            margin: 0 0 16px;
+            color: #4b5563;
+            font-size: 0.98em;
+            line-height: 1.4;
+        }
+
+        .onboarding-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .onboarding-btn {
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.98em;
+            min-width: 110px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .onboarding-btn.primary {
+            background: #1d4ed8;
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(29, 78, 216, 0.25);
+        }
+
+        .onboarding-btn.secondary {
+            background: #f3f4f6;
+            color: #111827;
+            border: 1px solid rgba(17, 24, 39, 0.12);
+        }
+
+        .onboarding-btn:active {
+            transform: translateY(1px);
+        }
+
+        #how-it-works-guide {
+            display: none;
+            margin: 0 auto 12px auto;
+            max-width: 720px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+            text-align: center;
+            font-size: 0.98em;
+            color: #1f2937;
+        }
+
+        #how-it-works-guide.active {
+            display: block;
+        }
+
+        #add-photo-tip {
+            display: none;
+            position: absolute;
+            bottom: 82px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111827;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 1201;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+        }
+
+        #add-photo-tip::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px 6px 0 6px;
+            border-style: solid;
+            border-color: #111827 transparent transparent transparent;
+        }
+
+        .onboarding-highlight {
+            animation: onboarding-pulse 1.4s ease-in-out infinite;
+            box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.25);
+        }
+
+        @keyframes onboarding-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
         @keyframes hero-upload-glow {
             0% {
                 box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18), 0 0 0 0 rgba(255, 255, 255, 0.4);
@@ -940,9 +1068,11 @@
         }
 
         @media (max-width: 768px) {
-            /* Hide mobile menu toggle on mobile - we don't need it */
+            /* Show mobile menu toggle on mobile */
             #mobile-menu-toggle {
-                display: none !important;
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
             }
             
             /* Optimize replace image button for mobile */
@@ -963,6 +1093,21 @@
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
                 height: auto;
+            }
+
+            /* Keep notifications unobtrusive on mobile */
+            #notification {
+                top: auto !important;
+                bottom: 12px !important;
+                right: 12px !important;
+                left: 12px !important;
+                max-width: none !important;
+            }
+
+            /* Hide debug overlays on mobile */
+            #mobile-debug,
+            #deployment-guid {
+                display: none !important;
             }
             
             html {
@@ -1440,12 +1585,14 @@
                 background: transparent !important;
                 overflow: hidden !important;
                 min-height: 400px !important;
+                touch-action: none !important;
             }
             
             #mobile-canvas-container canvas {
                 width: 100% !important;
                 height: 100% !important;
                 display: block !important;
+                touch-action: none !important;
             }
             
             /* Carousel Thumbnails */
@@ -2120,8 +2267,8 @@
             .control-group select,
             .control-group input[type="range"],
             .control-group input[type="number"] {
-                font-size: 12px; /* Prevents zoom on iOS */
-                min-height: 24px; /* Smaller touch-friendly size */
+                font-size: 16px; /* Prevents zoom on iOS */
+                min-height: 44px; /* Touch-friendly size */
                 background: rgba(255, 255, 255, 0.9);
                 color: #000000;
                 border: 2px solid rgba(0, 0, 0, 0.8);
@@ -2131,10 +2278,10 @@
             }
             
             .toggle-button {
-                font-size: 14px;
-                padding: 2px;
-                min-width: 24px;
-                min-height: 24px;
+                font-size: 16px;
+                padding: 6px;
+                min-width: 44px;
+                min-height: 44px;
                 background: rgba(255, 255, 255, 0.9);
                 border: 2px solid rgba(0, 0, 0, 0.8);
                 color: #000000;
@@ -3064,6 +3211,12 @@
             flex-wrap: wrap;
             z-index: 1200;
             pointer-events: none; /* allow underlying scene interaction except buttons */
+        }
+
+        /* Onboarding: center Add a Photo in the middle of the canvas */
+        .onboarding-center-add-photo .post-layout-actions {
+            bottom: 50%;
+            transform: translate(-50%, 50%);
         }
 
         .post-layout-actions .add-photo-section,
@@ -4557,6 +4710,17 @@
                     <div class="main-product-viewer">
                         <!-- 3D Scene Container -->
                         <div id="canvas-container" style="width: 100%; height: 100%; background: transparent; position: relative; display: block;">
+                            <!-- Onboarding overlay -->
+                            <div id="onboarding-overlay">
+                                <div class="onboarding-card">
+                                    <h3>Is this your first time here?</h3>
+                                    <p>We can show you the basics in a few seconds.</p>
+                                    <div class="onboarding-actions">
+                                        <button id="onboarding-yes" class="onboarding-btn primary" type="button">Yes</button>
+                                        <button id="onboarding-no" class="onboarding-btn secondary" type="button">No</button>
+                                    </div>
+                                </div>
+                            </div>
                             <!-- 3D Canvas will be moved here -->
                             
                             <!-- Lock Banner Overlay (shown when payment window opens) -->
@@ -4701,6 +4865,7 @@
                                 </button>
                                 <p class="photo-help-text">Precious Moments Made Eternal</p>
                             </div>
+                            <div id="add-photo-tip">Tap “Add a Photo” to begin</div>
                             
                             <div class="imagine-section" style="display: none !important; visibility: hidden;">
                                 <button class="imagine-button" id="imagine-btn">
@@ -4787,22 +4952,31 @@
                 </div>
                 
                 <!-- How it works section -->
-            <div style="text-align: center; margin: 0 auto 20px auto; padding: 16px 16px 20px 16px; width: 100%; max-width: 960px; background: var(--bg-stone); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.08);">
+            <div id="how-it-works" style="text-align: center; margin: 0 auto 20px auto; padding: 16px 16px 20px 16px; width: 100%; max-width: 960px; background: var(--bg-stone); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.08);">
+                <div id="how-it-works-guide">
+                    Want a quick tour? Review the steps below, then continue.
+                    <div style="margin-top: 10px;">
+                        <button id="how-it-works-continue" class="onboarding-btn primary" type="button">Continue</button>
+                    </div>
+                </div>
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
                     <div style="text-align: center;">
                         <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">1</div>
-                        <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Upload or Generate</h4>
-                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Choose your photo or describe what you want</p>
+                        <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Upload a Memory</h4>
+                        <div style="width: 120px; height: 80px; background: rgba(255,255,255,0.8); border: 1px dashed rgba(43,43,43,0.3); border-radius: 10px; margin: 8px auto 10px; display: flex; align-items: center; justify-content: center; color: rgba(43,43,43,0.6); font-size: 0.8em;">Thumbnail</div>
+                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Choose your photo</p>
                     </div>
                     <div style="text-align: center;">
                         <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">2</div>
-                        <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Crop</h4>
-                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Crop your image to fit the shape of your pendant</p>
+                        <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Crop the Image</h4>
+                        <div style="width: 120px; height: 80px; background: rgba(255,255,255,0.8); border: 1px dashed rgba(43,43,43,0.3); border-radius: 10px; margin: 8px auto 10px; display: flex; align-items: center; justify-content: center; color: rgba(43,43,43,0.6); font-size: 0.8em;">Thumbnail</div>
+                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Choose a portion of the image for your pendant</p>
                     </div>
                     <div style="text-align: center;">
                         <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">3</div>
                         <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Order</h4>
-                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Place your order and wait 📦</p>
+                        <div style="width: 120px; height: 80px; background: rgba(255,255,255,0.8); border: 1px dashed rgba(43,43,43,0.3); border-radius: 10px; margin: 8px auto 10px; display: flex; align-items: center; justify-content: center; color: rgba(43,43,43,0.6); font-size: 0.8em;">Thumbnail</div>
+                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Place your order and wait</p>
                     </div>
                 </div>
             </div>
@@ -5083,31 +5257,9 @@
                 <img id="cropper-image" src="" style="max-width:70vw;max-height:60vh;display:block;background:#111;"/>
                 <!-- Cropper Toolbar -->
                 <div id="cropper-toolbar" style="margin-top:18px;display:flex;gap:10px;align-items:center;">
-                    <label style="color:white;">Aspect:</label>
-                    <select id="cropper-aspect" style="padding:2px 6px;">
-                        <option value="free">Free</option>
-                        <option value="1">1:1</option>
-                        <option value="4/3">4:3</option>
-                        <option value="16/9">16:9</option>
-                    </select>
-                    <button id="cropper-rotate-left" title="Rotate Left">⟲</button>
-                    <button id="cropper-rotate-right" title="Rotate Right">⟳</button>
-                    <button id="cropper-flip-h" title="Flip Horizontal">⇋</button>
-                    <button id="cropper-flip-v" title="Flip Vertical">⇅</button>
                     <button id="cropper-zoom-in" title="Zoom In">＋</button>
                     <button id="cropper-zoom-out" title="Zoom Out">－</button>
                     <button id="cropper-reset" title="Reset">Reset</button>
-                    <button id="cropper-fit" title="Fit crop box to image">Fit</button>
-                    <button id="cropper-center" title="Center crop box">Center</button>
-                </div>
-                <!-- Pixel-precise controls -->
-                <div id="cropper-pixel-controls" style="margin-top:10px;display:flex;gap:8px;align-items:center;">
-                    <label style="color:white;font-size:0.95em;">X: <input id="cropper-x" type="number" style="width:60px;"></label>
-                    <label style="color:white;font-size:0.95em;">Y: <input id="cropper-y" type="number" style="width:60px;"></label>
-                    <label style="color:white;font-size:0.95em;">W: <input id="cropper-w" type="number" style="width:60px;"></label>
-                    <label style="color:white;font-size:0.95em;">H: <input id="cropper-h" type="number" style="width:60px;"></label>
-                    <span style="color:#aaa;font-size:0.95em;">Zoom: <span id="cropper-zoom">100%</span></span>
-                    <span style="color:#aaa;font-size:0.95em;">Rot: <span id="cropper-rotation">0°</span></span>
                 </div>
                 <div class="action-buttons" style="margin-top:18px;display:flex;gap:16px;justify-content:center;">
                     <button id="cropper-confirm" style="padding:8px 24px;font-size:1.1em;">Crop & Continue</button>
@@ -5306,6 +5458,106 @@
             }
         `;
         document.head.appendChild(style);
+    </script>
+
+    <!-- Onboarding Script -->
+    <script>
+        // Onboarding flow for the Three.js viewer
+        (function() {
+            const ONBOARDING_KEY = 'momenza_onboarding_seen';
+
+            const getEl = (id) => document.getElementById(id);
+            const safeScrollTo = (id) => {
+                const el = getEl(id);
+                if (!el) return;
+                if (typeof scrollToSection === 'function') {
+                    scrollToSection(id);
+                } else {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+
+            const showOverlay = () => {
+                const overlay = getEl('onboarding-overlay');
+                if (overlay) overlay.classList.add('active');
+            };
+
+            const hideOverlay = () => {
+                const overlay = getEl('onboarding-overlay');
+                if (overlay) overlay.classList.remove('active');
+            };
+
+            const showHowItWorksGuide = () => {
+                const guide = getEl('how-it-works-guide');
+                if (guide) guide.classList.add('active');
+                safeScrollTo('how-it-works');
+            };
+
+            const showAddPhotoGuide = () => {
+                safeScrollTo('scene-container');
+                const sceneContainer = getEl('scene-container');
+                const addPhotoBtn = getEl('add-photo-btn');
+                const addPhotoTip = getEl('add-photo-tip');
+                if (sceneContainer) {
+                    sceneContainer.classList.add('onboarding-center-add-photo');
+                }
+                if (addPhotoBtn) {
+                    addPhotoBtn.classList.add('onboarding-highlight');
+                }
+                if (addPhotoTip) {
+                    addPhotoTip.style.display = 'block';
+                }
+
+                const clearGuide = () => {
+                    if (sceneContainer) {
+                        sceneContainer.classList.remove('onboarding-center-add-photo');
+                    }
+                    if (addPhotoBtn) addPhotoBtn.classList.remove('onboarding-highlight');
+                    if (addPhotoTip) addPhotoTip.style.display = 'none';
+                    if (addPhotoBtn) addPhotoBtn.removeEventListener('click', clearGuide);
+                };
+
+                if (addPhotoBtn) {
+                    addPhotoBtn.addEventListener('click', clearGuide, { once: true });
+                }
+            };
+
+            const initOnboarding = () => {
+                if (sessionStorage.getItem(ONBOARDING_KEY) === 'true') return;
+
+                const overlay = getEl('onboarding-overlay');
+                const yesBtn = getEl('onboarding-yes');
+                const noBtn = getEl('onboarding-no');
+                const continueBtn = getEl('how-it-works-continue');
+
+                if (!overlay || !yesBtn || !noBtn || !continueBtn) return;
+
+                showOverlay();
+
+                yesBtn.addEventListener('click', () => {
+                    hideOverlay();
+                    showHowItWorksGuide();
+                });
+
+                noBtn.addEventListener('click', () => {
+                    hideOverlay();
+                });
+
+                continueBtn.addEventListener('click', () => {
+                    const guide = getEl('how-it-works-guide');
+                    if (guide) guide.classList.remove('active');
+                    sessionStorage.setItem(ONBOARDING_KEY, 'true');
+                    showAddPhotoGuide();
+                });
+            };
+
+            window.addEventListener('authenticated', initOnboarding);
+            document.addEventListener('DOMContentLoaded', () => {
+                if (document.body.classList.contains('authenticated')) {
+                    initOnboarding();
+                }
+            });
+        })();
     </script>
 
     <!-- dat.GUI Initialization Script -->

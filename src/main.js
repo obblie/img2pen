@@ -1106,27 +1106,12 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
     console.log('🎯 Modal elements found:', { modal: !!modal, img: !!img, confirmBtn: !!confirmBtn, cancelBtn: !!cancelBtn });
     
     // Toolbar controls
-    const aspectSelect = document.getElementById('cropper-aspect');
-    const rotateLeftBtn = document.getElementById('cropper-rotate-left');
-    const rotateRightBtn = document.getElementById('cropper-rotate-right');
-    const flipHBtn = document.getElementById('cropper-flip-h');
-    const flipVBtn = document.getElementById('cropper-flip-v');
     const zoomInBtn = document.getElementById('cropper-zoom-in');
     const zoomOutBtn = document.getElementById('cropper-zoom-out');
     const resetBtn = document.getElementById('cropper-reset');
-    const fitBtn = document.getElementById('cropper-fit');
-    const centerBtn = document.getElementById('cropper-center');
-    // Pixel controls
-    const xInput = document.getElementById('cropper-x');
-    const yInput = document.getElementById('cropper-y');
-    const wInput = document.getElementById('cropper-w');
-    const hInput = document.getElementById('cropper-h');
-    const zoomDisplay = document.getElementById('cropper-zoom');
-    const rotDisplay = document.getElementById('cropper-rotation');
     // Live preview
     const previewCanvas = document.getElementById('cropper-preview');
     const previewCtx = previewCanvas.getContext('2d');
-    let scaleX = 1, scaleY = 1;
 
     img.src = imageSrc;
     console.log('🎭 Setting modal display to flex');
@@ -1138,73 +1123,22 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
         autoCropArea: 1,
         movable: true,
         zoomable: true,
-        scalable: true,
-        rotatable: true,
+        scalable: false,
+        rotatable: false,
         ready() {
             if (cropShape === 'circle') addCircleOverlay(cropper);
-            updatePixelInputs();
             updatePreview();
-            updateZoomRotDisplay();
         },
         crop() {
-            updatePixelInputs();
             updatePreview();
-        },
-        zoom() {
-            updateZoomRotDisplay();
-        },
-        rotate() {
-            updateZoomRotDisplay();
         }
     });
 
-    // Aspect ratio change
-    aspectSelect.onchange = function() {
-        let val = aspectSelect.value;
-        if (val === 'free') cropper.setAspectRatio(NaN);
-        else cropper.setAspectRatio(eval(val));
-    };
-    // Rotate
-    rotateLeftBtn.onclick = function() { cropper.rotate(-90); };
-    rotateRightBtn.onclick = function() { cropper.rotate(90); };
-    // Flip
-    flipHBtn.onclick = function() { scaleX = -scaleX; cropper.scaleX(scaleX); };
-    flipVBtn.onclick = function() { scaleY = -scaleY; cropper.scaleY(scaleY); };
     // Zoom
     zoomInBtn.onclick = function() { cropper.zoom(0.1); };
     zoomOutBtn.onclick = function() { cropper.zoom(-0.1); };
     // Reset
-    resetBtn.onclick = function() { cropper.reset(); scaleX = 1; scaleY = 1; };
-    // Fit
-    fitBtn.onclick = function() { cropper.setCropBoxData({left:0,top:0,width:cropper.getImageData().naturalWidth,height:cropper.getImageData().naturalHeight}); };
-    // Center
-    centerBtn.onclick = function() {
-        const imgData = cropper.getImageData();
-        const cropData = cropper.getCropBoxData();
-        cropper.setCropBoxData({
-            left: imgData.left + (imgData.width - cropData.width) / 2,
-            top: imgData.top + (imgData.height - cropData.height) / 2,
-            width: cropData.width,
-            height: cropData.height
-        });
-    };
-    // Pixel-precise controls
-    function updatePixelInputs() {
-        const data = cropper.getData(true);
-        xInput.value = Math.round(data.x);
-        yInput.value = Math.round(data.y);
-        wInput.value = Math.round(data.width);
-        hInput.value = Math.round(data.height);
-    }
-    function setCropBoxFromInputs() {
-        cropper.setData({
-            x: parseInt(xInput.value),
-            y: parseInt(yInput.value),
-            width: parseInt(wInput.value),
-            height: parseInt(hInput.value)
-        });
-    }
-    xInput.onchange = yInput.onchange = wInput.onchange = hInput.onchange = setCropBoxFromInputs;
+    resetBtn.onclick = function() { cropper.reset(); };
     // Live preview - always show circular preview for pendant creation
     function updatePreview() {
         if (!previewCanvas) return;
@@ -1221,14 +1155,6 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
             previewCtx.restore();
         }
     }
-    // Zoom/rotation display
-    function updateZoomRotDisplay() {
-        const imgData = cropper.getImageData();
-        const rot = cropper.getData().rotate || 0;
-        zoomDisplay.textContent = Math.round(imgData.scaleX * 100) + '%';
-        rotDisplay.textContent = Math.round(rot) + '°';
-    }
-
     confirmBtn.onclick = () => {
         // For circle, mask the square crop to a circle
         if (cropShape === 'circle') {
