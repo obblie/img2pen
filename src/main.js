@@ -69,6 +69,18 @@ const METAL_MATERIALS = {
         roughness: 0.1,
         envMapIntensity: 1.0
     },
+    'white-bronze': {
+        color: 0xD6D0C8,
+        metalness: 1.0,
+        roughness: 0.16,
+        envMapIntensity: 1.0
+    },
+    'yellow-bronze': {
+        color: 0xE7C76E,
+        metalness: 1.0,
+        roughness: 0.18,
+        envMapIntensity: 1.0
+    },
     'rose-gold-14k': {
         color: 0xE8B4A0,
         metalness: 1.0,
@@ -722,6 +734,8 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819', selec
                     const metalTypeMap = {
                         'silver': 'Sterling Silver',
                         'gold': '14K Yellow Gold',
+                        'white-bronze': 'White Bronze',
+                        'yellow-bronze': 'Yellow Bronze',
                         'rose-gold': 'Rose Gold 14K'
                     };
                     
@@ -737,6 +751,8 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819', selec
                         const viewerToApiMap = {
                             'sterling-silver': 'silver',
                             'gold-14k': 'gold',
+                            'white-bronze': 'white-bronze',
+                            'yellow-bronze': 'yellow-bronze',
                             'rose-gold-14k': 'rose-gold'
                         };
                         const apiMetalType = viewerToApiMap[metalType] || 'silver';
@@ -835,6 +851,8 @@ async function buildCartPermalinkWithAttributes(variantId, quantity = 1) {
             const viewerToApiMap = {
                 'sterling-silver': 'silver',
                 'gold-14k': 'gold',
+                'white-bronze': 'white-bronze',
+                'yellow-bronze': 'yellow-bronze',
                 'rose-gold-14k': 'rose-gold'
             };
             selectedMetalType = viewerToApiMap[viewerMetalType] || 'silver';
@@ -1106,27 +1124,12 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
     console.log('🎯 Modal elements found:', { modal: !!modal, img: !!img, confirmBtn: !!confirmBtn, cancelBtn: !!cancelBtn });
     
     // Toolbar controls
-    const aspectSelect = document.getElementById('cropper-aspect');
-    const rotateLeftBtn = document.getElementById('cropper-rotate-left');
-    const rotateRightBtn = document.getElementById('cropper-rotate-right');
-    const flipHBtn = document.getElementById('cropper-flip-h');
-    const flipVBtn = document.getElementById('cropper-flip-v');
     const zoomInBtn = document.getElementById('cropper-zoom-in');
     const zoomOutBtn = document.getElementById('cropper-zoom-out');
     const resetBtn = document.getElementById('cropper-reset');
-    const fitBtn = document.getElementById('cropper-fit');
-    const centerBtn = document.getElementById('cropper-center');
-    // Pixel controls
-    const xInput = document.getElementById('cropper-x');
-    const yInput = document.getElementById('cropper-y');
-    const wInput = document.getElementById('cropper-w');
-    const hInput = document.getElementById('cropper-h');
-    const zoomDisplay = document.getElementById('cropper-zoom');
-    const rotDisplay = document.getElementById('cropper-rotation');
     // Live preview
     const previewCanvas = document.getElementById('cropper-preview');
     const previewCtx = previewCanvas.getContext('2d');
-    let scaleX = 1, scaleY = 1;
 
     img.src = imageSrc;
     console.log('🎭 Setting modal display to flex');
@@ -1138,73 +1141,22 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
         autoCropArea: 1,
         movable: true,
         zoomable: true,
-        scalable: true,
-        rotatable: true,
+        scalable: false,
+        rotatable: false,
         ready() {
             if (cropShape === 'circle') addCircleOverlay(cropper);
-            updatePixelInputs();
             updatePreview();
-            updateZoomRotDisplay();
         },
         crop() {
-            updatePixelInputs();
             updatePreview();
-        },
-        zoom() {
-            updateZoomRotDisplay();
-        },
-        rotate() {
-            updateZoomRotDisplay();
         }
     });
 
-    // Aspect ratio change
-    aspectSelect.onchange = function() {
-        let val = aspectSelect.value;
-        if (val === 'free') cropper.setAspectRatio(NaN);
-        else cropper.setAspectRatio(eval(val));
-    };
-    // Rotate
-    rotateLeftBtn.onclick = function() { cropper.rotate(-90); };
-    rotateRightBtn.onclick = function() { cropper.rotate(90); };
-    // Flip
-    flipHBtn.onclick = function() { scaleX = -scaleX; cropper.scaleX(scaleX); };
-    flipVBtn.onclick = function() { scaleY = -scaleY; cropper.scaleY(scaleY); };
     // Zoom
     zoomInBtn.onclick = function() { cropper.zoom(0.1); };
     zoomOutBtn.onclick = function() { cropper.zoom(-0.1); };
     // Reset
-    resetBtn.onclick = function() { cropper.reset(); scaleX = 1; scaleY = 1; };
-    // Fit
-    fitBtn.onclick = function() { cropper.setCropBoxData({left:0,top:0,width:cropper.getImageData().naturalWidth,height:cropper.getImageData().naturalHeight}); };
-    // Center
-    centerBtn.onclick = function() {
-        const imgData = cropper.getImageData();
-        const cropData = cropper.getCropBoxData();
-        cropper.setCropBoxData({
-            left: imgData.left + (imgData.width - cropData.width) / 2,
-            top: imgData.top + (imgData.height - cropData.height) / 2,
-            width: cropData.width,
-            height: cropData.height
-        });
-    };
-    // Pixel-precise controls
-    function updatePixelInputs() {
-        const data = cropper.getData(true);
-        xInput.value = Math.round(data.x);
-        yInput.value = Math.round(data.y);
-        wInput.value = Math.round(data.width);
-        hInput.value = Math.round(data.height);
-    }
-    function setCropBoxFromInputs() {
-        cropper.setData({
-            x: parseInt(xInput.value),
-            y: parseInt(yInput.value),
-            width: parseInt(wInput.value),
-            height: parseInt(hInput.value)
-        });
-    }
-    xInput.onchange = yInput.onchange = wInput.onchange = hInput.onchange = setCropBoxFromInputs;
+    resetBtn.onclick = function() { cropper.reset(); };
     // Live preview - always show circular preview for pendant creation
     function updatePreview() {
         if (!previewCanvas) return;
@@ -1221,14 +1173,6 @@ function showCropperModal(imageSrc, onCrop, onCancel, cropShape) {
             previewCtx.restore();
         }
     }
-    // Zoom/rotation display
-    function updateZoomRotDisplay() {
-        const imgData = cropper.getImageData();
-        const rot = cropper.getData().rotate || 0;
-        zoomDisplay.textContent = Math.round(imgData.scaleX * 100) + '%';
-        rotDisplay.textContent = Math.round(rot) + '°';
-    }
-
     confirmBtn.onclick = () => {
         // For circle, mask the square crop to a circle
         if (cropShape === 'circle') {
@@ -4820,13 +4764,18 @@ class HeightfieldViewer {
     updateMetalMaterial(metalType) {
         if (!this.heightfield) return;
 
-        console.log('Updating metal material to:', metalType);
+        const normalizedMetalType = ({
+            'yellow bronze': 'yellow-bronze',
+            'white bronze': 'white-bronze'
+        })[metalType] || metalType;
+
+        console.log('Updating metal material to:', metalType, 'normalized to:', normalizedMetalType);
         console.log('Available materials:', Object.keys(METAL_MATERIALS));
         
         // Store current metal type for variant ID lookup
-        this.currentMetalType = metalType;
+        this.currentMetalType = normalizedMetalType;
 
-        const materialProps = METAL_MATERIALS[metalType];
+        const materialProps = METAL_MATERIALS[normalizedMetalType] || METAL_MATERIALS['sterling-silver'];
         
         if (this.currentObjectType === 'earrings' && this.heightfield.isGroup) {
             // For earrings, update both meshes in the group
@@ -4866,12 +4815,12 @@ class HeightfieldViewer {
         }
         
         // Update sprue text when metal type changes
-        console.log('Calling updateSprueText for metal type:', metalType);
-        this.updateSprueText(metalType);
+        console.log('Calling updateSprueText for metal type:', normalizedMetalType);
+        this.updateSprueText(normalizedMetalType);
         
         // Update back engraving when metal type changes
-        console.log('Calling updateBackEngraving for metal type:', metalType);
-        this.updateBackEngraving(metalType);
+        console.log('Calling updateBackEngraving for metal type:', normalizedMetalType);
+        this.updateBackEngraving(normalizedMetalType);
     }
     
     clearSprueText() {
@@ -4887,6 +4836,12 @@ class HeightfieldViewer {
     }
     
     updateSprueText(metalType) {
+        if (metalType === 'white-bronze' || metalType === 'yellow-bronze') {
+            this.clearSprueText();
+            console.log('Skipping sprue quality stamp for bronze material:', metalType);
+            return;
+        }
+
         // Only update if we have sprue text objects
         if (this.sprueTextObjects.length === 0) {
             console.log('No sprue text objects to update');
@@ -5024,26 +4979,9 @@ class HeightfieldViewer {
             console.log('Skipping back engraving - not a circular pendant or no heightfield');
             return;
         }
-        
-        // Determine the correct text content based on metal type
-        let textContent = '';
-        switch (metalType) {
-            case 'gold-14k':
-            case 'rose-gold-14k':
-                textContent = '14k';
-                break;
-            case 'sterling-silver':
-            default:
-                textContent = '.925';
-                break;
-            case 'stl':
-                // No engraving for STL
-                this.clearBackEngraving();
-                return;
-        }
-        
-        console.log('Creating/updating back engraving with text:', textContent);
-        
+
+        const isBronzeType = metalType === 'white-bronze' || metalType === 'yellow-bronze';
+
         // Clear existing engraving
         this.clearBackEngraving();
         
@@ -5069,6 +5007,32 @@ class HeightfieldViewer {
         
         // Store the current metal properties for the text material
         const materialProps = METAL_MATERIALS[metalType] || METAL_MATERIALS['sterling-silver'];
+
+        if (metalType === 'stl') {
+            // No engraving for STL
+            return;
+        }
+
+        if (isBronzeType) {
+            console.log('Bronze selected: skipping quality stamp text and placing logo at stamp Y position');
+            this.loadMMLogo(textX, textY, textZ, 0, materialProps, { placeAtStampY: true });
+            return;
+        }
+
+        // Determine the correct text content based on metal type
+        let textContent = '';
+        switch (metalType) {
+            case 'gold-14k':
+            case 'rose-gold-14k':
+                textContent = '14k';
+                break;
+            case 'sterling-silver':
+            default:
+                textContent = '.925';
+                break;
+        }
+        
+        console.log('Creating/updating back engraving with text:', textContent);
         
         // Create text using FontLoader
         const loader = new FontLoader();
@@ -5162,11 +5126,12 @@ class HeightfieldViewer {
         );
     }
     
-    loadMMLogo(centerX, stampY, stampZ, stampHeight, materialProps) {
-        // Only load logo for sterling-silver and gold-14k
+    loadMMLogo(centerX, stampY, stampZ, stampHeight, materialProps, options = {}) {
+        // Only load logo for supported precious/bronze metals
         const currentMetalType = document.getElementById('metal-type')?.value || 'sterling-silver';
-        if (currentMetalType !== 'sterling-silver' && currentMetalType !== 'gold-14k') {
-            console.log('Skipping MMlogo - not sterling-silver or gold-14k');
+        const supportsLogo = ['sterling-silver', 'gold-14k', 'white-bronze', 'yellow-bronze'].includes(currentMetalType);
+        if (!supportsLogo) {
+            console.log('Skipping MMlogo - current metal type does not support logo:', currentMetalType);
             return;
         }
         
@@ -5216,14 +5181,13 @@ class HeightfieldViewer {
                 const xyScale = scale * 0.65; // Reduce X and Y by 35%
                 logoMesh.scale.set(xyScale, xyScale, scale * 0.5);
                 
-                // Position logo just above the "925" text
-                // The text is positioned at stampY (center Y), with height stampHeight
-                // So top of text is at: stampY + stampHeight/2
-                // We want logo centered just above the text with some spacing
+                // Position logo relative to quality stamp location.
+                // For bronze, place logo at the same Y as where the stamp would be.
+                const placeAtStampY = options.placeAtStampY === true;
                 const textTopY = stampY + (stampHeight / 2); // Top edge of text
-                const spacing = 1.5; // 1.5mm spacing above text
+                const spacing = placeAtStampY ? 0 : 1.5; // no offset when replacing stamp
                 const scaledLogoHeight = logoHeight * xyScale; // Use reduced XY scale for height calculation
-                const logoY = textTopY + spacing + (scaledLogoHeight / 2); // Center Y of logo
+                const logoY = placeAtStampY ? stampY : textTopY + spacing + (scaledLogoHeight / 2);
                 const logoX = centerX; // Centered horizontally (same as stamp)
                 const logoZ = stampZ; // Same Z depth as stamp
                 
