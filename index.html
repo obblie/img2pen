@@ -4954,7 +4954,7 @@
                 <!-- How it works section -->
             <div id="how-it-works" style="text-align: center; margin: 0 auto 20px auto; padding: 16px 16px 20px 16px; width: 100%; max-width: 960px; background: var(--bg-stone); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.08);">
                 <div id="how-it-works-guide">
-                    Want a quick tour? Review the steps below, then continue.
+                    Review the steps below, then continue.
                     <div style="margin-top: 10px;">
                         <button id="how-it-works-continue" class="onboarding-btn primary" type="button">Continue</button>
                     </div>
@@ -4963,19 +4963,16 @@
                     <div style="text-align: center;">
                         <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">1</div>
                         <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Upload a Memory</h4>
-                        <div style="width: 120px; height: 80px; background: rgba(255,255,255,0.8); border: 1px dashed rgba(43,43,43,0.3); border-radius: 10px; margin: 8px auto 10px; display: flex; align-items: center; justify-content: center; color: rgba(43,43,43,0.6); font-size: 0.8em;">Thumbnail</div>
-                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Choose your photo</p>
+                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Choose a clear, well-lit photo</p>
                     </div>
                     <div style="text-align: center;">
                         <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">2</div>
                         <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Crop the Image</h4>
-                        <div style="width: 120px; height: 80px; background: rgba(255,255,255,0.8); border: 1px dashed rgba(43,43,43,0.3); border-radius: 10px; margin: 8px auto 10px; display: flex; align-items: center; justify-content: center; color: rgba(43,43,43,0.6); font-size: 0.8em;">Thumbnail</div>
                         <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Choose a portion of the image for your pendant</p>
                     </div>
                     <div style="text-align: center;">
                         <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">3</div>
                         <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Order</h4>
-                        <div style="width: 120px; height: 80px; background: rgba(255,255,255,0.8); border: 1px dashed rgba(43,43,43,0.3); border-radius: 10px; margin: 8px auto 10px; display: flex; align-items: center; justify-content: center; color: rgba(43,43,43,0.6); font-size: 0.8em;">Thumbnail</div>
                         <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Place your order and wait</p>
                     </div>
                 </div>
@@ -4995,7 +4992,7 @@
                             <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
                         </button>
                         <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
-                            We currently offer .925 sterling silver and 14k yellow gold. If you have a specific metal in mind, please contact us and we will do our best to accommodate your request.
+                            We currently offer .925 sterling silver, 14k yellow gold, and both white and yellow bronze If you have a specific metal in mind that we don't currently offer, please contact us and we will do our best to accommodate your request.
                         </div>
                     </div>
                     <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
@@ -6626,6 +6623,14 @@
                 case 'gold':
                     shopifyOptionValue = '14K Yellow Gold';
                     break;
+                case 'white-bronze':
+                case 'white bronze':
+                    shopifyOptionValue = 'White Bronze';
+                    break;
+                case 'yellow-bronze':
+                case 'yellow bronze':
+                    shopifyOptionValue = 'Yellow Bronze';
+                    break;
                 case 'rose-gold':
                     shopifyOptionValue = 'Rose Gold';
                     break;
@@ -6900,6 +6905,14 @@
                     break;
                 case 'gold':
                     materialType = 'gold-14k';
+                    break;
+                case 'white-bronze':
+                case 'white bronze':
+                    materialType = 'white-bronze';
+                    break;
+                case 'yellow-bronze':
+                case 'yellow bronze':
+                    materialType = 'yellow-bronze';
                     break;
                 case 'rose-gold':
                     materialType = 'rose-gold-14k';
@@ -7568,7 +7581,11 @@
                 const value = optionValue.toLowerCase();
                 
                 // Map Shopify option values to our metal types
-                if (value.includes('sterling') || value.includes('silver')) {
+                if (value.includes('white bronze')) {
+                  return 'white-bronze';
+                } else if (value.includes('yellow bronze')) {
+                  return 'yellow-bronze';
+                } else if (value.includes('sterling') || value.includes('silver')) {
                   return 'silver';
                 } else if (value.includes('yellow gold') || value.includes('14k yellow')) {
                   return 'gold';
@@ -7685,6 +7702,8 @@
               const metalTypeMap = {
                 'sterling-silver': 'Sterling Silver',
                 'gold-14k': '14K Yellow Gold',
+                'white-bronze': 'White Bronze',
+                'yellow-bronze': 'Yellow Bronze',
                 'rose-gold-14k': 'Rose Gold 14K'
               };
               
