@@ -487,6 +487,26 @@
             transition: top 280ms ease, left 280ms ease;
         }
 
+        #guided-tour-card.step-1-wide {
+            width: min(560px, 96vw);
+            padding: 18px 18px 14px;
+        }
+
+        #guided-tour-card.step-2-wide {
+            width: min(560px, 95vw);
+        }
+
+
+        #guided-tour-image {
+            display: none;
+            width: 112.5%;
+            max-width: 100%;
+            display: block;
+            border-radius: 10px;
+            margin: 0 auto 10px auto;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
         #guided-tour-title {
             margin: 0 0 6px 0;
             font-size: 0.86rem;
@@ -4437,12 +4457,13 @@
         <div id="guided-tour-dim"></div>
         <div id="guided-tour-spotlight"></div>
         <div id="guided-tour-card" role="dialog" aria-live="polite" aria-label="Customization tour">
+            <img id="guided-tour-image" src="/goodBadPhoto_momenza.png" alt="Photo quality examples">
             <p id="guided-tour-title">Step</p>
             <p id="guided-tour-text"></p>
             <div id="guided-tour-actions">
                 <button id="tour-skip-btn" type="button">Skip</button>
                 <button id="tour-next-btn" type="button">Next</button>
-                <button id="tour-finish-btn" type="button" style="display:none;">Finish</button>
+                <button id="tour-finish-btn" type="button" style="display:none;">Close Tutorial</button>
             </div>
         </div>
     </div>
@@ -5946,6 +5967,7 @@
                 const overlay = getEl('guided-tour-overlay');
                 const spotlight = getEl('guided-tour-spotlight');
                 const card = getEl('guided-tour-card');
+                const tourImage = getEl('guided-tour-image');
                 const title = getEl('guided-tour-title');
                 const text = getEl('guided-tour-text');
                 const nextBtn = getEl('tour-next-btn');
@@ -6091,6 +6113,21 @@
                 };
 
                 const positionCardForStep = (rect) => {
+                    // Step 1: center popup above Add a Photo button.
+                    if (currentStep === 0) {
+                        const addPhotoBtn = getEl('add-photo-btn');
+                        if (addPhotoBtn && isVisible(addPhotoBtn)) {
+                            const btnRect = addPhotoBtn.getBoundingClientRect();
+                            const cardRect = card.getBoundingClientRect();
+                            const top = Math.max(12, btnRect.top - cardRect.height - 18);
+                            let left = btnRect.left + (btnRect.width - cardRect.width) / 2;
+                            left = Math.max(12, Math.min(left, window.innerWidth - cardRect.width - 12));
+                            card.style.top = `${top}px`;
+                            card.style.left = `${left}px`;
+                            return;
+                        }
+                    }
+
                     // Step 2: force placement above crop window with stronger upward offset.
                     if (currentStep === 1) {
                         const cardRect = card.getBoundingClientRect();
@@ -6351,6 +6388,16 @@
 
                     title.textContent = step.title;
                     text.textContent = step.text;
+                    card.classList.toggle('step-1-wide', currentStep === 0);
+                    card.classList.toggle('step-2-wide', currentStep === 1);
+                    if (currentStep === 1) {
+                        card.style.setProperty('width', 'min(560px, 95vw)', 'important');
+                    } else {
+                        card.style.removeProperty('width');
+                    }
+                    if (tourImage) {
+                        tourImage.style.display = currentStep === 0 ? 'block' : 'none';
+                    }
                     nextBtn.style.display = (currentStep === 2 || currentStep === 3) ? 'inline-flex' : 'none';
                     finishBtn.style.display = currentStep === stepDefs.length - 1 ? 'inline-flex' : 'none';
                     positionCardForStep(rect);
