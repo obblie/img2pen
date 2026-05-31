@@ -125,7 +125,7 @@
         }
         
         .navbar-brand {
-            font-family: 'Inter', 'JetBrains Mono', 'Courier New', monospace;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-weight: 700;
             font-size: 1.2em;
             color: #1f2937;
@@ -142,7 +142,7 @@
         
         .navbar-nav {
             display: flex;
-            gap: 8px;
+            gap: 26px;
             flex-wrap: wrap;
             list-style: none;
             margin: 0;
@@ -188,9 +188,9 @@
         }
         
         .navbar-nav a {
-            font-family: 'Inter', 'JetBrains Mono', 'Courier New', monospace;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-weight: 600;
-            font-size: 1.125em;
+            font-size: 1.05em;
             color: #4b5563;
             text-decoration: none;
             padding: 6px 0;
@@ -217,6 +217,23 @@
         .navbar-nav a:hover::after {
             width: 100%;
         }
+
+        .navbar-nav a.nav-start {
+            background: var(--oxblood);
+            color: var(--bg-parchment);
+            border-radius: 10px;
+            padding: 10px 18px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.14);
+        }
+
+        .navbar-nav a.nav-start:hover {
+            color: var(--bg-parchment);
+            background: var(--oxblood-strong);
+        }
+
+        .navbar-nav a.nav-start::after {
+            display: none;
+        }
         
         /* Add padding to body to account for fixed navbar */
         body {
@@ -239,11 +256,16 @@
             }
             
             .navbar-nav {
-                gap: 12px;
+                gap: 10px;
             }
             
             .navbar-nav a {
                 font-size: 1.1em;
+            }
+
+            .navbar-nav a.nav-start {
+                padding: 8px 12px;
+                border-radius: 8px;
             }
             
             /* Center theme selector on mobile - place it on second row, centered */
@@ -3594,11 +3616,11 @@
 
         .hero-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: minmax(540px, 1.55fr) minmax(280px, 0.8fr);
             gap: clamp(16px, 3vw, 40px);
             align-items: center;
             padding: var(--section-padding);
-            max-width: var(--section-max-width);
+            max-width: min(1140px, 94vw);
             width: 100%;
             margin: 0 auto;
             box-sizing: border-box;
@@ -3610,6 +3632,10 @@
             flex-direction: column;
             align-items: center;
             gap: 10px;
+            max-width: 1060px;
+            justify-self: start;
+            margin-left: clamp(-56px, -3.2vw, -18px);
+            margin-top: -18px;
         }
 
         .hero-cta-stack {
@@ -3619,6 +3645,177 @@
             gap: 10px;
             align-items: center;
             margin: 0 auto;
+        }
+
+        .hero-kicker {
+            margin: 0;
+            color: var(--ink);
+            font-size: clamp(2.7rem, 4.4vw, 4.2rem);
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            font-weight: 700;
+            max-width: 980px;
+            white-space: normal;
+        }
+
+        .hero-kicker .line-nowrap {
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        .hero-proofline {
+            margin-top: 8px;
+            font-size: 1.05rem;
+            color: rgba(43,43,43,0.78);
+            text-align: center;
+        }
+
+        .hero-text-col .hero-subtitle {
+            font-size: clamp(1.28rem, 2.35vw, 1.95rem);
+            line-height: 1.5;
+            max-width: 1040px !important;
+        }
+
+        .hero-gold-wash {
+            background: linear-gradient(180deg, rgba(184, 135, 75, 0) 0%, rgba(184, 135, 75, 0.24) 100%);
+            border-radius: 0.25em;
+            padding: 0 0.12em;
+        }
+
+        .hero-forever {
+            font-style: italic;
+        }
+
+        .hero-cta-stack .hero-upload-btn {
+            max-width: 492px;
+            min-height: 82px;
+            font-size: 1.55rem;
+            border-radius: 26px;
+        }
+
+        .hero-cta-stack {
+            width: min(700px, 100%);
+        }
+
+        .process-section {
+            position: relative;
+            width: 100%;
+            max-width: min(1200px, 96vw);
+            margin: 18px auto 0;
+            padding: 18px 8px 8px 86px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.56);
+            border: 1.5px solid rgba(43,43,43,0.14);
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.08);
+            box-sizing: border-box;
+        }
+
+        .process-title {
+            margin: 0;
+            position: absolute;
+            left: 18px;
+            top: 94%;
+            transform: translateY(-50%) rotate(-90deg);
+            transform-origin: left top;
+            white-space: nowrap;
+            font-family: Georgia, 'Times New Roman', serif;
+            font-size: clamp(1.75rem, 2.4vw, 2.2rem);
+            font-weight: 500;
+            color: var(--ink);
+        }
+
+        .process-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .process-step {
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0;
+            align-items: start;
+            padding: 10px 8px;
+        }
+
+        .process-step:not(:last-child)::after { display: none; }
+
+        .process-number {
+            width: 36px;
+            height: 36px;
+            border-radius: 999px;
+            background: var(--oxblood);
+            color: var(--bg-parchment);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+            margin: 0;
+        }
+
+        .process-step > div {
+            text-align: center;
+        }
+
+        .process-thumb {
+            width: 166px;
+            height: 166px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(43,43,43,0.16);
+            background: rgba(255,255,255,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+        }
+
+        .process-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .process-step h4 {
+            margin: 0 0 6px 0;
+            font-size: 1.36rem;
+            font-weight: 650;
+            color: var(--ink);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .process-step p {
+            margin: 0;
+            color: rgba(43,43,43,0.72);
+            line-height: 1.45;
+            font-size: 1.08rem;
+        }
+
+        .trust-row {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(43,43,43,0.1);
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            color: rgba(43,43,43,0.85);
+            font-size: 1.2rem;
+        }
+
+        .trust-item {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
+            white-space: nowrap;
         }
 
         /* Floating action buttons container - HIDDEN */
@@ -3741,9 +3938,10 @@
         }
 
         .hero-highlights {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
             width: 100%;
         }
 
@@ -3761,10 +3959,13 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
+            justify-self: end;
+            margin-right: 0;
+            transform: translateX(20%);
         }
 
         .hero-sample-image {
-            width: min(260px, 42vw);
+            width: min(238px, 37.3vw);
             height: auto;
             aspect-ratio: 1 / 1;
             object-fit: cover;
@@ -3833,6 +4034,7 @@
                 padding: 4px 0 8px 0 !important;
             }
             .hero-grid {
+                grid-template-columns: 1fr;
                 padding: 8px 6px !important;
                 gap: clamp(8px, 1.8vw, 14px);
                 max-width: 100% !important;
@@ -3900,7 +4102,8 @@
                 margin: 0 !important;
             }
             .hero-highlights {
-                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                display: grid;
+                grid-template-columns: repeat(2, minmax(130px, 1fr));
                 gap: 8px;
             }
             .hero-highlights > div {
@@ -3912,7 +4115,47 @@
                 font-weight: 500 !important;
             }
             .hero-sample-image {
-                width: min(200px, 44vw);
+                width: min(230px, 50.6vw);
+            }
+            .hero-kicker .line-nowrap {
+                white-space: normal;
+                display: inline;
+            }
+            .process-section {
+                margin-top: 28px;
+                padding: 18px 12px 14px;
+            }
+            .process-title {
+                position: static;
+                transform: none;
+                white-space: normal;
+                margin: 0 0 14px 0;
+                text-align: center;
+            }
+            .process-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+            .process-step:not(:last-child)::after {
+                display: none;
+            }
+            .process-thumb {
+                width: 105px;
+                height: 105px;
+            }
+            .process-step h4 {
+                font-size: 1.35rem;
+            }
+            .process-step p {
+                font-size: 1.05rem;
+            }
+            .trust-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+                font-size: 1.05rem;
+            }
+            .trust-item {
+                justify-content: flex-start;
             }
             .navbar-brand img {
                 height: 44px;
@@ -3937,7 +4180,7 @@
     <div id="splash-screen" class="splash-screen">
         <div class="splash-content">
             <div class="splash-logo">
-                <img src="/momenzaLogo_transparent.png" alt="Momenza Logo" style="width: 200px; max-width: 100%; height: auto;">
+                <img src="/momenzaLogo.png" alt="Momenza Logo" style="width: 200px; max-width: 100%; height: auto;">
             </div>
             <h1 class="splash-title">Welcome to Momenza Studio</h1>
             <p class="splash-subtitle">Please enter the password to continue</p>
@@ -3971,13 +4214,14 @@
     <!-- Navigation Bar -->
     <nav class="navbar" id="navbar">
         <a href="#" class="navbar-brand" onclick="event.preventDefault(); scrollToSection('hero-container'); return false;">
-            <img src="/momenzaLogo_transparent.png" alt="Momenza Logo">
+            <img src="/momenzaLogo.png" alt="Momenza Logo">
             <span>Momenza Studio</span>
         </a>
         <ul class="navbar-nav">
-            <li><a href="#" onclick="event.preventDefault(); scrollToSection('hero-container'); return false;">About</a></li>
-            <li><a href="#" onclick="event.preventDefault(); scrollToSection('scene-container'); return false;">Studio</a></li>
             <li><a href="#" onclick="event.preventDefault(); scrollToSection('upload-container'); return false;">Process</a></li>
+            <li><a href="#" onclick="event.preventDefault(); scrollToSection('scene-container'); return false;">Examples</a></li>
+            <li><a href="#" onclick="event.preventDefault(); scrollToSection('faq-container'); return false;">FAQ</a></li>
+            <li><a class="nav-start" href="#" onclick="event.preventDefault(); scrollToSection('upload-container'); return false;">Start</a></li>
         </ul>
         <div class="navbar-theme-selector" style="display: none !important; visibility: hidden;">
             <label for="theme-selector">Theme</label>
@@ -4012,31 +4256,12 @@
             <div class="hero-grid">
                 <!-- Left: Text Content -->
                 <div class="hero-text-col">
-                    <h1 class="hero-title" style="max-width: 520px; text-align: center; margin: 0 auto 16px;">
-                        <img class="hero-logo" src="/momenzaLogo_transparent.png" alt="Momenza" style="width: 480px; max-width: 100%; height: auto; display: block; margin: 0 auto; object-fit: contain; object-position: center;" loading="lazy" decoding="async">
-                    </h1>
-                    <p class="hero-subtitle" style="max-width: 550px; text-align: center; margin: -8px auto 32px;">Upload your cherished memories and transform them into stunning, wearable jewelry. Make <span style="background: var(--highlight); color: var(--ink); padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">once in a lifetime</span> last <em>forever.</em></p>
+                    <p class="hero-kicker"><span class="line-nowrap">Turn a cherished photo into</span><br><span class="line-nowrap">a custom pendant.</span></p>
+                    <p class="hero-subtitle" style="max-width: 560px; text-align: center; margin: 0 auto 20px;">Make <span class="hero-gold-wash">once in a lifetime</span> moments last <span class="hero-forever">forever</span>.</p>
                     <div class="hero-cta-stack">
-                        <div class="hero-highlights">
-                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
-                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">✨ Quality Craftsmanship</span>
-                            </div>
-                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
-                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🚀 Fast Delivery</span>
-                            </div>
-                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08); display: none !important; visibility: hidden;">
-                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🥹 Precious Results</span>
-                            </div>
-                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08);">
-                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🎨 Custom Design</span>
-                            </div>
-                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08); display: none !important; visibility: hidden;">
-                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🔒 Secure Payment</span>
-                            </div>
-                            <div style="background: var(--bg-stone); padding: 12px 16px; border-radius: 20px; text-align: center; box-shadow: 0 6px 14px rgba(0,0,0,0.12); border: 1px solid rgba(43,43,43,0.08); display: none !important; visibility: hidden;">
-                                <span style="font-weight: 600; color: var(--ink); font-size: 1.1em;">🌟 5-Star Reviews</span>
-                            </div>
-                        </div>
+                        <button class="hero-upload-btn" onclick="openUploadFromHero(); return false;">
+                            Upload a Photo to Begin
+                        </button>
                     </div>
                 </div>
                 
@@ -4050,11 +4275,44 @@
                             <img class="hero-sample-image" src="/woman_beach.png" alt="Sample Pendant Alternate View" loading="lazy" decoding="async">
                         </div>
                     </div>
-                    <button class="hero-upload-btn" onclick="openUploadFromHero(); return false;">
-                        Upload a Photo to Get Started
-                    </button>
                 </div>
-        </div>
+            </div>
+            <div id="how-it-works" class="process-section">
+                <h2 class="process-title">How it Works</h2>
+                <div id="how-it-works-guide" style="display:none;">
+                    Review the steps below, then continue.
+                    <button id="how-it-works-continue" class="onboarding-btn primary" type="button">Continue</button>
+                </div>
+                <div class="process-grid">
+                    <div class="process-step">
+                        <div>
+                            <div class="process-thumb">
+                                <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Upload a photo">
+                            </div>
+                            <h4><span class="process-number">1</span>Upload a Memory</h4>
+                            <p>Choose a clear, well-lit image.</p>
+                        </div>
+                    </div>
+                    <div class="process-step">
+                        <div>
+                            <div class="process-thumb">
+                                <img src="/howitworks/2_rm_crop.png" alt="Frame your pendant">
+                            </div>
+                            <h4><span class="process-number">2</span>Visualize Your Pendant</h4>
+                            <p>Customize your pendant in our 3D viewer.</p>
+                        </div>
+                    </div>
+                    <div class="process-step">
+                        <div>
+                            <div class="process-thumb">
+                                <img src="/howitworks/3_rm_finished.png" alt="Receive your keepsake">
+                            </div>
+                            <h4><span class="process-number">3</span>Receive your Keepsake</h4>
+                            <p>Wait patiently while we craft your pendant.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <script>
@@ -4434,7 +4692,7 @@
                 const addPhotoBtn = document.getElementById('add-photo-btn');
                 const imagineBtn = document.getElementById('imagine-btn');
                 const themeSelector = document.getElementById('theme-selector');
-                let faqCollapsed = true; // Start collapsed but show first 3 questions
+                let faqCollapsed = true;
             const THEME_KEY = 'iks-theme';
             const getVar = (name, fallback) => {
                 const val = getComputedStyle(document.documentElement).getPropertyValue(name)?.trim();
@@ -4575,62 +4833,43 @@
                 });
             }
                 
-                const updateFaqVisibility = () => {
-                    // Always show the FAQ list, but limit visible questions when collapsed
-                    if (faqList) {
-                        faqList.style.display = 'flex';
-                        // Get all FAQ items using the .faq-item class
-                        const faqItems = faqList.querySelectorAll('.faq-item');
-                        const faqMoreBtn = document.getElementById('faq-more-btn');
-                        const faqMoreBtnText = faqMoreBtn ? faqMoreBtn.querySelector('span:first-child') : null;
-                        const faqMoreArrows = document.getElementById('faq-more-arrows');
-                        
-                        if (faqCollapsed) {
-                            // When collapsed, show only first 3 questions, hide the rest
-                            faqItems.forEach((item, index) => {
-                                if (index < 3) {
-                                    item.style.display = 'block';
-                                } else {
-                                    item.style.display = 'none';
-                                }
-                            });
-                            // Show "More" button after question 3 when collapsed
-                            if (faqMoreBtn) {
-                                faqMoreBtn.style.display = 'flex';
-                                // Move button to after question 3
-                                if (faqItems.length >= 3) {
-                                    faqItems[2].parentNode.insertBefore(faqMoreBtn, faqItems[2].nextSibling);
-                                }
-                            }
-                            if (faqMoreBtnText) faqMoreBtnText.textContent = 'More';
-                            if (faqMoreArrows) {
-                                faqMoreArrows.textContent = '↓';
-                                faqMoreArrows.style.transform = 'rotate(0deg)';
-                            }
-                        } else {
-                            // When expanded, show all questions
-                            faqItems.forEach(item => {
-                                item.style.display = 'block';
-                            });
-                            // Show "Less" button at the bottom when expanded
-                            if (faqMoreBtn) {
-                                faqMoreBtn.style.display = 'flex';
-                                // Move button to the end of the list
-                                faqList.appendChild(faqMoreBtn);
-                            }
-                            if (faqMoreBtnText) faqMoreBtnText.textContent = 'Less';
-                            if (faqMoreArrows) {
-                                faqMoreArrows.textContent = '↑';
-                                faqMoreArrows.style.transform = 'rotate(0deg)';
-                            }
+                const setFaqItemOpen = (button, isOpen) => {
+                    const item = button.closest('.faq-item');
+                    if (!item) return;
+                    const answer = item.querySelector('.faq-answer');
+                    const toggleIcon = button.querySelector('span[aria-hidden="true"]');
+                    if (!answer) return;
+
+                    if (isOpen) {
+                        answer.style.display = 'block';
+                        answer.style.maxHeight = answer.scrollHeight + 'px';
+                        answer.style.paddingTop = '0';
+                        answer.style.paddingBottom = '20px';
+                        if (toggleIcon) {
+                            toggleIcon.textContent = '−';
+                            toggleIcon.style.transform = 'rotate(180deg)';
                         }
+                        item.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
+                        button.setAttribute('aria-expanded', 'true');
+                    } else {
+                        answer.style.display = 'none';
+                        answer.style.maxHeight = '0';
+                        answer.style.paddingTop = '0';
+                        answer.style.paddingBottom = '0';
+                        if (toggleIcon) {
+                            toggleIcon.textContent = '+';
+                            toggleIcon.style.transform = 'rotate(0deg)';
+                        }
+                        item.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+                        button.setAttribute('aria-expanded', 'false');
                     }
-                    if (faqSubtext) faqSubtext.style.display = faqCollapsed ? 'none' : 'block';
+                };
+
+                const updateFaqVisibility = () => {
+                    if (faqList) faqList.style.display = 'flex';
+                    if (faqSubtext) faqSubtext.style.display = 'block';
                     if (faqContainer) faqContainer.setAttribute('aria-expanded', faqCollapsed ? 'false' : 'true');
-                    if (faqToggleAllBtn) {
-                        faqToggleAllBtn.textContent = faqCollapsed ? '+' : '–';
-                        faqToggleAllBtn.setAttribute('aria-expanded', faqCollapsed ? 'false' : 'true');
-                    }
+                    if (faqToggleAllBtn) faqToggleAllBtn.setAttribute('aria-expanded', faqCollapsed ? 'false' : 'true');
                 };
 
                 // Gentle CTA pulse (once)
@@ -4647,33 +4886,11 @@
                     }, totalDurationMs);
                 };
                 
-                faqButtons.forEach(btn => {
+                faqButtons.forEach((btn) => {
+                    setFaqItemOpen(btn, false);
                     btn.addEventListener('click', () => {
-                        const answer = btn.nextElementSibling;
-                        const toggleIcon = btn.querySelector('span[aria-hidden="true"]');
-                        const faqItem = btn.closest('.faq-item');
-                        const isOpen = answer && answer.style.display === 'block';
-                        
-                        // Toggle current (allow multiple FAQs open)
-                        if (answer) {
-                            if (isOpen) {
-                                answer.style.display = 'none';
-                                answer.style.maxHeight = '0';
-                                answer.style.paddingTop = '0';
-                                answer.style.paddingBottom = '0';
-                                toggleIcon.textContent = '+';
-                                toggleIcon.style.transform = 'rotate(0deg)';
-                                if (faqItem) faqItem.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
-                            } else {
-                                answer.style.display = 'block';
-                                answer.style.maxHeight = answer.scrollHeight + 'px';
-                                answer.style.paddingTop = '0';
-                                answer.style.paddingBottom = '20px';
-                                toggleIcon.textContent = '−';
-                                toggleIcon.style.transform = 'rotate(180deg)';
-                                if (faqItem) faqItem.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
-                            }
-                        }
+                        const isOpen = btn.getAttribute('aria-expanded') === 'true';
+                        setFaqItemOpen(btn, !isOpen);
                     });
                 });
                 
@@ -4683,8 +4900,8 @@
                 
                 const toggleFaq = () => {
                     faqCollapsed = !faqCollapsed;
+                    faqButtons.forEach((btn) => setFaqItemOpen(btn, !faqCollapsed));
                     updateFaqVisibility();
-                    // Arrow direction is handled in updateFaqVisibility
                 };
                 
                 if (faqToggleAllBtn) {
@@ -4945,39 +5162,6 @@
             <!-- Main Content Section (2/3 height) -->
             <div style="flex: 2; width: 100%; overflow-y: visible; overflow-x: visible;">
                 <div style="width: 100%;">
-                <!-- Section Title -->
-                <div style="text-align: center; margin: 0 auto 20px auto; width: 100%; max-width: 960px; background: var(--bg-stone); padding: 18px 18px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.08);">
-                    <h2 style="color: var(--ink); font-weight: 800; font-size: 2em; margin-bottom: 10px;">How It Works</h2>
-                    <p style="color: rgba(43,43,43,0.8); font-size: 1em;">Upload a photo or describe what you want to create</p>
-                </div>
-                
-                <!-- How it works section -->
-            <div id="how-it-works" style="text-align: center; margin: 0 auto 20px auto; padding: 16px 16px 20px 16px; width: 100%; max-width: 960px; background: var(--bg-stone); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.08);">
-                <div id="how-it-works-guide">
-                    Review the steps below, then continue.
-                    <div style="margin-top: 10px;">
-                        <button id="how-it-works-continue" class="onboarding-btn primary" type="button">Continue</button>
-                    </div>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-                    <div style="text-align: center;">
-                        <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">1</div>
-                        <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Upload a Memory</h4>
-                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Choose a clear, well-lit photo</p>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">2</div>
-                        <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Crop the Image</h4>
-                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Choose a portion of the image for your pendant</p>
-                    </div>
-                    <div style="text-align: center;">
-                        <div style="width: 40px; height: 40px; background: var(--oxblood); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0px auto 10px; color: var(--bg-parchment); font-weight: bold; font-size: 1em;">3</div>
-                        <h4 style="color: var(--ink); font-weight: 700; margin-bottom: 5px; font-size: 0.95em;">Order</h4>
-                        <p style="color: rgba(43,43,43,0.8); font-size: 0.82em;">Place your order and wait</p>
-                    </div>
-                </div>
-            </div>
-            
             <!-- FAQ Section (Process Panel) -->
             <div id="faq-container" style="text-align: center; margin: 0 auto 24px auto; padding: 32px 24px; width: 100%; max-width: 960px; background: linear-gradient(135deg, var(--bg-stone) 0%, var(--bg-parchment) 100%); border-radius: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04); box-sizing: border-box; border: 1px solid rgba(43,43,43,0.06); backdrop-filter: blur(10px);">
                 <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 8px;">
@@ -4992,7 +5176,16 @@
                             <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
                         </button>
                         <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
-                            We currently offer .925 sterling silver, 14k yellow gold, and both white and yellow bronze If you have a specific metal in mind that we don't currently offer, please contact us and we will do our best to accommodate your request.
+                            We currently offer .925 sterling silver, 14k yellow gold, and both white and yellow bronze. If you have a specific metal in mind that we don't currently offer, please contact us and we will do our best to accommodate your request.
+                        </div>
+                    </div>
+                    <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                        <button class="faq-toggle" style="width: 100%; background: none; border: none; color: var(--ink); font-weight: 600; font-size: 1.05em; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s ease; text-align: left;">
+                            <span style="flex: 1; padding-right: 16px;">Do any of your metals contain nickel?</span>
+                            <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
+                        </button>
+                        <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
+                            Our white bronze contains nickel. All of our other metals do not.
                         </div>
                     </div>
                     <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
@@ -5028,7 +5221,7 @@
                             <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
                         </button>
                         <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
-                            We accept returns on a case by case basis for items that do not meet your expectations. Please contact us within 72 hours of receiving your Momenza and we will work with you to resolve the issue.
+                            We accept returns on a case by case basis for items that do not meet your expectations. Please contact us within 72 hours of receiving your pendant and we will work with you to resolve the issue.
                         </div>
                     </div>
                     <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
