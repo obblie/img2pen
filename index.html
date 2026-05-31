@@ -6029,7 +6029,15 @@
                     {
                         title: 'Step 4 of 5 · Choose a Metal',
                         text: 'Try different metal options to see how your keepsake will look.',
-                        target: () => getEl('metal-type') || getEl('product-component-1764405426589')
+                        target: () => {
+                            const explicitSelect = getEl('metal-type');
+                            if (explicitSelect && isVisible(explicitSelect)) return explicitSelect;
+                            const productNode = getEl('product-component-1764405426589');
+                            if (!productNode) return null;
+                            const iframe = productNode.querySelector('iframe');
+                            if (iframe && isVisible(iframe)) return iframe;
+                            return productNode;
+                        }
                     },
                     {
                         title: 'Step 5 of 5 · Place Your Order',
@@ -6163,9 +6171,7 @@
                         const cardRect = card.getBoundingClientRect();
                         const top = Math.max(12, Math.min(rect.top, window.innerHeight - cardRect.height - 12));
                         let left = rect.left - cardRect.width - 14;
-                        if (left < 12) {
-                            left = Math.min(window.innerWidth - cardRect.width - 12, rect.right + 14);
-                        }
+                        left = Math.max(12, left);
                         card.style.top = `${top}px`;
                         card.style.left = `${left}px`;
                         return;
@@ -6335,6 +6341,47 @@
 
                     const productNode = getEl('product-component-1764405426589');
                     const shopifyIframe = productNode ? productNode.querySelector('iframe') : null;
+                    if (shopifyIframe && activeTarget === shopifyIframe && currentStep === 3) {
+                        // Step 4: focus metal selector area inside Shopify iframe.
+                        let preciseSelectorRect = null;
+                        try {
+                            const iframeDoc = shopifyIframe.contentDocument || shopifyIframe.contentWindow?.document;
+                            if (iframeDoc) {
+                                const selects = iframeDoc.querySelectorAll('select');
+                                for (const sel of selects) {
+                                    const inFrame = sel.getBoundingClientRect();
+                                    if (inFrame.width > 0 && inFrame.height > 0) {
+                                        preciseSelectorRect = {
+                                            left: baseRect.left + inFrame.left,
+                                            top: baseRect.top + inFrame.top,
+                                            width: inFrame.width,
+                                            height: inFrame.height
+                                        };
+                                        break;
+                                    }
+                                }
+                            }
+                        } catch (error) {
+                            // Cross-origin iframe; fallback below.
+                        }
+
+                        if (preciseSelectorRect) {
+                            rect.left = preciseSelectorRect.left;
+                            rect.top = preciseSelectorRect.top;
+                            rect.width = preciseSelectorRect.width;
+                            rect.height = preciseSelectorRect.height;
+                            rect.bottom = rect.top + rect.height;
+                        } else {
+                            // Estimated metal selector strip when iframe DOM is inaccessible.
+                            const selectorHeight = 56;
+                            const selectorWidth = Math.max(220, Math.min(baseRect.width - 24, baseRect.width * 0.9));
+                            rect.left = baseRect.left + (baseRect.width - selectorWidth) / 2;
+                            rect.top = baseRect.top + Math.max(0, baseRect.height * 0.64);
+                            rect.width = selectorWidth;
+                            rect.height = selectorHeight;
+                            rect.bottom = rect.top + rect.height;
+                        }
+                    }
                     if (shopifyIframe && activeTarget === shopifyIframe && currentStep === 4) {
                         // Step 5: try exact Buy Now button inside iframe, fallback to estimated button zone.
                         let preciseButtonRect = null;
