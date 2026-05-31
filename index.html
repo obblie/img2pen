@@ -444,6 +444,99 @@
             transform: translateY(1px);
         }
 
+        /* Guided tour spotlight */
+        #guided-tour-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483644 !important;
+            pointer-events: none;
+            display: none;
+            isolation: isolate;
+        }
+
+        #guided-tour-overlay.active {
+            display: block;
+        }
+
+        #guided-tour-dim {
+            position: absolute;
+            inset: 0;
+            background: transparent;
+        }
+
+        #guided-tour-spotlight {
+            position: fixed;
+            z-index: 2147483645 !important;
+            border-radius: 14px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.58);
+            border: 1px solid rgba(255,255,255,0.45);
+            pointer-events: none;
+            transition: top 280ms ease, left 280ms ease, width 280ms ease, height 280ms ease, border-radius 280ms ease;
+        }
+
+        #guided-tour-card {
+            position: fixed;
+            z-index: 2147483647 !important;
+            width: min(360px, 92vw);
+            background: rgba(255, 255, 255, 0.97);
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+            padding: 14px 14px 12px;
+            pointer-events: auto;
+            transition: top 280ms ease, left 280ms ease;
+        }
+
+        #guided-tour-title {
+            margin: 0 0 6px 0;
+            font-size: 0.86rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(31, 41, 55, 0.72);
+            font-weight: 700;
+        }
+
+        #guided-tour-text {
+            margin: 0;
+            color: #1f2937;
+            line-height: 1.45;
+            font-size: 0.98rem;
+        }
+
+        #guided-tour-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        #guided-tour-actions button {
+            border: none;
+            border-radius: 9px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #tour-next-btn,
+        #tour-finish-btn {
+            background: var(--oxblood);
+            color: var(--bg-parchment);
+        }
+
+        #tour-skip-btn {
+            background: #f3f4f6;
+            color: #1f2937;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .tour-highlight-target {
+            position: relative !important;
+            z-index: 2147483646 !important;
+        }
+
         #how-it-works-guide {
             display: none;
             margin: 0 auto 12px auto;
@@ -3775,6 +3868,10 @@
                 animation: none;
                 transform: scaleX(1);
             }
+            #guided-tour-spotlight,
+            #guided-tour-card {
+                transition: none !important;
+            }
         }
 
         .hero-forever {
@@ -4335,6 +4432,19 @@
     <div id="mobile-debug" style="display:none;position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.9);color:white;padding:15px;border-radius:8px;z-index:9999;max-width:300px;font-family:monospace;font-size:12px;">
         <div id="debug-content"></div>
         <button onclick="this.parentElement.style.display='none'" style="float:right;background:red;color:white;border:none;padding:2px 6px;margin-top:5px;">X</button>
+    </div>
+    <div id="guided-tour-overlay" aria-hidden="true">
+        <div id="guided-tour-dim"></div>
+        <div id="guided-tour-spotlight"></div>
+        <div id="guided-tour-card" role="dialog" aria-live="polite" aria-label="Customization tour">
+            <p id="guided-tour-title">Step</p>
+            <p id="guided-tour-text"></p>
+            <div id="guided-tour-actions">
+                <button id="tour-skip-btn" type="button">Skip</button>
+                <button id="tour-next-btn" type="button">Next</button>
+                <button id="tour-finish-btn" type="button" style="display:none;">Finish</button>
+            </div>
+        </div>
     </div>
     <div id="how-it-works-backdrop" aria-hidden="true"></div>
     
@@ -5225,6 +5335,9 @@
                                     <span class="button-text">Add a Photo</span>
                                 </button>
                                 <p class="photo-help-text">Precious Moments Made Eternal</p>
+                                <p style="margin: 6px 0 0 0; text-align: center;">
+                                    <a href="#" id="take-tour-again-link" style="font-size: 0.82em; color: rgba(43,43,43,0.72); text-decoration: underline;">Take the Tour Again</a>
+                                </p>
                             </div>
                             <div id="add-photo-tip">Tap “Add a Photo” to begin</div>
                             
@@ -5320,7 +5433,7 @@
                             <span aria-hidden="true" style="font-size: 1.4em; font-weight: 300; color: var(--oxblood); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-width: 24px; text-align: center;">+</span>
                         </button>
                         <div class="faq-answer" style="display: none; padding: 0 24px 20px 24px; color: rgba(43,43,43,0.85); font-size: 0.98em; line-height: 1.7; max-height: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);">
-                            We currently offer .925 sterling silver, 14k yellow gold, and both white and yellow bronze. If you have a specific metal in mind that we don't currently offer, please contact us and we will do our best to accommodate your request.
+                            We currently offer .925 sterling silver, 14k yellow gold, and both white bronze and yellow brass. If you have a specific metal in mind that we don't currently offer, please contact us and we will do our best to accommodate your request.
                         </div>
                     </div>
                     <div class="faq-item" style="background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(43,43,43,0.08); border-radius: 16px; overflow: hidden; text-align: left; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
@@ -5799,8 +5912,10 @@
         // Onboarding flow for the Three.js viewer
         (function() {
             const ONBOARDING_KEY = 'momenza_onboarding_seen';
+            const TOUR_DONE_KEY = 'momenza_guided_tour_done';
 
             const getEl = (id) => document.getElementById(id);
+            const isVisible = (el) => !!el && el.getClientRects().length > 0;
             const safeScrollTo = (id) => {
                 const el = getEl(id);
                 if (!el) return;
@@ -5821,57 +5936,457 @@
                 if (overlay) overlay.classList.remove('active');
             };
 
-            const showHowItWorksGuide = () => {
-                const guide = getEl('how-it-works-guide');
-                const howItWorks = getEl('how-it-works');
-                const backdrop = getEl('how-it-works-backdrop');
-                const nextBtn = getEl('how-it-works-next');
-                const continueBtn = getEl('how-it-works-continue');
-                if (!guide || !howItWorks || !nextBtn || !continueBtn) return;
+            const guidedTour = (() => {
+                const overlay = getEl('guided-tour-overlay');
+                const spotlight = getEl('guided-tour-spotlight');
+                const card = getEl('guided-tour-card');
+                const title = getEl('guided-tour-title');
+                const text = getEl('guided-tour-text');
+                const nextBtn = getEl('tour-next-btn');
+                const finishBtn = getEl('tour-finish-btn');
+                const skipBtn = getEl('tour-skip-btn');
 
-                const steps = Array.from(howItWorks.querySelectorAll('.process-step'));
-                if (!steps.length) return;
+                let currentStep = 0;
+                let activeTarget = null;
+                let running = false;
+                let stepCleanup = null;
+                let stepPoll = null;
+                let removeScrollLock = null;
 
-                let activeStepIndex = 0;
-                const setActiveStep = (index) => {
-                    activeStepIndex = Math.max(0, Math.min(index, steps.length - 1));
-                    steps.forEach((step, i) => {
-                        step.classList.toggle('is-active', i === activeStepIndex);
+                const stepDefs = [
+                    {
+                        title: 'Step 1 of 5 · Add a Photo',
+                        text: "Start here. Upload a photo you'd like to transform into a custom pendant.",
+                        target: () => getEl('add-photo-btn') || getEl('file-input')
+                    },
+                    {
+                        title: 'Step 2 of 5 · Position Your Photo',
+                        text: 'Drag the square to choose your pendant image. See the Live Preview for the final result.',
+                        target: () => {
+                            const cropModal = getEl('cropper-modal');
+                            const cropWindow = document.querySelector('#cropper-modal > div');
+                            if (
+                                cropModal &&
+                                isVisible(cropModal) &&
+                                cropWindow &&
+                                isVisible(cropWindow) &&
+                                cropWindow.getBoundingClientRect().width > 300 &&
+                                cropWindow.getBoundingClientRect().height > 200
+                            ) {
+                                return cropWindow;
+                            }
+                            const cropBox = document.querySelector('.cropper-crop-box');
+                            if (cropBox && isVisible(cropBox)) return cropBox;
+                            return isVisible(getEl('cropper-image')) ? getEl('cropper-image') : getEl('add-photo-btn');
+                        }
+                    },
+                    {
+                        title: 'Step 3 of 5 · Preview Your Pendant',
+                        text: 'Click and drag in the 3D viewer to rotate your pendant and inspect it from every angle.',
+                        target: () => getEl('canvas-container')
+                    },
+                    {
+                        title: 'Step 4 of 5 · Choose a Metal',
+                        text: 'Try different metal options to see how your keepsake will look.',
+                        target: () => getEl('metal-type') || getEl('product-component-1764405426589')
+                    },
+                    {
+                        title: 'Step 5 of 5 · Place Your Order',
+                        text: "When you're happy with your design, you're ready to place your order.",
+                        target: () => {
+                            const productNode = getEl('product-component-1764405426589');
+                            if (!productNode) return null;
+
+                            const controls = productNode.querySelectorAll('button, [role="button"], a');
+                            for (const control of controls) {
+                                const label = `${control.textContent || ''} ${control.getAttribute('aria-label') || ''}`.toLowerCase();
+                                if (label.includes('buy now') || (label.includes('buy') && label.includes('now'))) {
+                                    return control;
+                                }
+                            }
+
+                            // Fallback when Buy Now is rendered inside cross-origin iframe.
+                            const iframe = productNode.querySelector('iframe');
+                            if (iframe && isVisible(iframe)) return iframe;
+                            return productNode;
+                        }
+                    }
+                ];
+
+                const clearHighlight = () => {
+                    if (activeTarget) activeTarget.classList.remove('tour-highlight-target');
+                    activeTarget = null;
+                };
+
+                const clearStepWatchers = () => {
+                    if (typeof stepCleanup === 'function') {
+                        stepCleanup();
+                    }
+                    stepCleanup = null;
+                    if (stepPoll) {
+                        clearInterval(stepPoll);
+                    }
+                    stepPoll = null;
+                };
+
+                const positionCard = (rect) => {
+                    const cardRect = card.getBoundingClientRect();
+                    const blockers = [
+                        getEl('cropper-confirm'),
+                        getEl('cropper-cancel'),
+                        getEl('cropper-toolbar')
+                    ]
+                        .filter((el) => el && isVisible(el))
+                        .map((el) => el.getBoundingClientRect());
+
+                    const intersectsBlocker = (top, left) => {
+                        const right = left + cardRect.width;
+                        const bottom = top + cardRect.height;
+                        return blockers.some((b) => !(right < b.left || left > b.right || bottom < b.top || top > b.bottom));
+                    };
+
+                    let prefersBelow = rect.bottom + 14 + cardRect.height <= window.innerHeight - 12;
+                    let top = prefersBelow ? rect.bottom + 14 : rect.top - cardRect.height - 14;
+                    top = Math.max(12, Math.min(top, window.innerHeight - cardRect.height - 12));
+
+                    let left = rect.left;
+                    if (left + cardRect.width > window.innerWidth - 12) {
+                        left = window.innerWidth - cardRect.width - 12;
+                    }
+                    left = Math.max(12, left);
+
+                    if (intersectsBlocker(top, left)) {
+                        const altTop = Math.max(12, rect.top - cardRect.height - 14);
+                        if (!intersectsBlocker(altTop, left)) {
+                            top = altTop;
+                        } else {
+                            const shiftedLeft = Math.max(12, Math.min(window.innerWidth - cardRect.width - 12, rect.right - cardRect.width));
+                            if (!intersectsBlocker(top, shiftedLeft)) {
+                                left = shiftedLeft;
+                            }
+                        }
+                    }
+
+                    card.style.top = `${top}px`;
+                    card.style.left = `${left}px`;
+                };
+
+                const positionCardForStep = (rect) => {
+                    // Step 2: force placement above crop window with stronger upward offset.
+                    if (currentStep === 1) {
+                        const cardRect = card.getBoundingClientRect();
+                        const top = 8;
+
+                        let left = rect.left;
+                        if (left + cardRect.width > window.innerWidth - 12) {
+                            left = window.innerWidth - cardRect.width - 12;
+                        }
+                        left = Math.max(12, left);
+
+                        card.style.top = `${top}px`;
+                        card.style.left = `${left}px`;
+                        return;
+                    }
+
+                    // Keep Step 3 guidance anchored to the 3D highlight area.
+                    if (currentStep === 2) {
+                        if (rect && rect.width > 0 && rect.height > 0) {
+                            const cardRect = card.getBoundingClientRect();
+                            const top = Math.max(12, Math.min(rect.top + 8, window.innerHeight - cardRect.height - 12));
+                            let left = rect.right + 14;
+                            if (left + cardRect.width > window.innerWidth - 12) {
+                                left = Math.max(12, rect.left - cardRect.width - 14);
+                            }
+                            card.style.top = `${top}px`;
+                            card.style.left = `${left}px`;
+                            return;
+                        }
+                    }
+                    // Step 4: place popup to the left of the metal dropdown/highlight.
+                    if (currentStep === 3) {
+                        const cardRect = card.getBoundingClientRect();
+                        const top = Math.max(12, Math.min(rect.top, window.innerHeight - cardRect.height - 12));
+                        let left = rect.left - cardRect.width - 14;
+                        if (left < 12) {
+                            left = Math.min(window.innerWidth - cardRect.width - 12, rect.right + 14);
+                        }
+                        card.style.top = `${top}px`;
+                        card.style.left = `${left}px`;
+                        return;
+                    }
+                    if (currentStep === 4) {
+                        const cardRect = card.getBoundingClientRect();
+                        const top = Math.max(12, rect.top - cardRect.height - 16);
+                        let left = rect.left + (rect.width - cardRect.width) / 2 - cardRect.width;
+                        left = Math.max(12, Math.min(left, window.innerWidth - cardRect.width - 12));
+                        card.style.top = `${top}px`;
+                        card.style.left = `${left}px`;
+                        return;
+                    }
+                    positionCard(rect);
+                };
+
+                const lockScroll = () => {
+                    const preventScroll = (event) => {
+                        if (!running) return;
+                        event.preventDefault();
+                    };
+                    const preventKeyScroll = (event) => {
+                        if (!running) return;
+                        const keys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '];
+                        if (keys.includes(event.key)) {
+                            event.preventDefault();
+                        }
+                    };
+
+                    document.documentElement.style.overflow = 'hidden';
+                    document.body.style.overflow = 'hidden';
+                    document.body.style.touchAction = 'none';
+
+                    window.addEventListener('wheel', preventScroll, { passive: false, capture: true });
+                    window.addEventListener('touchmove', preventScroll, { passive: false, capture: true });
+                    window.addEventListener('keydown', preventKeyScroll, { capture: true });
+
+                    removeScrollLock = () => {
+                        document.documentElement.style.overflow = '';
+                        document.body.style.overflow = '';
+                        document.body.style.touchAction = '';
+                        window.removeEventListener('wheel', preventScroll, { capture: true });
+                        window.removeEventListener('touchmove', preventScroll, { capture: true });
+                        window.removeEventListener('keydown', preventKeyScroll, { capture: true });
+                        removeScrollLock = null;
+                    };
+                };
+
+                const advanceTo = (index) => {
+                    currentStep = Math.max(0, Math.min(index, stepDefs.length - 1));
+                    renderStep();
+                };
+
+                const ensureAddPhotoVisible = () => {
+                    const addPhotoBtn = getEl('add-photo-btn');
+                    if (!addPhotoBtn) return;
+                    const rect = addPhotoBtn.getBoundingClientRect();
+                    const fullyVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+                    if (!fullyVisible) {
+                        addPhotoBtn.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                    }
+                };
+
+                const installStepAdvance = () => {
+                    clearStepWatchers();
+
+                    if (currentStep === 0) {
+                        const fileInput = getEl('file-input');
+                        const onFile = () => advanceTo(1);
+                        if (fileInput) fileInput.addEventListener('change', onFile, { once: true });
+                        stepCleanup = () => {
+                            if (fileInput) fileInput.removeEventListener('change', onFile);
+                        };
+                        return;
+                    }
+
+                    if (currentStep === 1) {
+                        let confirmBound = false;
+                        const waitForConfirm = () => {
+                            const confirmBtn = getEl('cropper-confirm');
+                            if (!confirmBtn || confirmBound) return false;
+                            const onConfirm = () => advanceTo(2);
+                            confirmBtn.addEventListener('click', onConfirm, { once: true });
+                            stepCleanup = () => confirmBtn.removeEventListener('click', onConfirm);
+                            confirmBound = true;
+                            return true;
+                        };
+                        waitForConfirm();
+                        stepPoll = setInterval(() => {
+                            if (!running || currentStep !== 1) return;
+                            waitForConfirm();
+                            const cropWindow = document.querySelector('#cropper-modal > div');
+                            if (cropWindow && isVisible(cropWindow)) {
+                                renderStep();
+                            }
+                        }, 180);
+                        return;
+                    }
+
+                    if (currentStep === 2) {
+                        // Step 3 advances via explicit Next button (not interaction-driven).
+                        return;
+                    }
+
+                    if (currentStep === 3) {
+                        const onAnyMetalChange = () => advanceTo(4);
+                        const metalSelect = getEl('metal-type');
+                        if (metalSelect) {
+                            metalSelect.addEventListener('change', onAnyMetalChange, { once: true });
+                            stepCleanup = () => metalSelect.removeEventListener('change', onAnyMetalChange);
+                            return;
+                        }
+
+                        const onDocChange = (event) => {
+                            if (event.target && event.target.tagName === 'SELECT') {
+                                onAnyMetalChange();
+                            }
+                        };
+                        document.addEventListener('change', onDocChange, true);
+                        stepCleanup = () => document.removeEventListener('change', onDocChange, true);
+                        return;
+                    }
+
+                    if (currentStep === 4) {
+                        stepPoll = setInterval(() => {
+                            if (!running || currentStep !== 4) return;
+                            renderStep();
+                        }, 220);
+                        return;
+                    }
+                };
+
+                const renderStep = () => {
+                    const step = stepDefs[currentStep];
+                    if (!step) return;
+
+                    // Re-assert top layering at runtime in case any inline/theme styles override CSS.
+                    // Also remount as last child of body so injected widgets/iframes cannot overtake it.
+                    if (overlay.parentNode !== document.body || document.body.lastElementChild !== overlay) {
+                        document.body.appendChild(overlay);
+                    }
+                    overlay.style.setProperty('position', 'fixed', 'important');
+                    spotlight.style.setProperty('position', 'fixed', 'important');
+                    card.style.setProperty('position', 'fixed', 'important');
+                    overlay.style.setProperty('z-index', '2147483644', 'important');
+                    spotlight.style.setProperty('z-index', '2147483645', 'important');
+                    card.style.setProperty('z-index', '2147483647', 'important');
+                    overlay.style.setProperty('isolation', 'isolate', 'important');
+                    card.style.setProperty('transform', 'translateZ(0)', 'important');
+
+                    clearHighlight();
+                    const target = step.target();
+                    if (!target) return;
+                    activeTarget = target;
+                    activeTarget.classList.add('tour-highlight-target');
+
+                    const baseRect = activeTarget.getBoundingClientRect();
+                    const rect = {
+                        top: baseRect.top,
+                        left: baseRect.left,
+                        width: baseRect.width,
+                        height: baseRect.height,
+                        right: baseRect.right,
+                        bottom: baseRect.bottom
+                    };
+
+                    const productNode = getEl('product-component-1764405426589');
+                    const shopifyIframe = productNode ? productNode.querySelector('iframe') : null;
+                    if (shopifyIframe && activeTarget === shopifyIframe && currentStep === 4) {
+                        // Step 5: try exact Buy Now button inside iframe, fallback to estimated button zone.
+                        let preciseButtonRect = null;
+                        try {
+                            const iframeDoc = shopifyIframe.contentDocument || shopifyIframe.contentWindow?.document;
+                            if (iframeDoc) {
+                                const candidates = iframeDoc.querySelectorAll('button, [role="button"], a');
+                                for (const el of candidates) {
+                                    const label = `${el.textContent || ''} ${el.getAttribute('aria-label') || ''}`.toLowerCase();
+                                    if (label.includes('buy now') || (label.includes('buy') && label.includes('now'))) {
+                                        const inFrame = el.getBoundingClientRect();
+                                        if (inFrame.width > 0 && inFrame.height > 0) {
+                                            preciseButtonRect = {
+                                                left: baseRect.left + inFrame.left,
+                                                top: baseRect.top + inFrame.top,
+                                                width: inFrame.width,
+                                                height: inFrame.height
+                                            };
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        } catch (error) {
+                            // Cross-origin iframe; fallback below.
+                        }
+
+                        if (preciseButtonRect) {
+                            rect.left = preciseButtonRect.left;
+                            rect.top = preciseButtonRect.top;
+                            rect.width = preciseButtonRect.width;
+                            rect.height = preciseButtonRect.height;
+                            rect.bottom = rect.top + rect.height;
+                        } else {
+                            const buttonHeight = Math.max(52, Math.min(68, baseRect.height * 0.18));
+                            const buttonWidth = Math.max(180, Math.min(baseRect.width * 0.82, baseRect.width - 24));
+                            rect.left = baseRect.left + (baseRect.width - buttonWidth) / 2;
+                            rect.width = buttonWidth;
+                            rect.top = baseRect.bottom - buttonHeight - 18;
+                            rect.height = buttonHeight;
+                            rect.bottom = rect.top + rect.height;
+                        }
+                    }
+                    rect.right = rect.left + rect.width;
+
+                    spotlight.style.top = `${rect.top - 6}px`;
+                    spotlight.style.left = `${rect.left - 6}px`;
+                    spotlight.style.width = `${rect.width + 12}px`;
+                    spotlight.style.height = `${rect.height + 12}px`;
+                    spotlight.style.borderRadius = `${Math.min(14, Math.max(8, rect.height * 0.12))}px`;
+
+                    title.textContent = step.title;
+                    text.textContent = step.text;
+                    nextBtn.style.display = (currentStep === 2 || currentStep === 3) ? 'inline-flex' : 'none';
+                    finishBtn.style.display = currentStep === stepDefs.length - 1 ? 'inline-flex' : 'none';
+                    positionCardForStep(rect);
+                    installStepAdvance();
+                };
+
+                const complete = (markDone) => {
+                    running = false;
+                    clearStepWatchers();
+                    clearHighlight();
+                    overlay.classList.remove('active');
+                    document.body.classList.remove('onboarding-how-open');
+                    if (markDone) {
+                        localStorage.setItem(TOUR_DONE_KEY, 'true');
+                        sessionStorage.setItem(ONBOARDING_KEY, 'true');
+                    }
+                    if (typeof removeScrollLock === 'function') {
+                        removeScrollLock();
+                    }
+                    window.removeEventListener('resize', renderStep);
+                };
+
+                const start = () => {
+                    if (!overlay || !spotlight || !card || !title || !text || !nextBtn || !skipBtn || !finishBtn) return;
+                    running = true;
+                    currentStep = 0;
+                    ensureAddPhotoVisible();
+                    overlay.classList.add('active');
+                    document.body.classList.add('onboarding-how-open');
+                    lockScroll();
+                    setTimeout(() => {
+                        if (!running) return;
+                        renderStep();
+                        window.addEventListener('resize', renderStep);
+                    }, 240);
+                };
+
+                if (finishBtn) {
+                    finishBtn.addEventListener('click', () => complete(true));
+                }
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', () => {
+                        if (!running) return;
+                        if (currentStep === 2) {
+                            advanceTo(3);
+                        } else if (currentStep === 3) {
+                            advanceTo(4);
+                        }
                     });
+                }
+                if (skipBtn) {
+                    skipBtn.addEventListener('click', () => complete(true));
+                }
 
-                    const isLastStep = activeStepIndex === steps.length - 1;
-                    nextBtn.style.display = isLastStep ? 'none' : 'inline-flex';
-                    continueBtn.style.display = isLastStep ? 'inline-flex' : 'none';
-                };
-
-                guide.classList.add('active');
-                guide.classList.add('onboarding-floating');
-                guide.style.display = 'block';
-                howItWorks.classList.add('onboarding-modal');
-                document.body.classList.add('onboarding-how-open');
-                if (backdrop) backdrop.classList.add('active');
-
-                const placeGuide = () => {
-                    const rect = howItWorks.getBoundingClientRect();
-                    guide.style.width = `${Math.min(rect.width, 520)}px`;
-                    guide.style.maxWidth = '94vw';
-                    guide.style.left = `${rect.left + rect.width / 2}px`;
-                    guide.style.transform = 'translateX(-50%)';
-
-                    const guideRect = guide.getBoundingClientRect();
-                    const desiredTop = rect.bottom + 12;
-                    const maxTop = window.innerHeight - guideRect.height - 12;
-                    const clampedTop = Math.max(12, Math.min(desiredTop, maxTop));
-                    guide.style.top = `${clampedTop}px`;
-                };
-
-                placeGuide();
-                window.addEventListener('resize', placeGuide);
-                setActiveStep(0);
-
-                nextBtn.onclick = () => setActiveStep(activeStepIndex + 1);
-                guide._placeGuide = placeGuide;
-            };
+                return { start, complete };
+            })();
 
             const showAddPhotoGuide = () => {
                 safeScrollTo('scene-container');
@@ -5903,54 +6418,35 @@
             };
 
             const initOnboarding = () => {
-                if (sessionStorage.getItem(ONBOARDING_KEY) === 'true') return;
-
                 const overlay = getEl('onboarding-overlay');
                 const yesBtn = getEl('onboarding-yes');
                 const noBtn = getEl('onboarding-no');
-                const nextBtn = getEl('how-it-works-next');
-                const continueBtn = getEl('how-it-works-continue');
-                const howItWorks = getEl('how-it-works');
-                const backdrop = getEl('how-it-works-backdrop');
+                const tourAgain = getEl('take-tour-again-link');
+                if (tourAgain && !tourAgain.dataset.bound) {
+                    tourAgain.dataset.bound = 'true';
+                    tourAgain.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        localStorage.removeItem(TOUR_DONE_KEY);
+                        guidedTour.start();
+                    });
+                }
 
-                if (!overlay || !yesBtn || !noBtn || !nextBtn || !continueBtn || !howItWorks) return;
+                if (localStorage.getItem(TOUR_DONE_KEY) === 'true') return;
+                if (!overlay || !yesBtn || !noBtn) return;
+
+                yesBtn.textContent = 'Yes, show me around';
 
                 showOverlay();
 
                 yesBtn.addEventListener('click', () => {
                     hideOverlay();
-                    showHowItWorksGuide();
+                    guidedTour.start();
                 });
 
                 noBtn.addEventListener('click', () => {
                     hideOverlay();
-                });
-
-                continueBtn.addEventListener('click', () => {
-                    const guide = getEl('how-it-works-guide');
-                    if (guide) {
-                        guide.classList.remove('active');
-                        guide.classList.remove('onboarding-floating');
-                        guide.style.display = 'none';
-                        guide.style.left = '';
-                        guide.style.top = '';
-                        guide.style.transform = '';
-                        guide.style.width = '';
-                        if (guide._placeGuide) {
-                            window.removeEventListener('resize', guide._placeGuide);
-                            delete guide._placeGuide;
-                        }
-                    }
-                    howItWorks.classList.remove('onboarding-modal');
-                    howItWorks.querySelectorAll('.process-step').forEach((step) => {
-                        step.classList.remove('is-active');
-                    });
-                    if (backdrop) backdrop.classList.remove('active');
-                    document.body.classList.remove('onboarding-how-open');
-                    nextBtn.style.display = 'inline-flex';
-                    continueBtn.style.display = 'none';
                     sessionStorage.setItem(ONBOARDING_KEY, 'true');
-                    showAddPhotoGuide();
+                    localStorage.setItem(TOUR_DONE_KEY, 'true');
                 });
             };
 
@@ -7024,7 +7520,7 @@
             let shopifyOptionValue;
             switch(metalType) {
                 case 'silver':
-                    shopifyOptionValue = 'Sterling Silver';
+                    shopifyOptionValue = '.925 Sterling Silver';
                     break;
                 case 'gold':
                     shopifyOptionValue = '14K Yellow Gold';
@@ -7035,7 +7531,8 @@
                     break;
                 case 'yellow-bronze':
                 case 'yellow bronze':
-                    shopifyOptionValue = 'Yellow Bronze';
+                case 'yellow brass':
+                    shopifyOptionValue = 'Yellow Brass';
                     break;
                 case 'rose-gold':
                     shopifyOptionValue = 'Rose Gold';
@@ -7044,7 +7541,7 @@
                     shopifyOptionValue = 'STL File';
                     break;
                 default:
-                    shopifyOptionValue = 'Sterling Silver';
+                    shopifyOptionValue = '.925 Sterling Silver';
             }
             
             console.log('=== Updating Shopify variant ===');
@@ -7318,6 +7815,7 @@
                     break;
                 case 'yellow-bronze':
                 case 'yellow bronze':
+                case 'yellow brass':
                     materialType = 'yellow-bronze';
                     break;
                 case 'rose-gold':
@@ -7989,7 +8487,7 @@
                 // Map Shopify option values to our metal types
                 if (value.includes('white bronze')) {
                   return 'white-bronze';
-                } else if (value.includes('yellow bronze')) {
+                } else if (value.includes('yellow brass') || value.includes('yellow bronze')) {
                   return 'yellow-bronze';
                 } else if (value.includes('sterling') || value.includes('silver')) {
                   return 'silver';
@@ -8106,10 +8604,10 @@
               
               // Map metal types to variant titles
               const metalTypeMap = {
-                'sterling-silver': 'Sterling Silver',
+                'sterling-silver': '.925 Sterling Silver',
                 'gold-14k': '14K Yellow Gold',
                 'white-bronze': 'White Bronze',
-                'yellow-bronze': 'Yellow Bronze',
+                'yellow-bronze': 'Yellow Brass',
                 'rose-gold-14k': 'Rose Gold 14K'
               };
               

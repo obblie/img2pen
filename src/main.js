@@ -732,10 +732,10 @@ async function getVariantIdFromStorefrontAPI(productId = '10066983190819', selec
                     // Try to get variant based on current metal type selection
                     // Map metal types to variant titles
                     const metalTypeMap = {
-                        'silver': 'Sterling Silver',
+                        'silver': '.925 Sterling Silver',
                         'gold': '14K Yellow Gold',
                         'white-bronze': 'White Bronze',
-                        'yellow-bronze': 'Yellow Bronze',
+                        'yellow-bronze': 'Yellow Brass',
                         'rose-gold': 'Rose Gold 14K'
                     };
                     
@@ -4767,6 +4767,7 @@ class HeightfieldViewer {
         if (!this.heightfield) return;
 
         const normalizedMetalType = ({
+            'yellow brass': 'yellow-bronze',
             'yellow bronze': 'yellow-bronze',
             'white bronze': 'white-bronze'
         })[metalType] || metalType;
