@@ -447,10 +447,10 @@
         #how-it-works-guide {
             display: none;
             margin: 0 auto 12px auto;
-            max-width: 720px;
+            max-width: 520px;
             background: rgba(255, 255, 255, 0.95);
             border: 1px solid rgba(0, 0, 0, 0.08);
-            padding: 12px 16px;
+            padding: 10px 14px;
             border-radius: 12px;
             box-shadow: 0 6px 16px rgba(0,0,0,0.12);
             text-align: center;
@@ -460,6 +460,69 @@
 
         #how-it-works-guide.active {
             display: block;
+        }
+
+        #how-it-works-guide.onboarding-floating {
+            position: fixed;
+            margin: 0;
+            z-index: 1310;
+        }
+
+        #how-it-works-guide .guide-actions {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        #how-it-works-next,
+        #how-it-works-continue {
+            display: inline-flex;
+        }
+
+        #how-it-works-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+            z-index: 1290;
+        }
+
+        #how-it-works-backdrop.active {
+            display: block;
+        }
+
+        body.onboarding-how-open {
+            overflow: hidden;
+        }
+
+        #how-it-works.onboarding-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(1120px, 94vw);
+            max-height: 90vh;
+            overflow-y: auto;
+            margin: 0;
+            z-index: 1300;
+        }
+
+        #how-it-works.onboarding-modal .process-step {
+            opacity: 0.24;
+            filter: saturate(0.65);
+            transition: opacity 0.25s ease, filter 0.25s ease;
+        }
+
+        #how-it-works.onboarding-modal .process-step.is-active {
+            opacity: 1;
+            filter: none;
+        }
+
+        #how-it-works.onboarding-modal .process-step.is-active .process-thumb {
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
         }
 
         #add-photo-tip {
@@ -1166,10 +1229,10 @@
             #cropper-modal .action-buttons {
                 position: sticky !important;
                 bottom: 0 !important;
-                background: #222 !important;
+                background: #ffffff !important;
                 padding: 16px 0 !important;
                 margin: 0 -16px !important;
-                border-top: 1px solid rgba(255,255,255,0.1) !important;
+                border-top: 1px solid rgba(0,0,0,0.1) !important;
                 z-index: 10 !important;
             }
             
@@ -3677,9 +3740,41 @@
         }
 
         .hero-gold-wash {
-            background: linear-gradient(180deg, rgba(184, 135, 75, 0) 0%, rgba(184, 135, 75, 0.24) 100%);
-            border-radius: 0.25em;
+            position: relative;
+            display: inline-block;
             padding: 0 0.12em;
+            z-index: 0;
+        }
+
+        .hero-gold-wash::before {
+            content: "";
+            position: absolute;
+            left: 0.06em;
+            right: 0.06em;
+            bottom: 0.32em;
+            height: 0.62em;
+            border-radius: 0.36em;
+            background: linear-gradient(90deg, rgba(184, 135, 75, 0.18) 0%, rgba(202, 161, 109, 0.26) 48%, rgba(184, 135, 75, 0.2) 100%);
+            transform: scaleX(0);
+            transform-origin: left center;
+            animation: heroMarkerSwipe 2000ms cubic-bezier(0.2, 0.7, 0.25, 1) 320ms forwards;
+            z-index: -1;
+        }
+
+        @keyframes heroMarkerSwipe {
+            from {
+                transform: scaleX(0);
+            }
+            to {
+                transform: scaleX(1);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .hero-gold-wash::before {
+                animation: none;
+                transform: scaleX(1);
+            }
         }
 
         .hero-forever {
@@ -3710,6 +3805,18 @@
             box-sizing: border-box;
         }
 
+        .process-label-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 86px;
+            height: 100%;
+            border-radius: 20px 0 0 20px;
+            background: var(--oxblood);
+            border-right: 1px solid rgba(43,43,43,0.12);
+            pointer-events: none;
+        }
+
         .process-title {
             margin: 0;
             position: absolute;
@@ -3721,7 +3828,7 @@
             font-family: Georgia, 'Times New Roman', serif;
             font-size: clamp(1.75rem, 2.4vw, 2.2rem);
             font-weight: 500;
-            color: var(--ink);
+            color: var(--bg-parchment);
         }
 
         .process-grid {
@@ -3761,11 +3868,18 @@
             text-align: center;
         }
 
+        .process-copy {
+            position: relative;
+            max-width: 32ch;
+            margin: 0 auto;
+        }
+
         .process-thumb {
+            position: relative;
             width: 166px;
             height: 166px;
             border-radius: 14px;
-            overflow: hidden;
+            overflow: visible;
             border: 1px solid rgba(43,43,43,0.16);
             background: rgba(255,255,255,0.85);
             display: flex;
@@ -3778,6 +3892,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            border-radius: 14px;
         }
 
         .process-step h4 {
@@ -3785,10 +3900,8 @@
             font-size: 1.36rem;
             font-weight: 650;
             color: var(--ink);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+            display: block;
+            text-align: center;
         }
 
         .process-step p {
@@ -3796,6 +3909,16 @@
             color: rgba(43,43,43,0.72);
             line-height: 1.45;
             font-size: 1.08rem;
+            text-align: center;
+        }
+
+        .process-thumb .process-number {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform: translate(-46%, -50%);
+            z-index: 1;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
         }
 
         .trust-row {
@@ -4132,6 +4255,9 @@
                 margin: 0 0 14px 0;
                 text-align: center;
             }
+            .process-label-panel {
+                display: none;
+            }
             .process-grid {
                 grid-template-columns: 1fr;
                 gap: 14px;
@@ -4182,7 +4308,7 @@
             <div class="splash-logo">
                 <img src="/momenzaLogo.png" alt="Momenza Logo" style="width: 200px; max-width: 100%; height: auto;">
             </div>
-            <h1 class="splash-title">Welcome to Momenza Studio</h1>
+            <h1 class="splash-title">Welcome to Momenza</h1>
             <p class="splash-subtitle">Please enter the password to continue</p>
             <form id="password-form" class="password-form" onsubmit="handlePasswordSubmit(event)">
                 <div class="password-input-wrapper">
@@ -4210,12 +4336,13 @@
         <div id="debug-content"></div>
         <button onclick="this.parentElement.style.display='none'" style="float:right;background:red;color:white;border:none;padding:2px 6px;margin-top:5px;">X</button>
     </div>
+    <div id="how-it-works-backdrop" aria-hidden="true"></div>
     
     <!-- Navigation Bar -->
     <nav class="navbar" id="navbar">
         <a href="#" class="navbar-brand" onclick="event.preventDefault(); scrollToSection('hero-container'); return false;">
             <img src="/momenzaLogo.png" alt="Momenza Logo">
-            <span>Momenza Studio</span>
+            <span>Momenza</span>
         </a>
         <ul class="navbar-nav">
             <li><a href="#" onclick="event.preventDefault(); scrollToSection('upload-container'); return false;">Process</a></li>
@@ -4278,39 +4405,51 @@
                 </div>
             </div>
             <div id="how-it-works" class="process-section">
+                <div class="process-label-panel" aria-hidden="true"></div>
                 <h2 class="process-title">How it Works</h2>
-                <div id="how-it-works-guide" style="display:none;">
-                    Review the steps below, then continue.
-                    <button id="how-it-works-continue" class="onboarding-btn primary" type="button">Continue</button>
-                </div>
                 <div class="process-grid">
                     <div class="process-step">
                         <div>
                             <div class="process-thumb">
+                                <span class="process-number">1</span>
                                 <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Upload a photo">
                             </div>
-                            <h4><span class="process-number">1</span>Upload a Memory</h4>
-                            <p>Choose a clear, well-lit image.</p>
+                            <div class="process-copy">
+                                <h4>Upload a Memory</h4>
+                                <p>Choose a clear, well-lit image.</p>
+                            </div>
                         </div>
                     </div>
                     <div class="process-step">
                         <div>
                             <div class="process-thumb">
+                                <span class="process-number">2</span>
                                 <img src="/howitworks/2_rm_crop.png" alt="Frame your pendant">
                             </div>
-                            <h4><span class="process-number">2</span>Visualize Your Pendant</h4>
-                            <p>Customize your pendant in our 3D viewer.</p>
+                            <div class="process-copy">
+                                <h4>Visualize Your Pendant</h4>
+                                <p>Customize your pendant in our 3D viewer.</p>
+                            </div>
                         </div>
                     </div>
                     <div class="process-step">
                         <div>
                             <div class="process-thumb">
+                                <span class="process-number">3</span>
                                 <img src="/howitworks/3_rm_finished.png" alt="Receive your keepsake">
                             </div>
-                            <h4><span class="process-number">3</span>Receive your Keepsake</h4>
-                            <p>Wait patiently while we craft your pendant.</p>
+                            <div class="process-copy">
+                                <h4>Receive your Keepsake</h4>
+                                <p>Handcrafted and shipped to you.</p>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </div>
+            <div id="how-it-works-guide" style="display:none;">
+                <div class="guide-actions">
+                    <button id="how-it-works-next" class="onboarding-btn secondary" type="button">Next</button>
+                    <button id="how-it-works-continue" class="onboarding-btn primary" type="button">Continue</button>
                 </div>
             </div>
         </div>
@@ -4689,10 +4828,12 @@
                 const faqSubtext = document.getElementById('faq-subtext');
                 const faqContainer = document.getElementById('faq-container');
                 const faqToggleAllBtn = document.getElementById('faq-toggle-all');
+                const faqItems = document.querySelectorAll('.faq-item');
                 const addPhotoBtn = document.getElementById('add-photo-btn');
                 const imagineBtn = document.getElementById('imagine-btn');
                 const themeSelector = document.getElementById('theme-selector');
-                let faqCollapsed = true;
+                const initialVisibleFaqCount = 3;
+                let faqExpanded = false;
             const THEME_KEY = 'iks-theme';
             const getVar = (name, fallback) => {
                 const val = getComputedStyle(document.documentElement).getPropertyValue(name)?.trim();
@@ -4868,8 +5009,11 @@
                 const updateFaqVisibility = () => {
                     if (faqList) faqList.style.display = 'flex';
                     if (faqSubtext) faqSubtext.style.display = 'block';
-                    if (faqContainer) faqContainer.setAttribute('aria-expanded', faqCollapsed ? 'false' : 'true');
-                    if (faqToggleAllBtn) faqToggleAllBtn.setAttribute('aria-expanded', faqCollapsed ? 'false' : 'true');
+                    faqItems.forEach((item, index) => {
+                        item.style.display = (faqExpanded || index < initialVisibleFaqCount) ? 'block' : 'none';
+                    });
+                    if (faqContainer) faqContainer.setAttribute('aria-expanded', faqExpanded ? 'true' : 'false');
+                    if (faqToggleAllBtn) faqToggleAllBtn.setAttribute('aria-expanded', faqExpanded ? 'true' : 'false');
                 };
 
                 // Gentle CTA pulse (once)
@@ -4898,18 +5042,18 @@
                 const faqMoreBtn = document.getElementById('faq-more-btn');
                 const faqMoreArrows = document.getElementById('faq-more-arrows');
                 
-                const toggleFaq = () => {
-                    faqCollapsed = !faqCollapsed;
-                    faqButtons.forEach((btn) => setFaqItemOpen(btn, !faqCollapsed));
+                const revealMoreFaq = () => {
+                    faqExpanded = true;
                     updateFaqVisibility();
+                    if (faqMoreBtn) faqMoreBtn.style.display = 'none';
                 };
                 
                 if (faqToggleAllBtn) {
-                    faqToggleAllBtn.addEventListener('click', toggleFaq);
+                    faqToggleAllBtn.addEventListener('click', revealMoreFaq);
                 }
                 
                 if (faqMoreBtn) {
-                    faqMoreBtn.addEventListener('click', toggleFaq);
+                    faqMoreBtn.addEventListener('click', revealMoreFaq);
                 }
                 
                 updateFaqVisibility();
@@ -5438,7 +5582,7 @@
 
     <!-- Cropper Modal -->
     <div id="cropper-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);z-index:4000;justify-content:center;align-items:center;flex-direction:column;">
-        <div style="background:#222;padding:24px;border-radius:10px;box-shadow:0 2px 16px #000;max-width:90vw;max-height:90vh;display:flex;flex-direction:row;align-items:flex-start;gap:32px;">
+        <div style="background:#ffffff;padding:24px;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.2);max-width:90vw;max-height:90vh;display:flex;flex-direction:row;align-items:flex-start;gap:32px;">
             <!-- Mobile cropping instructions -->
             <div id="mobile-crop-instructions" style="display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,150,0,0.9);color:white;padding:8px 16px;border-radius:6px;font-size:14px;z-index:1;text-align:center;">
                 📱 Drag corners to crop • Double-tap to reset
@@ -5473,9 +5617,9 @@
                 </div>
             </div>
             <!-- Live Preview -->
-            <div id="cropper-preview-container" style="background:#111;padding:12px;border-radius:8px;min-width:260px;min-height:260px;display:flex;flex-direction:column;align-items:center;">
-                <div style="color:white;font-size:1em;margin-bottom:8px;">Live Preview</div>
-                <div style="background:#222;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;width:250px;height:250px;">
+            <div id="cropper-preview-container" style="background:#ffffff;padding:12px;border-radius:14px;border:1.5px solid rgba(0,0,0,0.18);min-width:260px;min-height:260px;display:flex;flex-direction:column;align-items:center;">
+                <div style="color:#222;font-size:1em;margin-bottom:8px;">Live Preview</div>
+                <div style="background:#ffffff;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;width:250px;height:250px;">
                     <canvas id="cropper-preview" width="250" height="250" style="display:block;border-radius:50%;"></canvas>
                 </div>
             </div>
@@ -5504,7 +5648,7 @@
         // To generate a hash for your password, use: await crypto.subtle.digest('SHA-256', new TextEncoder().encode('yourpassword'))
         // Then convert to hex: Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
         // Or use an online SHA-256 tool
-        const CORRECT_PASSWORD_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'; // Default: "password"
+        const CORRECT_PASSWORD_HASH = '7c72a8db971e2f6cbf2647c0217382509c4bbe4d57146b93690c8aed1f19e6e4'; // Default: "password5321"
         
         // Session storage key
         const AUTH_SESSION_KEY = 'momenza_authenticated';
@@ -5679,8 +5823,54 @@
 
             const showHowItWorksGuide = () => {
                 const guide = getEl('how-it-works-guide');
-                if (guide) guide.classList.add('active');
-                safeScrollTo('how-it-works');
+                const howItWorks = getEl('how-it-works');
+                const backdrop = getEl('how-it-works-backdrop');
+                const nextBtn = getEl('how-it-works-next');
+                const continueBtn = getEl('how-it-works-continue');
+                if (!guide || !howItWorks || !nextBtn || !continueBtn) return;
+
+                const steps = Array.from(howItWorks.querySelectorAll('.process-step'));
+                if (!steps.length) return;
+
+                let activeStepIndex = 0;
+                const setActiveStep = (index) => {
+                    activeStepIndex = Math.max(0, Math.min(index, steps.length - 1));
+                    steps.forEach((step, i) => {
+                        step.classList.toggle('is-active', i === activeStepIndex);
+                    });
+
+                    const isLastStep = activeStepIndex === steps.length - 1;
+                    nextBtn.style.display = isLastStep ? 'none' : 'inline-flex';
+                    continueBtn.style.display = isLastStep ? 'inline-flex' : 'none';
+                };
+
+                guide.classList.add('active');
+                guide.classList.add('onboarding-floating');
+                guide.style.display = 'block';
+                howItWorks.classList.add('onboarding-modal');
+                document.body.classList.add('onboarding-how-open');
+                if (backdrop) backdrop.classList.add('active');
+
+                const placeGuide = () => {
+                    const rect = howItWorks.getBoundingClientRect();
+                    guide.style.width = `${Math.min(rect.width, 520)}px`;
+                    guide.style.maxWidth = '94vw';
+                    guide.style.left = `${rect.left + rect.width / 2}px`;
+                    guide.style.transform = 'translateX(-50%)';
+
+                    const guideRect = guide.getBoundingClientRect();
+                    const desiredTop = rect.bottom + 12;
+                    const maxTop = window.innerHeight - guideRect.height - 12;
+                    const clampedTop = Math.max(12, Math.min(desiredTop, maxTop));
+                    guide.style.top = `${clampedTop}px`;
+                };
+
+                placeGuide();
+                window.addEventListener('resize', placeGuide);
+                setActiveStep(0);
+
+                nextBtn.onclick = () => setActiveStep(activeStepIndex + 1);
+                guide._placeGuide = placeGuide;
             };
 
             const showAddPhotoGuide = () => {
@@ -5718,9 +5908,12 @@
                 const overlay = getEl('onboarding-overlay');
                 const yesBtn = getEl('onboarding-yes');
                 const noBtn = getEl('onboarding-no');
+                const nextBtn = getEl('how-it-works-next');
                 const continueBtn = getEl('how-it-works-continue');
+                const howItWorks = getEl('how-it-works');
+                const backdrop = getEl('how-it-works-backdrop');
 
-                if (!overlay || !yesBtn || !noBtn || !continueBtn) return;
+                if (!overlay || !yesBtn || !noBtn || !nextBtn || !continueBtn || !howItWorks) return;
 
                 showOverlay();
 
@@ -5735,7 +5928,27 @@
 
                 continueBtn.addEventListener('click', () => {
                     const guide = getEl('how-it-works-guide');
-                    if (guide) guide.classList.remove('active');
+                    if (guide) {
+                        guide.classList.remove('active');
+                        guide.classList.remove('onboarding-floating');
+                        guide.style.display = 'none';
+                        guide.style.left = '';
+                        guide.style.top = '';
+                        guide.style.transform = '';
+                        guide.style.width = '';
+                        if (guide._placeGuide) {
+                            window.removeEventListener('resize', guide._placeGuide);
+                            delete guide._placeGuide;
+                        }
+                    }
+                    howItWorks.classList.remove('onboarding-modal');
+                    howItWorks.querySelectorAll('.process-step').forEach((step) => {
+                        step.classList.remove('is-active');
+                    });
+                    if (backdrop) backdrop.classList.remove('active');
+                    document.body.classList.remove('onboarding-how-open');
+                    nextBtn.style.display = 'inline-flex';
+                    continueBtn.style.display = 'none';
                     sessionStorage.setItem(ONBOARDING_KEY, 'true');
                     showAddPhotoGuide();
                 });

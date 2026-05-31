@@ -3001,8 +3001,10 @@ class HeightfieldViewer {
             const heightfieldData = this.generateHeightfieldData(image);
             this.createHeightfieldMesh(heightfieldData);
             
-            // Hide demo message when user uploads their own image (not for initial load)
-            // Leave best-practices badge visible until user explicitly dismisses
+            // Hide welcome/demo message after any user-provided image is processed.
+            if (typeof hideDemoMessage === 'function') {
+                hideDemoMessage();
+            }
         }
         // Show the canvas container when image is processed
         const canvasContainer = document.getElementById('canvas-container');
@@ -3903,7 +3905,7 @@ class HeightfieldViewer {
                 console.log('Sprue added successfully');
                 
                 // Add embossed text to sprue based on metal type
-                const sprueMetalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+                const sprueMetalType = this.currentMetalType || document.getElementById('metal-type')?.value || 'sterling-silver';
                 let textContent = '';
                 switch (sprueMetalType) {
                     case 'gold-14k':
@@ -4097,7 +4099,7 @@ class HeightfieldViewer {
                 this.heightfield = mesh;
                 
                 // Create back engraving for quality stamp
-                const currentMetalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+                const currentMetalType = this.currentMetalType || document.getElementById('metal-type')?.value || 'sterling-silver';
                 this.updateBackEngraving(currentMetalType);
                 
                 // Create platform at the bottom edge of the pendant
@@ -4107,7 +4109,7 @@ class HeightfieldViewer {
                 // this.createJumpring('small');
                 // this.updateJumpringPosition();
                 // Ensure the correct metal material is applied on first render
-                const metalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+                const metalType = this.currentMetalType || document.getElementById('metal-type')?.value || 'sterling-silver';
                 this.updateMetalMaterial(metalType);
                 console.log('Adding red layer');
                 console.log('Scene children:', this.scene.children.length);
@@ -4435,7 +4437,7 @@ class HeightfieldViewer {
                 }
                 
                 // Ensure the correct metal material is applied on first render
-                const earringMetalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+                const earringMetalType = this.currentMetalType || document.getElementById('metal-type')?.value || 'sterling-silver';
                 this.updateMetalMaterial(earringMetalType);
                 
                 // Fit camera to the earrings group to ensure jump rings are visible
@@ -4596,7 +4598,7 @@ class HeightfieldViewer {
         this.createJumpring('small');
         this.updateJumpringPosition();
         // Ensure the correct metal material is applied on first render
-        const metalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+        const metalType = this.currentMetalType || document.getElementById('metal-type')?.value || 'sterling-silver';
         this.updateMetalMaterial(metalType);
         console.log('Adding red layer');
         console.log('Scene children:', this.scene.children.length);
