@@ -4107,6 +4107,7 @@
         }
 
         .examples-embla {
+            --examples-slide-count: 1;
             overflow: hidden;
             outline: none;
             width: min(737px, 82vw);
@@ -4117,11 +4118,51 @@
             display: flex;
             gap: 0;
             will-change: transform;
+            width: calc(var(--examples-slide-count) * 100%);
+            touch-action: pan-y pinch-zoom;
         }
 
         .examples-embla__slide {
-            flex: 0 0 100%;
-            min-width: 0;
+            flex: 0 0 calc(100% / var(--examples-slide-count));
+            width: calc(100% / var(--examples-slide-count));
+            min-width: calc(100% / var(--examples-slide-count));
+            max-width: calc(100% / var(--examples-slide-count));
+        }
+
+        .examples-nav {
+            margin-top: 14px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .examples-nav-btn {
+            min-width: 110px;
+            height: 42px;
+            border-radius: 11px;
+            border: 1px solid rgba(43,43,43,0.18);
+            background: rgba(255,255,255,0.92);
+            color: var(--ink);
+            font-size: 0.95rem;
+            font-weight: 650;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+        }
+
+        .examples-nav-btn:hover:not(:disabled),
+        .examples-nav-btn:focus-visible:not(:disabled) {
+            background: #fff;
+            border-color: rgba(43,43,43,0.3);
+            transform: translateY(-1px);
+            outline: none;
+        }
+
+        .examples-nav-btn:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .example-card {
@@ -4129,6 +4170,7 @@
             border: 1px solid rgba(43,43,43,0.12);
             border-radius: 16px;
             padding: 12px;
+            box-sizing: border-box;
             box-shadow: 0 8px 22px rgba(0,0,0,0.08);
             cursor: default;
             transform: none;
@@ -4290,6 +4332,10 @@
         @media (max-width: 640px) {
             .examples-container {
                 padding: 22px 14px 24px;
+            }
+            .examples-nav-btn {
+                min-width: 96px;
+                height: 40px;
             }
             .examples-lightbox-panel {
                 width: min(100%, 98vw);
@@ -5917,6 +5963,10 @@
                     </button>
                 </div>
             </div>
+        </div>
+        <div class="examples-nav" aria-label="Examples carousel controls">
+            <button id="examples-prev" class="examples-nav-btn" type="button" aria-label="Show previous example">← Prev</button>
+            <button id="examples-next" class="examples-nav-btn" type="button" aria-label="Show next example">Next →</button>
         </div>
     </div>
 </section>
@@ -9977,56 +10027,70 @@
         }
     </script>
 
-    <script src="https://unpkg.com/embla-carousel/embla-carousel.umd.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const emblaNode = document.getElementById('examples-embla');
-            if (!emblaNode || typeof EmblaCarousel !== 'function') return;
+            const carouselRoot = document.getElementById('examples-embla');
+            if (!carouselRoot) return;
 
             const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             const isDesktop = () => window.matchMedia('(min-width: 1025px)').matches;
-            const cards = Array.from(document.querySelectorAll('.example-card'));
+            const container = carouselRoot.querySelector('.examples-embla__container');
+            const slideNodes = Array.from(carouselRoot.querySelectorAll('.examples-embla__slide'));
+            const cards = Array.from(carouselRoot.querySelectorAll('.example-card'));
+            const prevBtn = document.getElementById('examples-prev');
+            const nextBtn = document.getElementById('examples-next');
             const lightbox = document.getElementById('examples-lightbox');
             const closeBtn = document.getElementById('examples-lightbox-close');
             const lightboxTitle = document.getElementById('examples-lightbox-title');
             const lightboxBefore = document.getElementById('examples-lightbox-before');
             const lightboxAfter = document.getElementById('examples-lightbox-after');
             const lightboxCompare = document.getElementById('examples-lightbox-compare');
+            if (!container || slideNodes.length === 0) return;
 
-            let emblaApi = null;
+            const slideCount = slideNodes.length;
+            let currentIndex = 0;
             let activePreviouslyFocused = null;
 
-            const snapToFirstSlide = () => {
-                if (!emblaApi) return;
-                emblaApi.scrollTo(0, true);
-                requestAnimationFrame(() => emblaApi.scrollTo(0, true));
-            };
-
-            const keepNearestSnap = () => {
-                if (!emblaApi) return;
-                emblaApi.scrollTo(emblaApi.selectedScrollSnap(), true);
-            };
-
-            const applyParallax = () => {
-                if (!emblaApi || reduceMotion) {
-                    cards.forEach((card) => card.style.setProperty('--parallax-offset', '0px'));
-                    return;
-                }
-                const scrollProgress = emblaApi.scrollProgress();
-                const snaps = emblaApi.scrollSnapList();
-                const selectedSnap = emblaApi.selectedScrollSnap();
-                const selectedSnapPoint = snaps[selectedSnap] || 0;
-                cards.forEach((card, index) => {
-                    const snapPoint = snaps[index] ?? selectedSnapPoint;
-                    const delta = snapPoint - scrollProgress;
-                    const offset = Math.max(-22, Math.min(22, delta * -90));
-                    card.style.setProperty('--parallax-offset', `${offset}px`);
-                });
-            };
+            carouselRoot.style.setProperty('--examples-slide-count', String(slideCount));
 
             const setComparisonSplit = (compareEl, ratio) => {
                 const clamped = Math.max(0.05, Math.min(0.95, ratio));
                 compareEl.style.setProperty('--split', `${clamped * 100}%`);
+            };
+
+            const applyParallax = () => {
+                if (reduceMotion) {
+                    cards.forEach((card) => card.style.setProperty('--parallax-offset', '0px'));
+                    return;
+                }
+                cards.forEach((card, index) => {
+                    const distance = index - currentIndex;
+                    const offset = Math.max(-18, Math.min(18, distance * -10));
+                    card.style.setProperty('--parallax-offset', `${offset}px`);
+                });
+            };
+
+            const updateExamplesNav = () => {
+                if (!prevBtn || !nextBtn) return;
+                prevBtn.disabled = currentIndex <= 0;
+                nextBtn.disabled = currentIndex >= slideCount - 1;
+            };
+
+            const renderCarousel = (instant = false) => {
+                const offsetPercent = -(currentIndex * (100 / slideCount));
+                container.style.transition = (instant || reduceMotion)
+                    ? 'none'
+                    : 'transform 420ms cubic-bezier(0.22, 1, 0.36, 1)';
+                container.style.transform = `translate3d(${offsetPercent}%, 0, 0)`;
+                applyParallax();
+                updateExamplesNav();
+            };
+
+            const goToIndex = (index) => {
+                const target = Math.max(0, Math.min(slideCount - 1, index));
+                if (target === currentIndex) return;
+                currentIndex = target;
+                renderCarousel(false);
             };
 
             const enableComparisonDrag = (compareEl) => {
@@ -10120,47 +10184,34 @@
             });
 
             enableComparisonDrag(lightboxCompare);
-
             document.querySelectorAll('[data-compare]').forEach((compareEl) => {
                 if (compareEl === lightboxCompare) return;
                 setComparisonSplit(compareEl, 0.5);
                 enableComparisonDrag(compareEl);
             });
 
-            emblaApi = EmblaCarousel(
-                emblaNode,
-                {
-                    loop: false,
-                    align: 'start',
-                    containScroll: 'trimSnaps',
-                    dragFree: false,
-                    skipSnaps: false,
-                    startIndex: 0,
-                    watchDrag: (_, event) => {
-                        const target = event?.target;
-                        if (!(target instanceof HTMLElement)) return true;
-                        return !target.closest('[data-compare]');
-                    }
+            prevBtn?.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                goToIndex(currentIndex - 1);
+            });
+            nextBtn?.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                goToIndex(currentIndex + 1);
+            });
+
+            carouselRoot.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowLeft') {
+                    event.preventDefault();
+                    goToIndex(currentIndex - 1);
+                } else if (event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    goToIndex(currentIndex + 1);
                 }
-            );
+            });
 
-            emblaApi.on('select', applyParallax);
-            emblaApi.on('scroll', applyParallax);
-            emblaApi.on('settle', () => {
-                keepNearestSnap();
-                applyParallax();
-            });
-            emblaApi.on('reInit', () => {
-                applyParallax();
-                keepNearestSnap();
-            });
-            applyParallax();
-            snapToFirstSlide();
-
-            window.addEventListener('resize', () => {
-                applyParallax();
-                keepNearestSnap();
-            });
+            renderCarousel(true);
         });
     </script>
 
