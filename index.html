@@ -4071,6 +4071,251 @@
             white-space: nowrap;
         }
 
+        .examples-section {
+            width: 100%;
+            padding: 44px 16px 64px;
+            box-sizing: border-box;
+            background: var(--bg-parchment);
+        }
+
+        .examples-container {
+            width: min(1190px, 92vw);
+            margin: 0 auto;
+            padding: 28px 22px 30px;
+            border-radius: 20px;
+            border: 1.5px solid rgba(43,43,43,0.12);
+            background: rgba(255,255,255,0.62);
+            box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+        }
+
+        .examples-container h2 {
+            margin: 0;
+            color: var(--ink);
+            font-size: clamp(1.8rem, 3.5vw, 2.7rem);
+            letter-spacing: -0.02em;
+            text-align: center;
+        }
+
+        .examples-subtitle {
+            margin: 10px auto 18px;
+            max-width: 62ch;
+            text-align: center;
+            color: rgba(43,43,43,0.72);
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        .examples-embla {
+            overflow: hidden;
+            outline: none;
+            width: min(737px, 82vw);
+            margin: 0 auto;
+        }
+
+        .examples-embla__container {
+            display: flex;
+            gap: 0;
+            will-change: transform;
+        }
+
+        .examples-embla__slide {
+            flex: 0 0 100%;
+            min-width: 0;
+        }
+
+        .example-card {
+            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(43,43,43,0.12);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+            cursor: default;
+            transform: none;
+            transition: transform 280ms ease, box-shadow 220ms ease;
+            height: 100%;
+            width: 100%;
+            margin: 0 auto;
+            --parallax-offset: 0px;
+        }
+
+        .example-card:hover,
+        .example-card:focus-visible {
+            box-shadow: 0 12px 24px rgba(0,0,0,0.11);
+            outline: none;
+        }
+
+        .example-compare {
+            --split: 50%;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(43,43,43,0.14);
+            background: #e7e3db;
+            aspect-ratio: 1 / 1;
+            touch-action: none;
+            transform: translateX(var(--parallax-offset));
+            transition: transform 120ms linear;
+        }
+
+        .example-compare img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .example-compare > img:first-child {
+            object-position: var(--before-x, 50%) var(--before-y, 50%);
+        }
+
+        .example-compare .after-layer {
+            object-position: var(--after-x, 50%) var(--after-y, 50%);
+        }
+
+        .example-compare .after-layer {
+            clip-path: inset(0 0 0 var(--split));
+        }
+
+        .example-divider {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: var(--split);
+            width: 0;
+            border-left: 2px solid rgba(255,255,255,0.9);
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.18);
+            transform: translateX(-1px);
+            pointer-events: none;
+        }
+
+        .example-divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 26px;
+            height: 26px;
+            transform: translate(-50%, -50%);
+            border-radius: 999px;
+            background: rgba(255,255,255,0.95);
+            border: 1px solid rgba(43,43,43,0.16);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+        }
+
+        .example-label {
+            margin: 10px 2px 2px;
+            text-align: center;
+            font-weight: 650;
+            color: var(--ink);
+            letter-spacing: 0.01em;
+        }
+
+        .examples-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 2147483600;
+            background: rgba(16, 16, 16, 0.74);
+            backdrop-filter: blur(2px);
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .examples-lightbox.active {
+            display: flex;
+        }
+
+        .examples-lightbox-panel {
+            width: min(980px, 96vw);
+            max-height: 94vh;
+            overflow: auto;
+            background: #f8f6f2;
+            border-radius: 16px;
+            border: 1px solid rgba(43,43,43,0.14);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.32);
+            padding: 14px 14px 18px;
+            position: relative;
+        }
+
+        .examples-lightbox-close {
+            position: sticky;
+            top: 0;
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            border: 1px solid rgba(43,43,43,0.14);
+            background: rgba(255,255,255,0.92);
+            color: var(--ink);
+            font-size: 1.3rem;
+            cursor: pointer;
+            z-index: 1;
+        }
+
+        .examples-lightbox-title {
+            margin: 8px 4px 0;
+            text-align: center;
+            font-weight: 700;
+            color: var(--ink);
+            font-size: 1.2rem;
+        }
+
+        .examples-lightbox .example-compare {
+            margin-top: 8px;
+            aspect-ratio: 2 / 3;
+        }
+
+        @media (max-width: 1024px) {
+            .example-card {
+                transform: none !important;
+            }
+            .example-compare {
+                --split: 50% !important;
+                touch-action: pan-y;
+            }
+            .example-divider::after {
+                width: 22px;
+                height: 22px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .examples-container {
+                padding: 22px 14px 24px;
+            }
+            .examples-lightbox-panel {
+                width: min(100%, 98vw);
+                padding: 10px 10px 14px;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .examples-section {
+                min-height: calc(100vh - 70px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .examples-container {
+                width: min(1084px, 92vw);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .example-card {
+                transition: none !important;
+                transform: none !important;
+            }
+        }
+
         /* Floating action buttons container - HIDDEN */
         .floating-action-buttons {
             display: none !important;
@@ -5624,11 +5869,69 @@
     </div>
 </div>
 
-<section id="examples-coming-soon" style="min-height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; background: var(--bg-parchment);">
-    <div style="text-align: center; padding: 24px;">
-        <h2 style="margin: 0; color: var(--ink); font-size: clamp(2rem, 5vw, 3.2rem); letter-spacing: -0.02em;">Examples coming soon...</h2>
+<section id="examples-coming-soon" class="examples-section">
+    <div class="examples-container">
+        <h2>Made from Real Memories</h2>
+        <p class="examples-subtitle"></p>
+
+        <div class="examples-embla" id="examples-embla" tabindex="0" aria-label="Examples gallery carousel">
+            <div class="examples-embla__container">
+                <div class="examples-embla__slide">
+                    <button class="example-card" type="button" data-label="Pet Portrait" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
+                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original pet portrait photo before customization">
+                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished pet portrait pendant rendering">
+                            <span class="example-divider" aria-hidden="true"></span>
+                        </div>
+                        <p class="example-label">Pet Portrait</p>
+                    </button>
+                </div>
+                <div class="examples-embla__slide">
+                    <button class="example-card" type="button" data-label="Family Memory" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
+                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original family memory photo before customization">
+                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished family memory pendant rendering">
+                            <span class="example-divider" aria-hidden="true"></span>
+                        </div>
+                        <p class="example-label">Family Memory</p>
+                    </button>
+                </div>
+                <div class="examples-embla__slide">
+                    <button class="example-card" type="button" data-label="Wedding Moment" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
+                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original wedding moment photo before customization">
+                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished wedding keepsake pendant rendering">
+                            <span class="example-divider" aria-hidden="true"></span>
+                        </div>
+                        <p class="example-label">Wedding Moment</p>
+                    </button>
+                </div>
+                <div class="examples-embla__slide">
+                    <button class="example-card" type="button" data-label="Travel Keepsake" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
+                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original travel photo before customization">
+                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished travel keepsake pendant rendering">
+                            <span class="example-divider" aria-hidden="true"></span>
+                        </div>
+                        <p class="example-label">Travel Keepsake</p>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
+
+<div id="examples-lightbox" class="examples-lightbox" aria-hidden="true">
+    <div class="examples-lightbox-panel" role="dialog" aria-modal="true" aria-label="Example transformation detail">
+        <button id="examples-lightbox-close" class="examples-lightbox-close" type="button" aria-label="Close example viewer">×</button>
+        <p id="examples-lightbox-title" class="examples-lightbox-title"></p>
+        <div class="example-compare" id="examples-lightbox-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
+            <img id="examples-lightbox-before" src="" alt="Original photo enlarged view">
+            <img id="examples-lightbox-after" class="after-layer" src="" alt="Finished pendant enlarged view">
+            <span class="example-divider" aria-hidden="true"></span>
+        </div>
+    </div>
+</div>
 
 <!-- Loading Overlay -->
 <div id="loading-overlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.92);z-index:3000;justify-content:center;align-items:center;flex-direction:column;">
@@ -9672,6 +9975,193 @@
                 });
             }
         }
+    </script>
+
+    <script src="https://unpkg.com/embla-carousel/embla-carousel.umd.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const emblaNode = document.getElementById('examples-embla');
+            if (!emblaNode || typeof EmblaCarousel !== 'function') return;
+
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const isDesktop = () => window.matchMedia('(min-width: 1025px)').matches;
+            const cards = Array.from(document.querySelectorAll('.example-card'));
+            const lightbox = document.getElementById('examples-lightbox');
+            const closeBtn = document.getElementById('examples-lightbox-close');
+            const lightboxTitle = document.getElementById('examples-lightbox-title');
+            const lightboxBefore = document.getElementById('examples-lightbox-before');
+            const lightboxAfter = document.getElementById('examples-lightbox-after');
+            const lightboxCompare = document.getElementById('examples-lightbox-compare');
+
+            let emblaApi = null;
+            let activePreviouslyFocused = null;
+
+            const snapToFirstSlide = () => {
+                if (!emblaApi) return;
+                emblaApi.scrollTo(0, true);
+                requestAnimationFrame(() => emblaApi.scrollTo(0, true));
+            };
+
+            const keepNearestSnap = () => {
+                if (!emblaApi) return;
+                emblaApi.scrollTo(emblaApi.selectedScrollSnap(), true);
+            };
+
+            const applyParallax = () => {
+                if (!emblaApi || reduceMotion) {
+                    cards.forEach((card) => card.style.setProperty('--parallax-offset', '0px'));
+                    return;
+                }
+                const scrollProgress = emblaApi.scrollProgress();
+                const snaps = emblaApi.scrollSnapList();
+                const selectedSnap = emblaApi.selectedScrollSnap();
+                const selectedSnapPoint = snaps[selectedSnap] || 0;
+                cards.forEach((card, index) => {
+                    const snapPoint = snaps[index] ?? selectedSnapPoint;
+                    const delta = snapPoint - scrollProgress;
+                    const offset = Math.max(-22, Math.min(22, delta * -90));
+                    card.style.setProperty('--parallax-offset', `${offset}px`);
+                });
+            };
+
+            const setComparisonSplit = (compareEl, ratio) => {
+                const clamped = Math.max(0.05, Math.min(0.95, ratio));
+                compareEl.style.setProperty('--split', `${clamped * 100}%`);
+            };
+
+            const enableComparisonDrag = (compareEl) => {
+                let active = false;
+                let pointerId = null;
+
+                const updateFromClientX = (clientX) => {
+                    const rect = compareEl.getBoundingClientRect();
+                    const ratio = (clientX - rect.left) / rect.width;
+                    setComparisonSplit(compareEl, ratio);
+                };
+
+                const onPointerDown = (event) => {
+                    if (!isDesktop() && compareEl !== lightboxCompare) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    active = true;
+                    pointerId = event.pointerId;
+                    compareEl.setPointerCapture(pointerId);
+                    updateFromClientX(event.clientX);
+                };
+
+                const onPointerMove = (event) => {
+                    if (!active || event.pointerId !== pointerId) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    updateFromClientX(event.clientX);
+                };
+
+                const stop = () => {
+                    if (!active) return;
+                    active = false;
+                    pointerId = null;
+                };
+
+                compareEl.addEventListener('pointerdown', onPointerDown);
+                compareEl.addEventListener('pointermove', onPointerMove);
+                compareEl.addEventListener('pointerup', stop);
+                compareEl.addEventListener('pointercancel', stop);
+                compareEl.addEventListener('lostpointercapture', stop);
+            };
+
+            const trapFocus = (event) => {
+                if (!lightbox.classList.contains('active')) return;
+                if (event.key !== 'Tab') return;
+                const focusables = Array.from(lightbox.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])'))
+                    .filter((el) => !el.disabled && el.offsetParent !== null);
+                if (!focusables.length) return;
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
+            };
+
+            const openLightbox = (card) => {
+                const label = card.dataset.label || 'Transformation Example';
+                lightboxTitle.textContent = label;
+                lightboxBefore.src = card.dataset.before || '';
+                lightboxAfter.src = card.dataset.after || '';
+                setComparisonSplit(lightboxCompare, 0.5);
+                activePreviouslyFocused = document.activeElement;
+                lightbox.classList.add('active');
+                lightbox.setAttribute('aria-hidden', 'false');
+                closeBtn.focus();
+            };
+
+            const closeLightbox = () => {
+                lightbox.classList.remove('active');
+                lightbox.setAttribute('aria-hidden', 'true');
+                if (activePreviouslyFocused && typeof activePreviouslyFocused.focus === 'function') {
+                    activePreviouslyFocused.focus();
+                }
+            };
+
+            // Modal interactions disabled for inline-only examples experience.
+
+            closeBtn.addEventListener('click', closeLightbox);
+            lightbox.addEventListener('click', (event) => {
+                if (event.target === lightbox) closeLightbox();
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && lightbox.classList.contains('active')) {
+                    closeLightbox();
+                }
+                trapFocus(event);
+            });
+
+            enableComparisonDrag(lightboxCompare);
+
+            document.querySelectorAll('[data-compare]').forEach((compareEl) => {
+                if (compareEl === lightboxCompare) return;
+                setComparisonSplit(compareEl, 0.5);
+                enableComparisonDrag(compareEl);
+            });
+
+            emblaApi = EmblaCarousel(
+                emblaNode,
+                {
+                    loop: false,
+                    align: 'start',
+                    containScroll: 'trimSnaps',
+                    dragFree: false,
+                    skipSnaps: false,
+                    startIndex: 0,
+                    watchDrag: (_, event) => {
+                        const target = event?.target;
+                        if (!(target instanceof HTMLElement)) return true;
+                        return !target.closest('[data-compare]');
+                    }
+                }
+            );
+
+            emblaApi.on('select', applyParallax);
+            emblaApi.on('scroll', applyParallax);
+            emblaApi.on('settle', () => {
+                keepNearestSnap();
+                applyParallax();
+            });
+            emblaApi.on('reInit', () => {
+                applyParallax();
+                keepNearestSnap();
+            });
+            applyParallax();
+            snapToFirstSlide();
+
+            window.addEventListener('resize', () => {
+                applyParallax();
+                keepNearestSnap();
+            });
+        });
     </script>
 
 <!-- Social Footer -->
