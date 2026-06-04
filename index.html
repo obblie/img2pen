@@ -4783,6 +4783,7 @@
                 --mobile-content-width: min(430px, calc(100vw - 28px));
                 --mobile-media-width: min(310px, calc(100vw - 56px));
                 --mobile-section-padding-x: 14px;
+                --mobile-hero-inner-width: min(100%, 332px);
             }
 
             body {
@@ -4874,8 +4875,8 @@
 
             .hero-text-col {
                 order: 1;
-                width: 100% !important;
-                max-width: 100% !important;
+                width: var(--mobile-hero-inner-width) !important;
+                max-width: var(--mobile-hero-inner-width) !important;
                 text-align: center !important;
                 padding: 0 !important;
                 display: flex !important;
@@ -4888,6 +4889,11 @@
                 justify-self: center !important;
                 transform: none !important;
                 box-sizing: border-box !important;
+            }
+
+            .hero-text-col > * {
+                margin-left: auto !important;
+                margin-right: auto !important;
             }
 
             .hero-container > div > div {
@@ -4904,8 +4910,8 @@
             .hero-cta-stack {
                 display: flex !important;
                 flex-direction: column !important;
-                width: 100% !important;
-                max-width: 100% !important;
+                width: var(--mobile-hero-inner-width) !important;
+                max-width: var(--mobile-hero-inner-width) !important;
                 align-items: center !important;
                 margin: 0 auto !important;
             }
@@ -4916,7 +4922,8 @@
 
             .hero-kicker {
                 margin: 18px auto 10px !important;
-                max-width: 13ch;
+                width: min(100%, 13ch) !important;
+                max-width: min(100%, 13ch) !important;
                 font-size: clamp(2.15rem, 10vw, 3.2rem) !important;
                 line-height: 0.98 !important;
                 letter-spacing: 0 !important;
@@ -4932,8 +4939,8 @@
 
             .hero-subtitle {
                 margin: 0 auto 18px !important;
-                width: min(24ch, 100%) !important;
-                max-width: min(24ch, 100%) !important;
+                width: min(100%, 24ch) !important;
+                max-width: min(100%, 24ch) !important;
                 font-size: 1.05rem !important;
                 line-height: 1.5 !important;
                 color: rgba(43,43,43,0.72) !important;
@@ -4943,8 +4950,8 @@
             }
 
             .hero-text-col .hero-subtitle {
-                width: min(24ch, 100%) !important;
-                max-width: min(24ch, 100%) !important;
+                width: min(100%, 24ch) !important;
+                max-width: min(100%, 24ch) !important;
             }
 
             .hero-subtitle::before {
@@ -4957,7 +4964,7 @@
 
             .hero-cta-stack {
                 order: 3;
-                width: 100%;
+                width: var(--mobile-hero-inner-width) !important;
             }
 
             .mobile-hero-product-image {
