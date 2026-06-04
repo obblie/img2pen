@@ -694,7 +694,7 @@
         }
 
         #how-it-works.onboarding-modal .process-step.is-active .process-thumb {
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+            box-shadow: none;
         }
 
         #add-photo-tip {
@@ -4057,7 +4057,7 @@
             height: 166px;
             border-radius: 14px;
             overflow: visible;
-            border: 1px solid rgba(43,43,43,0.16);
+            border: 0;
             background: rgba(255,255,255,0.85);
             display: flex;
             align-items: center;
@@ -4368,7 +4368,7 @@
             }
             .example-compare {
                 --split: 50% !important;
-                touch-action: pan-y;
+                touch-action: none;
             }
             .example-divider::after {
                 width: 22px;
@@ -4847,7 +4847,7 @@
 
             .hero-container {
                 min-height: auto !important;
-                padding: 18px var(--mobile-section-padding-x) 34px !important;
+                padding: 18px 0 34px !important;
                 width: var(--mobile-content-width) !important;
                 max-width: var(--mobile-content-width) !important;
                 margin: 18px auto 0 !important;
@@ -4862,20 +4862,37 @@
             .hero-grid {
                 display: flex !important;
                 flex-direction: column !important;
+                justify-content: center !important;
                 gap: 22px !important;
                 width: 100% !important;
                 max-width: none !important;
+                padding: 0 var(--mobile-section-padding-x) !important;
                 margin: 0 auto !important;
                 box-sizing: border-box !important;
+                align-items: center !important;
             }
 
             .hero-text-col {
                 order: 1;
                 width: 100% !important;
+                max-width: 100% !important;
                 text-align: center !important;
                 padding: 0 !important;
                 display: flex !important;
                 flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                margin: 0 auto !important;
+                margin-left: 0 !important;
+                margin-top: 0 !important;
+                justify-self: center !important;
+                transform: none !important;
+                box-sizing: border-box !important;
+            }
+
+            .hero-container > div > div {
+                padding: 0 !important;
+                margin: 0 auto !important;
             }
 
             .hero-media-col {
@@ -4889,6 +4906,8 @@
                 flex-direction: column !important;
                 width: 100% !important;
                 max-width: 100% !important;
+                align-items: center !important;
+                margin: 0 auto !important;
             }
 
             .hero-cta-stack .hero-upload-btn {
@@ -4902,6 +4921,8 @@
                 line-height: 0.98 !important;
                 letter-spacing: 0 !important;
                 color: #2b2925;
+                text-align: center !important;
+                text-wrap: balance;
             }
 
             .hero-kicker .line-nowrap {
@@ -4911,22 +4932,26 @@
 
             .hero-subtitle {
                 margin: 0 auto 18px !important;
-                max-width: 29ch !important;
+                width: min(24ch, 100%) !important;
+                max-width: min(24ch, 100%) !important;
                 font-size: 1.05rem !important;
                 line-height: 1.5 !important;
                 color: rgba(43,43,43,0.72) !important;
+                text-align: center !important;
+                box-sizing: border-box !important;
+                text-wrap: balance;
+            }
+
+            .hero-text-col .hero-subtitle {
+                width: min(24ch, 100%) !important;
+                max-width: min(24ch, 100%) !important;
             }
 
             .hero-subtitle::before {
-                content: "Make once in a lifetime moments last forever.";
+                content: none !important;
             }
 
-            .hero-subtitle > * ,
             .hero-subtitle {
-                color: transparent !important;
-            }
-
-            .hero-subtitle::before {
                 color: rgba(43,43,43,0.72);
             }
 
@@ -5094,33 +5119,32 @@
             }
 
             .process-thumb {
-                width: min(100%, 28ch) !important;
-                max-width: min(100%, 28ch) !important;
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
                 height: auto !important;
                 min-height: 0 !important;
                 aspect-ratio: auto;
-                border-radius: 0 !important;
+                border: 0 !important;
+                outline: 0 !important;
                 background: transparent !important;
                 box-shadow: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 10px;
-                justify-self: center;
                 overflow: visible !important;
             }
 
             .process-thumb img {
-                width: 100%;
+                width: 100% !important;
                 height: auto;
-                max-width: 100%;
+                max-width: 100% !important;
                 max-height: none;
                 border-radius: 0 !important;
+                border: 0 !important;
                 object-fit: contain;
                 object-position: center;
                 display: block;
+                margin: 0 auto;
             }
 
             .process-thumb .process-number {
@@ -11341,6 +11365,7 @@
             const enableComparisonDrag = (compareEl) => {
                 let active = false;
                 let pointerId = null;
+                let dragMode = null;
 
                 const updateFromClientX = (clientX) => {
                     const rect = compareEl.getBoundingClientRect();
@@ -11348,27 +11373,65 @@
                     setComparisonSplit(compareEl, ratio);
                 };
 
+                const startDrag = (clientX, mode, id = null) => {
+                    active = true;
+                    dragMode = mode;
+                    pointerId = id;
+                    updateFromClientX(clientX);
+                };
+
                 const onPointerDown = (event) => {
-                    if (!isDesktop() && compareEl !== lightboxCompare) return;
                     event.preventDefault();
                     event.stopPropagation();
-                    active = true;
-                    pointerId = event.pointerId;
-                    compareEl.setPointerCapture(pointerId);
-                    updateFromClientX(event.clientX);
+                    startDrag(event.clientX, 'pointer', event.pointerId);
+                    if (typeof compareEl.setPointerCapture === 'function') {
+                        try {
+                            compareEl.setPointerCapture(event.pointerId);
+                        } catch (_) {
+                            // Ignore capture failures and fall back to move events.
+                        }
+                    }
                 };
 
                 const onPointerMove = (event) => {
-                    if (!active || event.pointerId !== pointerId) return;
+                    if (!active || dragMode !== 'pointer' || event.pointerId !== pointerId) return;
                     event.preventDefault();
                     event.stopPropagation();
                     updateFromClientX(event.clientX);
+                };
+
+                const onMouseDown = (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    startDrag(event.clientX, 'mouse');
+                };
+
+                const onMouseMove = (event) => {
+                    if (!active || dragMode !== 'mouse') return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    updateFromClientX(event.clientX);
+                };
+
+                const onTouchStart = (event) => {
+                    if (!event.touches || !event.touches.length) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    startDrag(event.touches[0].clientX, 'touch');
+                };
+
+                const onTouchMove = (event) => {
+                    if (!active || dragMode !== 'touch' || !event.touches || !event.touches.length) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    updateFromClientX(event.touches[0].clientX);
                 };
 
                 const stop = () => {
                     if (!active) return;
                     active = false;
                     pointerId = null;
+                    dragMode = null;
                 };
 
                 compareEl.addEventListener('pointerdown', onPointerDown);
@@ -11376,6 +11439,13 @@
                 compareEl.addEventListener('pointerup', stop);
                 compareEl.addEventListener('pointercancel', stop);
                 compareEl.addEventListener('lostpointercapture', stop);
+                compareEl.addEventListener('mousedown', onMouseDown);
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', stop);
+                compareEl.addEventListener('touchstart', onTouchStart, { passive: false });
+                window.addEventListener('touchmove', onTouchMove, { passive: false });
+                window.addEventListener('touchend', stop);
+                window.addEventListener('touchcancel', stop);
             };
 
             const trapFocus = (event) => {
