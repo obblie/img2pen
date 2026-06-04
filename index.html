@@ -322,7 +322,8 @@
             background: var(--bg-parchment);
             display: block;
             width: 100vw;
-            height: 100vh;
+            min-height: 100vh;
+            height: auto;
             margin: 0;
             padding: 40px;
             box-sizing: border-box;
@@ -976,7 +977,8 @@
         .scene-container {
             background: var(--bg-parchment);
             display: block;
-            width: 100vw;
+            width: 100%;
+            max-width: 100%;
             height: auto;
             min-height: 100vh;
             margin: 0;
@@ -5082,37 +5084,58 @@
             }
 
             .process-step > div {
-                display: grid !important;
-                justify-items: center;
-                gap: 12px !important;
-                padding-inline: 14px;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                gap: 16px !important;
+                width: 100%;
+                padding-inline: 4px;
                 box-sizing: border-box;
             }
 
             .process-thumb {
-                width: min(82%, 116px) !important;
+                width: min(100%, 28ch) !important;
+                max-width: min(100%, 28ch) !important;
                 height: auto !important;
-                aspect-ratio: 4 / 3;
-                border-radius: 18px !important;
-                background: #fff;
-                box-shadow: 0 12px 24px rgba(43,43,43,0.1);
+                min-height: 0 !important;
+                aspect-ratio: auto;
+                border-radius: 0 !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+                justify-self: center;
+                overflow: visible !important;
             }
 
             .process-thumb img {
-                border-radius: 18px !important;
-                object-fit: cover;
+                width: 100%;
+                height: auto;
+                max-width: 100%;
+                max-height: none;
+                border-radius: 0 !important;
+                object-fit: contain;
+                object-position: center;
+                display: block;
             }
 
-            .process-number {
-                top: -13px !important;
-                left: 50% !important;
-                transform: translateX(-50%) !important;
+            .process-thumb .process-number {
+                position: static !important;
+                top: auto !important;
+                left: auto !important;
+                transform: none !important;
                 width: 34px !important;
                 height: 34px !important;
                 z-index: 2;
                 border: 3px solid #fff;
                 background: var(--oxblood) !important;
                 color: #fff !important;
+                margin: 0 0 8px !important;
+                flex: 0 0 auto;
             }
 
             .process-copy {
@@ -5124,6 +5147,8 @@
                 border-radius: 16px;
                 background: rgba(255,255,255,0.82);
                 box-shadow: 0 8px 18px rgba(43,43,43,0.07);
+                justify-self: center;
+                margin-top: 2px;
             }
 
             .process-step h4 {
@@ -6229,8 +6254,25 @@
 
             window.moveMobilePurchasePanelToLocation = moveMobilePurchasePanelToLocation;
 
+            function moveHowItWorksSectionToLocation(isDesktop = window.innerWidth > 768) {
+                const heroContainer = document.getElementById('hero-container');
+                const processSection = document.getElementById('how-it-works');
+                if (!heroContainer || !processSection) return;
+
+                if (isDesktop) {
+                    if (processSection.parentElement !== heroContainer) {
+                        heroContainer.appendChild(processSection);
+                    }
+                } else if (processSection.parentElement !== heroContainer.parentElement || processSection.previousElementSibling !== heroContainer) {
+                    heroContainer.insertAdjacentElement('afterend', processSection);
+                }
+            }
+
+            window.moveHowItWorksSectionToLocation = moveHowItWorksSectionToLocation;
+
             document.addEventListener('DOMContentLoaded', () => {
                 moveMobilePurchasePanelToLocation();
+                moveHowItWorksSectionToLocation();
 
                 const mobileMetalSelect = document.getElementById('mobile-metal-type');
                 if (mobileMetalSelect && !mobileMetalSelect.dataset.bound) {
@@ -6355,6 +6397,7 @@
                 // Re-evaluate on resize/orientation change
                 window.addEventListener('resize', () => {
                     moveMobilePurchasePanelToLocation();
+                    moveHowItWorksSectionToLocation();
                     const hasImage = checkIfImageExists();
                     updateMobileAddPhotoFab(hasImage);
                     updateRecropButton();
