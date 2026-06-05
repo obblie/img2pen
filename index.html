@@ -4236,7 +4236,7 @@
             padding: 12px;
             box-sizing: border-box;
             box-shadow: 0 8px 22px rgba(0,0,0,0.08);
-            cursor: default;
+            cursor: pointer;
             transform: none;
             transition: transform 280ms ease, box-shadow 220ms ease;
             height: 100%;
@@ -4260,6 +4260,10 @@
             background: #e7e3db;
             aspect-ratio: 1 / 1;
             touch-action: none;
+            overscroll-behavior: contain;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            user-select: none;
             transform: translateX(var(--parallax-offset));
             transition: transform 120ms linear;
         }
@@ -4377,19 +4381,28 @@
         .examples-lightbox .example-compare {
             margin-top: 8px;
             aspect-ratio: 2 / 3;
+            touch-action: none;
+            overscroll-behavior: contain;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         @media (max-width: 1024px) {
             .example-card {
                 transform: none !important;
             }
-            .example-compare {
-                --split: 50% !important;
+            .example-card .example-compare {
+                --split: 50%;
                 touch-action: none;
+                cursor: ew-resize;
             }
             .example-divider::after {
-                width: 22px;
-                height: 22px;
+                width: 30px;
+                height: 30px;
+            }
+            .examples-lightbox .example-divider::after {
+                width: 44px;
+                height: 44px;
             }
         }
 
@@ -5438,6 +5451,12 @@
                 text-align: center;
                 color: rgba(255,255,255,0.94);
                 text-shadow: 0 2px 8px rgba(43,43,43,0.3);
+                background: rgba(43,43,43,0.34);
+                border: 1px solid rgba(255,255,255,0.16);
+                border-radius: 999px;
+                padding: 8px 12px;
+                backdrop-filter: blur(8px);
+                box-shadow: 0 8px 18px rgba(0,0,0,0.18);
             }
 
             .mobile-viewer-overlay-cta .mobile-tutorial-helper a {
@@ -7230,44 +7249,44 @@
         <div class="examples-embla" id="examples-embla" tabindex="0" aria-label="Examples gallery carousel">
             <div class="examples-embla__container">
                 <div class="examples-embla__slide">
-                    <button class="example-card" type="button" data-label="Pet Portrait" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                    <div class="example-card" role="group" aria-label="Pet Portrait example" data-label="Pet Portrait" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
                         <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
                             <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original pet portrait photo before customization">
                             <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished pet portrait pendant rendering">
                             <span class="example-divider" aria-hidden="true"></span>
                         </div>
                         <p class="example-label">Pet Portrait</p>
-                    </button>
+                    </div>
                 </div>
                 <div class="examples-embla__slide">
-                    <button class="example-card" type="button" data-label="Family Memory" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                    <div class="example-card" role="group" aria-label="Family Memory example" data-label="Family Memory" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
                         <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
                             <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original family memory photo before customization">
                             <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished family memory pendant rendering">
                             <span class="example-divider" aria-hidden="true"></span>
                         </div>
                         <p class="example-label">Family Memory</p>
-                    </button>
+                    </div>
                 </div>
                 <div class="examples-embla__slide">
-                    <button class="example-card" type="button" data-label="Wedding Moment" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                    <div class="example-card" role="group" aria-label="Wedding Moment example" data-label="Wedding Moment" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
                         <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
                             <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original wedding moment photo before customization">
                             <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished wedding keepsake pendant rendering">
                             <span class="example-divider" aria-hidden="true"></span>
                         </div>
                         <p class="example-label">Wedding Moment</p>
-                    </button>
+                    </div>
                 </div>
                 <div class="examples-embla__slide">
-                    <button class="example-card" type="button" data-label="Travel Keepsake" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                    <div class="example-card" role="group" aria-label="Travel Keepsake example" data-label="Travel Keepsake" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
                         <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
                             <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original travel photo before customization">
                             <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished travel keepsake pendant rendering">
                             <span class="example-divider" aria-hidden="true"></span>
                         </div>
                         <p class="example-label">Travel Keepsake</p>
-                    </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -11489,8 +11508,10 @@
                 compareEl.style.setProperty('--split', `${clamped * 100}%`);
             };
 
+            const isMobileExamples = () => !isDesktop();
+
             const applyParallax = () => {
-                if (reduceMotion) {
+                if (reduceMotion || !isDesktop()) {
                     cards.forEach((card) => card.style.setProperty('--parallax-offset', '0px'));
                     return;
                 }
@@ -11508,6 +11529,13 @@
             };
 
             const renderCarousel = (instant = false) => {
+                if (!isDesktop()) {
+                    container.style.transition = 'none';
+                    container.style.transform = 'none';
+                    applyParallax();
+                    updateExamplesNav();
+                    return;
+                }
                 const offsetPercent = -(currentIndex * (100 / slideCount));
                 container.style.transition = (instant || reduceMotion)
                     ? 'none'
@@ -11605,6 +11633,9 @@
                 window.addEventListener('mousemove', onMouseMove);
                 window.addEventListener('mouseup', stop);
                 compareEl.addEventListener('touchstart', onTouchStart, { passive: false });
+                compareEl.addEventListener('touchmove', onTouchMove, { passive: false });
+                compareEl.addEventListener('touchend', stop);
+                compareEl.addEventListener('touchcancel', stop);
                 window.addEventListener('touchmove', onTouchMove, { passive: false });
                 window.addEventListener('touchend', stop);
                 window.addEventListener('touchcancel', stop);
@@ -11646,8 +11677,6 @@
                     activePreviouslyFocused.focus();
                 }
             };
-
-            // Modal interactions disabled for inline-only examples experience.
 
             closeBtn.addEventListener('click', closeLightbox);
             lightbox.addEventListener('click', (event) => {
