@@ -5269,20 +5269,23 @@
 
             .examples-embla {
                 width: 100% !important;
-                overflow: visible !important;
+                overflow: hidden !important;
             }
 
             .examples-embla__container {
-                display: grid !important;
-                width: 100% !important;
-                transform: none !important;
-                gap: 18px !important;
+                display: flex !important;
+                gap: 0 !important;
+                width: calc(var(--examples-slide-count) * 100%) !important;
+                will-change: transform;
+                touch-action: pan-y pinch-zoom;
             }
 
             .examples-embla__slide {
-                width: 100% !important;
-                min-width: 0 !important;
-                max-width: none !important;
+                display: block !important;
+                flex: 0 0 calc(100% / var(--examples-slide-count)) !important;
+                width: calc(100% / var(--examples-slide-count)) !important;
+                min-width: calc(100% / var(--examples-slide-count)) !important;
+                max-width: calc(100% / var(--examples-slide-count)) !important;
             }
 
             .example-card {
@@ -5311,18 +5314,20 @@
                 font-size: 1.04rem;
             }
 
-            .examples-embla__slide:nth-child(n+4) {
-                display: none;
-            }
-
             .examples-nav {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px !important;
                 margin-top: 20px !important;
             }
 
             .examples-nav-btn {
+                display: inline-flex !important;
+                align-items: center;
+                justify-content: center;
                 min-width: 0 !important;
                 width: 100%;
-                max-width: 220px;
+                max-width: none;
                 height: 50px !important;
                 border-radius: 14px !important;
                 background: var(--oxblood) !important;
@@ -5331,16 +5336,15 @@
             }
 
             #examples-prev {
-                display: none !important;
+                display: inline-flex !important;
             }
 
             #examples-next {
-                font-size: 0 !important;
+                font-size: 0.98rem !important;
             }
 
             #examples-next::before {
-                content: "View More Examples";
-                font-size: 0.98rem;
+                content: none;
             }
 
             .scene-container {
@@ -11529,13 +11533,6 @@
             };
 
             const renderCarousel = (instant = false) => {
-                if (!isDesktop()) {
-                    container.style.transition = 'none';
-                    container.style.transform = 'none';
-                    applyParallax();
-                    updateExamplesNav();
-                    return;
-                }
                 const offsetPercent = -(currentIndex * (100 / slideCount));
                 container.style.transition = (instant || reduceMotion)
                     ? 'none'
@@ -11718,6 +11715,7 @@
             });
 
             renderCarousel(true);
+            window.addEventListener('resize', () => renderCarousel(true));
         });
     </script>
 
