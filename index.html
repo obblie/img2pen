@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Momenza: Create 3D Jewelry from Your Photos</title>
+    <title>Momenza: 3D Jewelry from Your Photos</title>
     <link rel="icon" type="image/x-icon" href="/momenzafav.ico">
     <meta name="description" content="Turn a cherished photo into a custom pendant with Momenza Studio. Upload, preview in 3D, and personalize your keepsake.">
     
@@ -11,14 +11,14 @@
     <link rel="canonical" href="https://www.momenza.io">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Momenza">
-    <meta property="og:title" content="Momenza: Create 3D Jewelry from Your Photos">
+    <meta property="og:title" content="Momenza: 3D Jewelry from Your Photos">
     <meta property="og:description" content="Turn a cherished photo into a custom pendant with Momenza Studio.">
     <meta property="og:url" content="https://www.momenza.io">
     <meta property="og:image" content="https://www.momenza.io/momenzaLogo.png">
     <meta property="og:image:secure_url" content="https://www.momenza.io/momenzaLogo.png">
     <meta property="og:image:alt" content="Momenza logo">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Momenza: Create 3D Jewelry from Your Photos">
+    <meta name="twitter:title" content="Momenza: 3D Jewelry from Your Photos">
     <meta name="twitter:description" content="Turn a cherished photo into a custom pendant with Momenza Studio.">
     <meta name="twitter:image" content="https://www.momenza.io/momenzaLogo.png">
     <script>
@@ -650,6 +650,23 @@
 
             #guided-tour-card {
                 z-index: 2147483647 !important;
+                width: min(360px, calc(100vw - 24px)) !important;
+                max-width: calc(100vw - 24px) !important;
+                box-sizing: border-box;
+                overflow: hidden;
+            }
+
+            #guided-tour-card.step-1-wide {
+                width: min(360px, calc(100vw - 24px)) !important;
+                max-width: calc(100vw - 24px) !important;
+                padding: 14px 14px 12px !important;
+            }
+
+            #guided-tour-image {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: auto;
+                margin: 0 0 10px 0;
             }
         }
 
@@ -5395,6 +5412,38 @@
                 margin: 0 auto;
             }
 
+            .mobile-viewer-overlay-cta {
+                position: absolute;
+                left: 50%;
+                bottom: 18px;
+                transform: translateX(-50%);
+                width: min(calc(100% - 28px), 320px);
+                display: grid;
+                gap: 10px;
+                justify-items: center;
+                z-index: 1215;
+                pointer-events: auto;
+            }
+
+            .mobile-viewer-overlay-cta .add-photo-button {
+                width: 100%;
+                min-height: 50px;
+                border-radius: 14px !important;
+                font-size: 0.96rem !important;
+                box-shadow: 0 16px 34px rgba(43,43,43,0.24) !important;
+            }
+
+            .mobile-viewer-overlay-cta .mobile-tutorial-helper {
+                margin: 0;
+                text-align: center;
+                color: rgba(255,255,255,0.94);
+                text-shadow: 0 2px 8px rgba(43,43,43,0.3);
+            }
+
+            .mobile-viewer-overlay-cta .mobile-tutorial-helper a {
+                color: inherit;
+            }
+
             .product-details-section {
                 display: none !important;
             }
@@ -5526,57 +5575,93 @@
                 box-sizing: border-box !important;
             }
 
-            .post-layout-actions .add-photo-button {
-                height: 50px !important;
-                border-radius: 14px !important;
-                font-size: 0.96rem !important;
-            }
-
             .mobile-purchase-panel {
                 display: grid !important;
                 gap: 12px;
-                margin-top: 12px;
+                margin-top: 0;
                 text-align: left;
                 box-sizing: border-box;
             }
 
-            .mobile-purchase-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 12px;
+            .mobile-purchase-copy {
+                display: grid;
+                gap: 1px;
+                justify-items: center;
+                text-align: center;
             }
 
-            .mobile-purchase-title {
+            .mobile-purchase-price {
                 margin: 0;
                 color: var(--ink);
-                font-size: 0.96rem;
+                font-size: 1.55rem;
                 font-weight: 820;
-                line-height: 1.25;
+                line-height: 1.1;
+                text-align: center;
+                justify-self: center;
             }
 
             .mobile-purchase-description {
-                margin: 4px 0 0;
+                margin: 2px 0 0;
                 color: rgba(43,43,43,0.68);
-                font-size: 0.82rem;
-                line-height: 1.4;
+                font-size: 0.86rem;
+                line-height: 1.5;
+                max-width: 30ch;
             }
 
             .mobile-purchase-controls {
                 display: grid;
-                grid-template-columns: 1fr auto;
-                gap: 10px;
-                align-items: end;
+                grid-template-columns: 1fr;
+                gap: 8px;
+                box-sizing: border-box;
+            }
+
+            .mobile-product-meta,
+            .mobile-material-field {
+                display: grid;
+                gap: 4px;
+            }
+
+            .mobile-material-field label {
+                margin: 0;
+                color: rgba(43,43,43,0.68);
+                font-size: 0.8rem;
+                font-weight: 600;
+                letter-spacing: 0.01em;
+                text-transform: none;
+            }
+
+            .mobile-material-field select {
+                width: 100%;
+                min-height: 50px;
+                padding: 12px 16px;
+                border-radius: 14px;
+                border: 1px solid rgba(43,43,43,0.14);
+                background: rgba(255,255,255,0.96);
+                color: var(--ink);
+                font-size: 0.95rem;
+                font-weight: 700;
                 box-sizing: border-box;
             }
 
             .mobile-purchase-panel .mobile-buy-now {
-                min-width: 128px;
-                min-height: 48px;
+                width: 100%;
+                min-height: 50px;
+                border-radius: 14px;
+                font-size: 0.98rem;
             }
 
-            .mobile-purchase-panel .mobile-price {
-                white-space: nowrap;
+            .mobile-tutorial-helper {
+                margin: 2px 0 0;
+                text-align: center;
+                color: rgba(43,43,43,0.66);
+                font-size: 0.82rem;
+                line-height: 1.35;
+            }
+
+            .mobile-tutorial-helper a {
+                color: inherit;
+                text-decoration: underline;
+                text-underline-offset: 2px;
             }
         }
 
@@ -5855,7 +5940,8 @@
             function updateMobileAddPhotoFab(hasImage) {
                 const fab = document.getElementById('mobile-add-photo-fab');
                 const fabContainer = document.getElementById('floating-action-buttons');
-                if (!fab || !fabContainer) return;
+                const addPhotoButton = document.getElementById('add-photo-btn');
+                const addPhotoButtonText = addPhotoButton?.querySelector('.button-text');
                 const isMobile = window.matchMedia('(max-width: 768px)').matches;
                 const isDesktop = !isMobile;
                 
@@ -5876,6 +5962,12 @@
                         hasImage = false; // Default image, keep as "Add a Photo"
                     }
                 }
+
+                if (addPhotoButtonText && isMobile) {
+                    addPhotoButtonText.textContent = hasImage ? 'Replace Photo' : 'Add a Photo';
+                }
+
+                if (!fab || !fabContainer) return;
                 
                 if (hasImage && (isMobile || isDesktop)) {
                     // Floating buttons removed - keep hidden
@@ -6222,6 +6314,20 @@
                 };
             }
 
+            function shortenMobilePurchaseDescription(description) {
+                const plainDescription = String(description || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+                if (!plainDescription) return '';
+                const withoutDimensions = plainDescription
+                    .replace(/^~?\s*\d+(?:\.\d+)?\s*[x×]\s*\d+(?:\.\d+)?\s*mm\s*\(~?\s*\d+(?:\.\d+)?\s*[x×]\s*\d+(?:\.\d+)?\s*"?\)\s*/i, '')
+                    .replace(/^approx\.?\s*\d+(?:\.\d+)?\s*"?\s*\(\s*\d+(?:\.\d+)?\s*[x×]\s*\d+(?:\.\d+)?\s*mm\s*\)\s*/i, '')
+                    .trim();
+                const cleaned = withoutDimensions || plainDescription;
+                const firstSentence = cleaned.match(/[^.!?]+[.!?]/)?.[0]?.trim();
+                if (firstSentence && firstSentence.length <= 140) return firstSentence;
+                if (cleaned.length <= 140) return cleaned;
+                return `${cleaned.slice(0, 137).trimEnd()}…`;
+            }
+
             function scheduleMobileShopifyPanelSync(metalType) {
                 [0, 120, 350, 800, 1400].forEach((delay) => {
                     setTimeout(() => syncMobileShopifyPanel(metalType), delay);
@@ -6245,15 +6351,13 @@
 
                 const renderedData = getRenderedMobileShopifyData();
                 const variant = getCurrentMobileShopifyVariant(model, metalType);
-                const title = renderedData.title || model?.title || model?.attrs?.title;
                 const description = renderedData.description || model?.description || model?.descriptionHtml || model?.attrs?.description || model?.attrs?.descriptionHtml;
                 const price = renderedData.price || getMobileVariantPrice(variant);
 
-                if (titleEl && title) titleEl.textContent = title;
                 if (priceEl && price) priceEl.textContent = price;
                 if (descriptionEl && description) {
-                    const plainDescription = String(description).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-                    if (plainDescription) descriptionEl.textContent = plainDescription;
+                    const shortDescription = shortenMobilePurchaseDescription(description);
+                    if (shortDescription) descriptionEl.textContent = shortDescription;
                 }
             }
 
@@ -6800,6 +6904,14 @@
                                     <p>Click this message to continue.</p>
                                 </div>
                             </div>
+                            <div class="mobile-viewer-overlay-cta mobile-only">
+                                <button class="add-photo-button" id="add-photo-btn">
+                                    <span class="button-text">Add a Photo</span>
+                                </button>
+                                <p class="mobile-tutorial-helper">
+                                    Need help? <a href="#" id="take-tour-again-link">Restart Tutorial</a>
+                                </p>
+                            </div>
                             
                             <style>
                                 @media (max-width: 768px) {
@@ -6831,21 +6943,18 @@
                             <!-- CTA row floating over scene -->
                             <div class="post-layout-actions">
                             <div class="add-photo-section">
-                                <button class="add-photo-button" id="add-photo-btn">
+                                <button class="add-photo-button desktop-only" type="button" onclick="document.getElementById('file-input')?.click(); return false;">
                                     <span class="button-text">Add a Photo</span>
                                 </button>
                                 <div class="mobile-purchase-panel" aria-label="Mobile purchase controls">
-                                    <div class="mobile-purchase-header">
-                                        <div>
-                                            <p class="mobile-purchase-title" id="mobile-shopify-title">Custom Photo Pendant</p>
-                                            <p class="mobile-purchase-description" id="mobile-shopify-description">A custom pendant made from your favorite photo and previewed in 3D before purchase.</p>
-                                        </div>
-                                        <div class="mobile-price" id="mobile-shopify-price">$129.99</div>
+                                    <div class="mobile-purchase-copy">
+                                        <p class="mobile-purchase-price" id="mobile-shopify-price">$129.99</p>
+                                        <p class="mobile-purchase-description" id="mobile-shopify-description">Turn a meaningful photo into a custom pendant designed to keep life's most important moments close.</p>
                                     </div>
                                     <div class="mobile-purchase-controls">
                                         <div class="mobile-product-meta">
                                             <div class="mobile-material-field">
-                                                <label for="mobile-metal-type">Material</label>
+                                                <label for="mobile-metal-type">Choose a Metal</label>
                                                 <select id="mobile-metal-type" aria-label="Material selector">
                                                     <option value="white-bronze" selected>White Bronze</option>
                                                     <option value="silver">.925 Sterling Silver</option>
@@ -6857,8 +6966,8 @@
                                         <button class="mobile-buy-now" type="button" onclick="triggerMobileBuyNow(); return false;">Buy Now</button>
                                     </div>
                                 </div>
-                                <p style="margin: 6px 0 0 0; text-align: center;">
-                                    <a href="#" id="take-tour-again-link" style="font-size: 0.82em; color: rgba(43,43,43,0.72); text-decoration: underline;">Restart Tutorial</a>
+                                <p class="mobile-tutorial-helper desktop-only">
+                                    Need help? <a href="#" onclick="window.launchTutorial && window.launchTutorial(); return false;">Restart Tutorial</a>
                                 </p>
                             </div>
                             <div id="add-photo-tip">Tap “Add a Photo” to begin</div>
@@ -7564,8 +7673,15 @@
                     },
                     {
                         title: 'Step 2 of 5 · Position Your Photo',
-                        text: 'Drag the square to choose your pendant image. See the Live Preview for the final result.',
+                        text: window.matchMedia('(max-width: 768px)').matches
+                            ? 'Drag the square to choose your pendant image.'
+                            : 'Drag the square to choose your pendant image. See the Live Preview for the final result.',
                         target: () => {
+                            const cropBox = document.querySelector('.cropper-crop-box');
+                            if (window.matchMedia('(max-width: 768px)').matches) {
+                                if (cropBox && isVisible(cropBox)) return cropBox;
+                                if (isVisible(getEl('cropper-image'))) return getEl('cropper-image');
+                            }
                             const cropModal = getEl('cropper-modal');
                             const cropWindow = document.querySelector('#cropper-modal > div');
                             if (
@@ -7578,7 +7694,6 @@
                             ) {
                                 return cropWindow;
                             }
-                            const cropBox = document.querySelector('.cropper-crop-box');
                             if (cropBox && isVisible(cropBox)) return cropBox;
                             return isVisible(getEl('cropper-image')) ? getEl('cropper-image') : getEl('add-photo-btn');
                         }
@@ -7593,9 +7708,14 @@
                         text: 'Try different metal options to see how your keepsake will look.',
                         target: () => {
                             const mobileMetalSelect = getEl('mobile-metal-type');
+                            const mobileMetalField = document.querySelector('.mobile-material-field');
                             if (window.matchMedia('(max-width: 768px)').matches && mobileMetalSelect && isVisible(mobileMetalSelect)) {
-                                mobileMetalSelect.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                                mobileMetalSelect.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
                                 return mobileMetalSelect;
+                            }
+                            if (window.matchMedia('(max-width: 768px)').matches && mobileMetalField && isVisible(mobileMetalField)) {
+                                mobileMetalField.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                                return mobileMetalField;
                             }
                             const explicitSelect = getEl('metal-type');
                             if (explicitSelect && isVisible(explicitSelect)) return explicitSelect;
@@ -7699,6 +7819,11 @@
                         const addPhotoBtn = getEl('add-photo-btn');
                         if (addPhotoBtn && isVisible(addPhotoBtn)) {
                             const btnRect = addPhotoBtn.getBoundingClientRect();
+                            if (window.matchMedia('(max-width: 768px)').matches) {
+                                const availableHeight = Math.max(220, btnRect.top - 30);
+                                card.style.maxHeight = `${availableHeight}px`;
+                                card.style.overflowY = 'auto';
+                            }
                             const cardRect = card.getBoundingClientRect();
                             const top = Math.max(12, btnRect.top - cardRect.height - 18);
                             let left = btnRect.left + (btnRect.width - cardRect.width) / 2;
@@ -7712,8 +7837,23 @@
                     // Step 2: force placement above crop window with stronger upward offset.
                     if (currentStep === 1) {
                         const cardRect = card.getBoundingClientRect();
-                        const top = 8;
+                        if (window.matchMedia('(max-width: 768px)').matches) {
+                            const cropImage = getEl('cropper-image');
+                            const anchorRect = cropImage && isVisible(cropImage)
+                                ? cropImage.getBoundingClientRect()
+                                : rect;
+                            const top = Math.min(
+                                window.innerHeight - cardRect.height - 12,
+                                anchorRect.bottom + 12
+                            );
+                            let left = rect.left + (rect.width - cardRect.width) / 2;
+                            left = Math.max(12, Math.min(left, window.innerWidth - cardRect.width - 12));
+                            card.style.top = `${Math.max(12, top)}px`;
+                            card.style.left = `${left}px`;
+                            return;
+                        }
 
+                        const top = 8;
                         let left = rect.left;
                         if (left + cardRect.width > window.innerWidth - 12) {
                             left = window.innerWidth - cardRect.width - 12;
@@ -7730,10 +7870,13 @@
                         if (rect && rect.width > 0 && rect.height > 0) {
                             const cardRect = card.getBoundingClientRect();
                             if (window.matchMedia('(max-width: 768px)').matches) {
-                                const top = Math.max(12, Math.min(rect.top + 16, window.innerHeight - cardRect.height - 12));
+                                const top = Math.min(
+                                    window.innerHeight - cardRect.height - 12,
+                                    rect.bottom + 12
+                                );
                                 let left = rect.left + (rect.width - cardRect.width) / 2;
                                 left = Math.max(12, Math.min(left, window.innerWidth - cardRect.width - 12));
-                                card.style.top = `${top}px`;
+                                card.style.top = `${Math.max(12, top)}px`;
                                 card.style.left = `${left}px`;
                                 card.style.zIndex = '2147483647';
                                 return;
@@ -8039,6 +8182,8 @@
                     text.textContent = step.text;
                     card.classList.toggle('step-1-wide', currentStep === 0);
                     card.classList.toggle('step-2-wide', currentStep === 1);
+                    card.style.removeProperty('max-height');
+                    card.style.removeProperty('overflow-y');
                     if (currentStep === 1) {
                         card.style.setProperty('width', 'min(560px, 95vw)', 'important');
                     } else {
@@ -10105,6 +10250,7 @@
         "buttonDestination": "checkout",
         "layout": "horizontal",
         "contents": {
+          "title": false,
           "img": false,
           "imgWithCarousel": true,
           "description": true
@@ -10125,6 +10271,7 @@
       },
       "modalProduct": {
         "contents": {
+          "title": false,
           "img": false,
           "imgWithCarousel": true,
           "button": false,

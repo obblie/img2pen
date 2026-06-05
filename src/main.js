@@ -1415,6 +1415,7 @@ class HeightfieldViewer {
         this.sprueTextObjects = [];
         // Back engraving system for quality stamps
         this.backEngravingObjects = [];
+        this.backEngravingGeneration = 0;
         
         // Load default font
         this.loadEngravingFont(this.defaultFontName);
@@ -4966,6 +4967,7 @@ class HeightfieldViewer {
 
     clearBackEngraving() {
         console.log('Clearing back engraving objects. Count:', this.backEngravingObjects.length);
+        this.backEngravingGeneration += 1;
         // Remove existing back engraving objects from scene
         this.backEngravingObjects.forEach(textObj => {
             this.scene.remove(textObj);
@@ -4987,6 +4989,7 @@ class HeightfieldViewer {
 
         // Clear existing engraving
         this.clearBackEngraving();
+        const engravingGeneration = this.backEngravingGeneration;
         
         // Get pendant dimensions and position
         const diameter = this.pendantDiameter;
@@ -5018,7 +5021,11 @@ class HeightfieldViewer {
 
         if (isBronzeType) {
             console.log('Bronze selected: skipping quality stamp text and placing logo at stamp Y position');
-            this.loadMMLogo(textX, textY, textZ, 0, materialProps, { placeAtStampY: true });
+            this.loadMMLogo(textX, textY, textZ, 0, materialProps, {
+                placeAtStampY: true,
+                engravingGeneration,
+                metalType
+            });
             return;
         }
 
@@ -5081,7 +5088,10 @@ class HeightfieldViewer {
                 console.log('Back engraving created:', textContent, 'at position:', textMesh.position);
                 
                 // Load and position MMlogo.stl 2mm above the quality stamp
-                this.loadMMLogo(textX, textY, textZ, textHeight_bbox, materialProps);
+                this.loadMMLogo(textX, textY, textZ, textHeight_bbox, materialProps, {
+                    engravingGeneration,
+                    metalType
+                });
             },
             (progress) => {
                 console.log('Font loading progress for back engraving:', progress);
@@ -5124,19 +5134,24 @@ class HeightfieldViewer {
                 
                 // Load and position MMlogo.stl 2mm above the quality stamp (fallback case)
                 const fallbackTextHeight = 2.0; // charHeight from fallback
-                this.loadMMLogo(textX, textY, textZ, fallbackTextHeight, materialProps);
+                this.loadMMLogo(textX, textY, textZ, fallbackTextHeight, materialProps, {
+                    engravingGeneration,
+                    metalType
+                });
             }
         );
     }
     
     loadMMLogo(centerX, stampY, stampZ, stampHeight, materialProps, options = {}) {
         // Only load logo for supported precious/bronze metals
-        const currentMetalType = document.getElementById('metal-type')?.value || 'sterling-silver';
+        const currentMetalType = options.metalType || document.getElementById('metal-type')?.value || 'sterling-silver';
         const supportsLogo = ['sterling-silver', 'gold-14k', 'white-bronze', 'yellow-bronze'].includes(currentMetalType);
         if (!supportsLogo) {
             console.log('Skipping MMlogo - current metal type does not support logo:', currentMetalType);
             return;
         }
+
+        const expectedGeneration = options.engravingGeneration ?? this.backEngravingGeneration;
         
         console.log('Loading MMlogo.stl...');
         console.log('Stamp position:', { centerX, stampY, stampZ, stampHeight });
@@ -5145,6 +5160,11 @@ class HeightfieldViewer {
         loader.load(
             '/MMlogo.stl',
             (geometry) => {
+                if (expectedGeneration !== this.backEngravingGeneration) {
+                    console.log('Skipping stale MMlogo load for generation:', expectedGeneration, 'current:', this.backEngravingGeneration);
+                    if (geometry?.dispose) geometry.dispose();
+                    return;
+                }
                 console.log('MMlogo.stl loaded successfully');
                 
                 // Compute bounding box to get logo dimensions
