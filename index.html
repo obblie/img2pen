@@ -5688,6 +5688,14 @@
             }
         }
 
+        @media (min-width: 1025px) {
+            #drop-zone.faq-drawer-closed {
+                min-height: auto !important;
+                padding-top: 20px !important;
+                padding-bottom: 20px !important;
+            }
+        }
+
     </style>
     <!-- Cropper.js CSS -->
     <link  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
@@ -6567,6 +6575,7 @@
                 const faqContainer = document.getElementById('faq-container');
                 const faqToggleAllBtn = document.getElementById('faq-toggle-all');
                 const faqItems = document.querySelectorAll('.faq-item');
+                const dropZone = document.getElementById('drop-zone');
                 const addPhotoBtn = document.getElementById('add-photo-btn');
                 const imagineBtn = document.getElementById('imagine-btn');
                 const themeSelector = document.getElementById('theme-selector');
@@ -6752,6 +6761,7 @@
                     });
                     if (faqContainer) faqContainer.setAttribute('aria-expanded', faqExpanded ? 'true' : 'false');
                     if (faqToggleAllBtn) faqToggleAllBtn.setAttribute('aria-expanded', faqExpanded ? 'true' : 'false');
+                    if (dropZone) dropZone.classList.toggle('faq-drawer-closed', !faqExpanded);
                 };
 
                 // Gentle CTA pulse (once)
@@ -7065,6 +7075,62 @@
         </div>
     </div>
 
+<section id="examples-coming-soon" class="examples-section">
+    <div class="examples-container">
+        <h2>Made from Real Memories</h2>
+        <p class="examples-subtitle"></p>
+
+        <div class="examples-embla" id="examples-embla" tabindex="0" aria-label="Examples gallery carousel">
+            <div class="examples-embla__container">
+                <div class="examples-embla__slide">
+                    <div class="example-card" role="group" aria-label="Pet Portrait example" data-label="Pet Portrait" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
+                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original pet portrait photo before customization">
+                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished pet portrait pendant rendering">
+                            <span class="example-divider" aria-hidden="true"></span>
+                        </div>
+                        <p class="example-label">Pet Portrait</p>
+                    </div>
+                </div>
+                <div class="examples-embla__slide">
+                    <div class="example-card" role="group" aria-label="Family Memory example" data-label="Family Memory" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
+                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original family memory photo before customization">
+                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished family memory pendant rendering">
+                            <span class="example-divider" aria-hidden="true"></span>
+                        </div>
+                        <p class="example-label">Family Memory</p>
+                    </div>
+                </div>
+                <div class="examples-embla__slide">
+                    <div class="example-card" role="group" aria-label="Wedding Moment example" data-label="Wedding Moment" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
+                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original wedding moment photo before customization">
+                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished wedding keepsake pendant rendering">
+                            <span class="example-divider" aria-hidden="true"></span>
+                        </div>
+                        <p class="example-label">Wedding Moment</p>
+                    </div>
+                </div>
+                <div class="examples-embla__slide">
+                    <div class="example-card" role="group" aria-label="Travel Keepsake example" data-label="Travel Keepsake" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
+                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
+                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original travel photo before customization">
+                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished travel keepsake pendant rendering">
+                            <span class="example-divider" aria-hidden="true"></span>
+                        </div>
+                        <p class="example-label">Travel Keepsake</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="examples-nav" aria-label="Examples carousel controls">
+            <button id="examples-prev" class="examples-nav-btn" type="button" aria-label="Show previous example">← Prev</button>
+            <button id="examples-next" class="examples-nav-btn" type="button" aria-label="Show next example">Next →</button>
+        </div>
+    </div>
+</section>
+
     <!-- Upload Section -->
     <div id="upload-container" class="upload-container">
         <div id="drop-zone" style="padding: 20px 24px; width: 100%; max-width: 1100px; min-height: 80vh; margin: 0 auto; display: flex; flex-direction: column; box-sizing: border-box;">
@@ -7244,62 +7310,6 @@
         </div>
     </div>
 </div>
-
-<section id="examples-coming-soon" class="examples-section">
-    <div class="examples-container">
-        <h2>Made from Real Memories</h2>
-        <p class="examples-subtitle"></p>
-
-        <div class="examples-embla" id="examples-embla" tabindex="0" aria-label="Examples gallery carousel">
-            <div class="examples-embla__container">
-                <div class="examples-embla__slide">
-                    <div class="example-card" role="group" aria-label="Pet Portrait example" data-label="Pet Portrait" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
-                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
-                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original pet portrait photo before customization">
-                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished pet portrait pendant rendering">
-                            <span class="example-divider" aria-hidden="true"></span>
-                        </div>
-                        <p class="example-label">Pet Portrait</p>
-                    </div>
-                </div>
-                <div class="examples-embla__slide">
-                    <div class="example-card" role="group" aria-label="Family Memory example" data-label="Family Memory" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
-                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
-                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original family memory photo before customization">
-                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished family memory pendant rendering">
-                            <span class="example-divider" aria-hidden="true"></span>
-                        </div>
-                        <p class="example-label">Family Memory</p>
-                    </div>
-                </div>
-                <div class="examples-embla__slide">
-                    <div class="example-card" role="group" aria-label="Wedding Moment example" data-label="Wedding Moment" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
-                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
-                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original wedding moment photo before customization">
-                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished wedding keepsake pendant rendering">
-                            <span class="example-divider" aria-hidden="true"></span>
-                        </div>
-                        <p class="example-label">Wedding Moment</p>
-                    </div>
-                </div>
-                <div class="examples-embla__slide">
-                    <div class="example-card" role="group" aria-label="Travel Keepsake example" data-label="Travel Keepsake" data-before="/howitworks/1_rm_uploadAPhoto.png" data-after="/howitworks/3_rm_finished.png">
-                        <div class="example-compare" data-compare style="--before-x: 48%; --after-x: 50%;">
-                            <img src="/howitworks/1_rm_uploadAPhoto.png" alt="Original travel photo before customization">
-                            <img class="after-layer" src="/howitworks/3_rm_finished.png" alt="Finished travel keepsake pendant rendering">
-                            <span class="example-divider" aria-hidden="true"></span>
-                        </div>
-                        <p class="example-label">Travel Keepsake</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="examples-nav" aria-label="Examples carousel controls">
-            <button id="examples-prev" class="examples-nav-btn" type="button" aria-label="Show previous example">← Prev</button>
-            <button id="examples-next" class="examples-nav-btn" type="button" aria-label="Show next example">Next →</button>
-        </div>
-    </div>
-</section>
 
 <div id="examples-lightbox" class="examples-lightbox" aria-hidden="true">
     <div class="examples-lightbox-panel" role="dialog" aria-modal="true" aria-label="Example transformation detail">
