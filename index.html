@@ -7677,8 +7677,10 @@
                             ? 'Drag the square to choose your pendant image.'
                             : 'Drag the square to choose your pendant image. See the Live Preview for the final result.',
                         target: () => {
+                            const confirmBtn = getEl('cropper-confirm');
                             const cropBox = document.querySelector('.cropper-crop-box');
                             if (window.matchMedia('(max-width: 768px)').matches) {
+                                if (confirmBtn && isVisible(confirmBtn)) return confirmBtn;
                                 if (cropBox && isVisible(cropBox)) return cropBox;
                                 if (isVisible(getEl('cropper-image'))) return getEl('cropper-image');
                             }
@@ -7710,11 +7712,21 @@
                             const mobileMetalSelect = getEl('mobile-metal-type');
                             const mobileMetalField = document.querySelector('.mobile-material-field');
                             if (window.matchMedia('(max-width: 768px)').matches && mobileMetalSelect && isVisible(mobileMetalSelect)) {
-                                mobileMetalSelect.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                                const selectRect = mobileMetalSelect.getBoundingClientRect();
+                                const topSafe = 88;
+                                const bottomSafe = window.innerHeight - 180;
+                                if (selectRect.top < topSafe || selectRect.bottom > bottomSafe) {
+                                    mobileMetalSelect.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                                }
                                 return mobileMetalSelect;
                             }
                             if (window.matchMedia('(max-width: 768px)').matches && mobileMetalField && isVisible(mobileMetalField)) {
-                                mobileMetalField.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                                const fieldRect = mobileMetalField.getBoundingClientRect();
+                                const topSafe = 88;
+                                const bottomSafe = window.innerHeight - 180;
+                                if (fieldRect.top < topSafe || fieldRect.bottom > bottomSafe) {
+                                    mobileMetalField.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                                }
                                 return mobileMetalField;
                             }
                             const explicitSelect = getEl('metal-type');
