@@ -58,40 +58,40 @@ const RESOLUTION = 1000; // Number of segments in X direction (restored to origi
 // Metal material properties
 const METAL_MATERIALS = {
     'sterling-silver': {
-        color: 0xE8E8E8,
+        color: 0xDADDE0,
         metalness: 1.0,
-        roughness: 0.1,
-        envMapIntensity: 1.0
+        roughness: 0.18,
+        envMapIntensity: 0.65
     },
     'gold-14k': {
         color: 0xE7C76E,
         metalness: 1.0,
-        roughness: 0.1,
-        envMapIntensity: 1.0
+        roughness: 0.2,
+        envMapIntensity: 0.65
     },
     'white-bronze': {
-        color: 0xD6D0C8,
+        color: 0xD0D2D3,
         metalness: 1.0,
-        roughness: 0.16,
-        envMapIntensity: 1.0
+        roughness: 0.24,
+        envMapIntensity: 0.55
     },
     'yellow-bronze': {
         color: 0xE7C76E,
         metalness: 1.0,
-        roughness: 0.18,
-        envMapIntensity: 1.0
+        roughness: 0.26,
+        envMapIntensity: 0.58
     },
     'rose-gold-14k': {
         color: 0xE8B4A0,
         metalness: 1.0,
-        roughness: 0.1,
-        envMapIntensity: 1.0
+        roughness: 0.22,
+        envMapIntensity: 0.62
     },
     'stl': {
-        color: 0xE8E8E8, // Use sterling silver color for STL preview
+        color: 0xDADDE0, // Use sterling silver color for STL preview
         metalness: 1.0,
-        roughness: 0.1,
-        envMapIntensity: 1.0
+        roughness: 0.18,
+        envMapIntensity: 0.65
     }
 };
 
@@ -1426,29 +1426,227 @@ class HeightfieldViewer {
         // this.setupRulerToggle();
     }
 
+    normalizeMetalType(metalType) {
+        return ({
+            'yellow brass': 'yellow-bronze',
+            'yellow bronze': 'yellow-bronze',
+            'white bronze': 'white-bronze',
+            'sterling silver': 'sterling-silver',
+            '14k yellow gold': 'gold-14k'
+        })[metalType] || metalType || 'sterling-silver';
+    }
+
+    getMetalProfile(metalType = 'sterling-silver') {
+        const normalizedMetalType = this.normalizeMetalType(metalType);
+        return METAL_MATERIALS[normalizedMetalType] || METAL_MATERIALS['sterling-silver'];
+    }
+
+    createPolishedMetalMaterial(metalType = 'sterling-silver', options = {}) {
+        const profile = this.getMetalProfile(metalType);
+        return new THREE.MeshPhysicalMaterial({
+            color: profile.color,
+            metalness: 1.0,
+            roughness: options.roughness ?? 0.08,
+            clearcoat: 0.35,
+            clearcoatRoughness: 0.12,
+            reflectivity: 0.72,
+            envMapIntensity: options.envMapIntensity ?? Math.min(0.9, (profile.envMapIntensity || 0.65) + 0.18),
+            side: options.side || THREE.DoubleSide,
+            vertexColors: options.vertexColors || false,
+            transparent: !!options.transparent,
+            alphaMap: options.alphaMap || null,
+            alphaTest: options.alphaTest || 0
+        });
+    }
+
+    createMatteReliefMaterial(metalType = 'sterling-silver', options = {}) {
+        const profile = this.getMetalProfile(metalType);
+        return new THREE.MeshPhysicalMaterial({
+            color: profile.color,
+            metalness: 1.0,
+            roughness: options.roughness ?? Math.max(profile.roughness || 0.24, 0.34),
+            clearcoat: 0.08,
+            clearcoatRoughness: 0.44,
+            reflectivity: 0.48,
+            envMapIntensity: options.envMapIntensity ?? Math.min(0.62, profile.envMapIntensity || 0.55),
+            side: options.side || THREE.DoubleSide,
+            vertexColors: options.vertexColors !== false,
+            transparent: !!options.transparent,
+            alphaMap: options.alphaMap || null,
+            alphaTest: options.alphaTest || 0
+        });
+    }
+
+    createPendantMaterialSet(metalType = 'sterling-silver', options = {}) {
+        return [
+            this.createMatteReliefMaterial(metalType, {
+                ...options,
+                roughness: options.reliefRoughness ?? 0.38,
+                envMapIntensity: options.reliefEnvMapIntensity ?? 0.5,
+                vertexColors: true
+            }),
+            this.createPolishedMetalMaterial(metalType, {
+                ...options,
+                roughness: options.polishedRoughness ?? 0.07,
+                envMapIntensity: options.polishedEnvMapIntensity ?? 0.78,
+                vertexColors: false
+            })
+        ];
+    }
+
+    applyMetalMaterialToObject(object, metalType = 'sterling-silver') {
+        if (!object) return;
+        const materialSet = this.createPendantMaterialSet(metalType);
+        const polishedMaterial = this.createPolishedMetalMaterial(metalType);
+        object.traverse((child) => {
+            if (!child.isMesh || !child.material) return;
+            const usesGroupedPendantMaterials = Array.isArray(child.material);
+            child.material = usesGroupedPendantMaterials ? materialSet.map((material) => material.clone()) : polishedMaterial.clone();
+            child.castShadow = true;
+            child.receiveShadow = true;
+        });
+    }
+
+    updateMaterialProperties(materialOrMaterials, updater) {
+        const materials = Array.isArray(materialOrMaterials) ? materialOrMaterials : [materialOrMaterials];
+        materials.filter(Boolean).forEach(updater);
+    }
+
+    createOxidizedVertexColors(positions, options = {}) {
+        const reliefMinZ = options.reliefMinZ ?? -0.001;
+        const reliefMaxZ = options.reliefMaxZ ?? Math.max(0.05, this.depth || 0.6);
+        let minZ = Infinity;
+        let maxZ = -Infinity;
+        for (let i = 2; i < positions.length; i += 3) {
+            const z = positions[i];
+            if (z >= reliefMinZ && z <= reliefMaxZ + 0.05) {
+                minZ = Math.min(minZ, z);
+                maxZ = Math.max(maxZ, z);
+            }
+        }
+
+        const colors = [];
+        const range = Number.isFinite(minZ) && Number.isFinite(maxZ)
+            ? Math.max(1e-6, maxZ - minZ)
+            : Math.max(1e-6, reliefMaxZ - reliefMinZ);
+        const oxidizedFloor = options.oxidizedFloor ?? 0.055;
+        const satinBase = options.satinBase ?? 0.58;
+        const highPolish = options.highPolish ?? 1.08;
+        const antiquingAmount = options.antiquingAmount ?? Math.max(
+            0.78,
+            parseFloat(document.getElementById('antiquing-amount')?.value || 0.78)
+        );
+        const smoothstep = (edge0, edge1, value) => {
+            const t = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
+            return t * t * (3 - 2 * t);
+        };
+
+        for (let i = 2; i < positions.length; i += 3) {
+            const z = positions[i];
+            if (z < reliefMinZ || z > reliefMaxZ + 0.08) {
+                colors.push(1, 0.99, 0.98);
+                continue;
+            }
+
+            const heightT = Math.max(0, Math.min(1, (z - minZ) / range));
+            const deepRecessMask = 1 - smoothstep(0.035, 0.34, heightT);
+            const midGrooveMask = 1 - smoothstep(0.18, 0.62, heightT);
+            const highlightMask = smoothstep(0.58, 0.94, heightT);
+            const oxidation = Math.min(1, (deepRecessMask * 0.95 + midGrooveMask * 0.42) * antiquingAmount);
+            const brightness = Math.max(oxidizedFloor, satinBase * (1 - oxidation) + highPolish * highlightMask * 0.32);
+            const warmSilver = brightness * 0.98;
+            colors.push(Math.min(1, brightness), Math.min(1, warmSilver), Math.min(1, brightness * 1.02));
+        }
+
+        return new THREE.Float32BufferAttribute(colors, 3);
+    }
+
+    applySmoothJewelryNormals(geometry) {
+        if (!geometry) return geometry;
+        geometry.computeVertexNormals();
+        const normalAttr = geometry.getAttribute('normal');
+        if (normalAttr) normalAttr.needsUpdate = true;
+        return geometry;
+    }
+
+    setupProductCamera() {
+        this.camera.fov = 38;
+        this.camera.near = 0.1;
+        this.camera.far = 1000;
+        this.camera.position.set(-18, 10, 56);
+        this.camera.lookAt(0, 3.5, 0);
+        this.camera.updateProjectionMatrix();
+        this.defaultCameraPosition = this.camera.position.clone();
+        this.frontCameraPosition = new THREE.Vector3(0, 2, 62);
+    }
+
+    setupJewelryStudioLighting() {
+        Object.values(this.lights || {}).forEach((light) => {
+            if (light && light.parent) light.parent.remove(light);
+        });
+
+        this.scene.background = new THREE.Color(0xf6f3ee);
+        this.renderer.setClearColor(0xf6f3ee, 1);
+
+        const ambient = new THREE.HemisphereLight(0xffffff, 0xd9d0c6, 0.28);
+        this.scene.add(ambient);
+
+        const key = new THREE.RectAreaLight(0xffffff, 4.3, 34, 28);
+        key.position.set(-16, 30, 32);
+        key.lookAt(0, 2, 0);
+        this.scene.add(key);
+
+        const fill = new THREE.RectAreaLight(0xfff7ee, 1.25, 26, 20);
+        fill.position.set(24, 13, 26);
+        fill.lookAt(0, 2, 0);
+        this.scene.add(fill);
+
+        const rim = new THREE.DirectionalLight(0xffffff, 1.05);
+        rim.position.set(0, 12, -24);
+        rim.castShadow = true;
+        rim.shadow.mapSize.width = 2048;
+        rim.shadow.mapSize.height = 2048;
+        rim.shadow.camera.near = 0.1;
+        rim.shadow.camera.far = 100;
+        rim.shadow.camera.left = -30;
+        rim.shadow.camera.right = 30;
+        rim.shadow.camera.top = 30;
+        rim.shadow.camera.bottom = -30;
+        rim.shadow.bias = -0.0005;
+        rim.shadow.radius = 2.5;
+        this.scene.add(rim);
+
+        const softFront = new THREE.DirectionalLight(0xffffff, 0.34);
+        softFront.position.set(0, 6, 22);
+        this.scene.add(softFront);
+
+        this.lights = { ambient, key, fill, rim, softFront };
+        this.directionalLight = rim;
+        this.fillLight = fill;
+        this.rimLight = rim;
+    }
+
     init() {
         // Setup renderer with improved quality settings
         const canvasContainer = document.getElementById('canvas-container');
         this.renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
-        // Set background to be slightly darker than main page (#f8f9fa -> #e8e9ea)
-        this.renderer.setClearColor(0xe8e9ea);
-        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.setClearColor(0xf6f3ee);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.2;
+        this.renderer.toneMappingExposure = 1.05;
+        if ('outputEncoding' in this.renderer) this.renderer.outputEncoding = THREE.sRGBEncoding;
+        if ('outputColorSpace' in this.renderer) this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         canvasContainer.appendChild(this.renderer.domElement);
 
-        // Setup camera - angled view to show pendant standing upright on platform (20% closer)
-        // Positioned to show more of the face
-        this.camera.position.set(-22.37, 12.48, 37.75);
-        this.camera.lookAt(0, 0, 0);
+        this.setupProductCamera();
         
         // Store default camera position for reset functionality
-        this.defaultCameraPosition = new THREE.Vector3(-22.37, 12.48, 37.75);
+        this.defaultCameraPosition = this.camera.position.clone();
         
         // Store front-facing camera position for reference image capture
-        this.frontCameraPosition = new THREE.Vector3(0, 0, 50); // Front view, looking straight at pendant
+        this.frontCameraPosition = new THREE.Vector3(0, 2, 62); // Front view, looking straight at pendant
         const baseCameraDistance = this.defaultCameraPosition.length();
 
         // Setup controls
@@ -1478,29 +1676,31 @@ class HeightfieldViewer {
             }
         });
 
-        // Use Poly Haven HDRI for environment map
+        // Use a neutral studio HDRI for clean jewelry reflections; visible background stays solid/off-white.
         const rgbeLoader = new RGBELoader();
-        rgbeLoader.load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/venice_sunset_1k.hdr', (texture) => {
+        rgbeLoader.load('https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_09_1k.hdr', (texture) => {
             texture.mapping = THREE.EquirectangularReflectionMapping;
             this.scene.environment = texture;
-            // Set background to solid color slightly darker than main page (#f8f9fa -> #e8e9ea)
-            // Keep HDRI for environment reflections but use solid color for background
-            this.scene.background = new THREE.Color(0xe8e9ea);
+            this.scene.background = new THREE.Color(0xf6f3ee);
             this.scene.backgroundBlurriness = 0;
             this.envMapLoaded = true;
             if (this.heightfield) {
-                this.heightfield.material.metalness = 1.0;
-                this.heightfield.material.roughness = 0.1;
-                this.heightfield.material.envMapIntensity = 1.5;
+                this.updateMaterialProperties(this.heightfield.material, (material, index) => {
+                    material.metalness = 1.0;
+                    material.roughness = index === 1 ? 0.07 : 0.38;
+                    material.envMapIntensity = index === 1 ? 0.78 : 0.5;
+                });
             }
         }, undefined, (err) => {
             this.envMapLoaded = false;
             if (this.heightfield) {
-                this.heightfield.material.metalness = 0.2;
-                this.heightfield.material.roughness = 0.7;
-                this.heightfield.material.envMapIntensity = 0.0;
+                this.updateMaterialProperties(this.heightfield.material, (material, index) => {
+                    material.metalness = 0.8;
+                    material.roughness = index === 1 ? 0.12 : 0.45;
+                    material.envMapIntensity = 0.0;
+                });
             }
-            console.warn('HDRI environment map failed to load. Falling back to non-metallic material.');
+            console.warn('HDRI environment map failed to load. Falling back to controlled studio lighting only.');
         });
 
         // Enhanced lighting setup for showcasing shine
@@ -1552,6 +1752,7 @@ class HeightfieldViewer {
             accent1: this.accentLight1,
             accent2: this.accentLight2
         };
+        this.setupJewelryStudioLighting();
 
         // Setup event listeners and UI controls
         this.setupEventListeners();
@@ -3382,6 +3583,9 @@ class HeightfieldViewer {
         const newGeometry = new THREE.BufferGeometry();
         newGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
         newGeometry.setIndex(newIndices);
+        geometry.groups.forEach((group) => {
+            newGeometry.addGroup(group.start, group.count, group.materialIndex);
+        });
         
         if (uvs.length > 0) {
             newGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
@@ -3403,6 +3607,12 @@ class HeightfieldViewer {
         const validIndices = [];
         let degenerateCount = 0;
         
+        const compactedGroups = geometry.groups.map((group) => ({
+            start: null,
+            count: 0,
+            materialIndex: group.materialIndex
+        }));
+
         for (let i = 0; i < indices.length; i += 3) {
             const a = indices[i];
             const b = indices[i + 1];
@@ -3410,7 +3620,14 @@ class HeightfieldViewer {
             
             // Check if triangle is degenerate (has duplicate vertices)
             if (a !== b && b !== c && c !== a) {
+                const newTriangleStart = validIndices.length;
                 validIndices.push(a, b, c);
+                const groupIndex = geometry.groups.findIndex((group) => i >= group.start && i < group.start + group.count);
+                if (groupIndex >= 0) {
+                    const compactedGroup = compactedGroups[groupIndex];
+                    if (compactedGroup.start === null) compactedGroup.start = newTriangleStart;
+                    compactedGroup.count += 3;
+                }
             } else {
                 degenerateCount++;
             }
@@ -3422,6 +3639,11 @@ class HeightfieldViewer {
         const newGeometry = new THREE.BufferGeometry();
         newGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
         newGeometry.setIndex(validIndices);
+        compactedGroups.forEach((group) => {
+            if (group.start !== null && group.count > 0) {
+                newGeometry.addGroup(group.start, group.count, group.materialIndex);
+            }
+        });
         
         if (uvs) {
             newGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
@@ -3686,6 +3908,8 @@ class HeightfieldViewer {
                     allIndices.push(b+0, b+1, b+4);
                     allIndices.push(b+1, b+5, b+4);
                 }
+                const rimIndexStart = allIndices.length - edgePoints.length * 24;
+                const rimIndexCount = edgePoints.length * 24;
                 // Add a transparent red-tinted layer from the top of the relief up to the rim
                 const redLayerPositions = [];
                 const redLayerIndices = [];
@@ -3723,10 +3947,10 @@ class HeightfieldViewer {
                 const redLayerMaterial = new THREE.MeshStandardMaterial({
                     color: highlightColor,
                     transparent: true,
-                    opacity: 0.15,
+                    opacity: 0.035,
                     metalness: 0.9,
-                    roughness: 0.05,
-                    envMapIntensity: 2.0,
+                    roughness: 0.32,
+                    envMapIntensity: 0.25,
                     side: THREE.DoubleSide,
                     depthWrite: false
                 });
@@ -3742,20 +3966,8 @@ class HeightfieldViewer {
                 }
                 this.scene.add(redLayerMesh);
                 this.redLayer = redLayerMesh;
-                // Compute antiquing vertex colors based on Z height
-                let minZCirc = Infinity, maxZCirc = -Infinity;
-                let antiquingColorsCirc = [];
-                for (let i = 2; i < allPositions.length; i += 3) {
-                    if (allPositions[i] < minZCirc) minZCirc = allPositions[i];
-                    if (allPositions[i] > maxZCirc) maxZCirc = allPositions[i];
-                }
-                const antiquingAmount = parseFloat(document.getElementById('antiquing-amount')?.value || 0.5);
-                for (let i = 2; i < allPositions.length; i += 3) {
-                    const z = allPositions[i];
-                    const t = (z - minZCirc) / (maxZCirc - minZCirc + 1e-6);
-                    const antiqued = 0.15 + (1 - 0.15) * ((1 - antiquingAmount) * t + antiquingAmount * (1 - t));
-                    antiquingColorsCirc.push(antiqued, antiqued, antiqued);
-                }
+                const baseAntiquingColors = Array.from(this.createOxidizedVertexColors(allPositions).array);
+                let antiquingColorsCirc = [...baseAntiquingColors];
                 // Create jumpring with relief applied
                 const jumpringRadius = 2;
                 const jumpringWireThickness = 0.5;
@@ -3821,7 +4033,9 @@ class HeightfieldViewer {
                 }
                 
                 // Add jumpring indices to existing indices
+                const jumpringIndexStart = allIndices.length;
                 allIndices.push(...jumpringIndices);
+                const jumpringIndexCount = jumpringIndices.length;
                 
                 // SPRUE HIDDEN - Sprue creation code commented out
                 /* Add sprue to the side of the pendant - TEST VERSION
@@ -4035,26 +4249,28 @@ class HeightfieldViewer {
                 geometry.setAttribute('uv', new THREE.Float32BufferAttribute(allUVs, 2));
                 geometry.setAttribute('color', new THREE.Float32BufferAttribute(antiquingColorsCirc, 3));
                 geometry.setIndex(allIndices);
-                geometry.computeVertexNormals();
+                this.applySmoothJewelryNormals(geometry);
+                geometry.clearGroups();
+                geometry.addGroup(0, rimIndexStart, 0);
+                geometry.addGroup(rimIndexStart, rimIndexCount, 1);
+                const afterRimStart = rimIndexStart + rimIndexCount;
+                const afterRimCount = Math.max(0, jumpringIndexStart - afterRimStart);
+                if (afterRimCount > 0) geometry.addGroup(afterRimStart, afterRimCount, 0);
+                geometry.addGroup(jumpringIndexStart, jumpringIndexCount, 1);
                 
                 // Fix mesh topology issues before validation
                 console.log('🔧 Fixing mesh topology...');
                 geometry = this.fixMeshTopology(geometry);
+                this.applySmoothJewelryNormals(geometry);
                 
                 // Validate mesh is watertight (non-blocking for debugging)
                 // Validation runs silently - no warnings displayed
                 this.validateMeshWatertight(geometry);
-                // Single material for all
-                const material = new THREE.MeshStandardMaterial({
-                    color: METAL_MATERIALS['sterling-silver'].color,
-                    metalness: this.envMapLoaded ? 1.0 : 0.2,
-                    roughness: this.envMapLoaded ? 0.1 : 0.7,
-                    side: THREE.DoubleSide,
-                    envMapIntensity: this.envMapLoaded ? 1.0 : 0.0,
+                const currentMetalTypeForMaterial = this.currentMetalType || document.getElementById('metal-type')?.value || 'sterling-silver';
+                const material = this.createPendantMaterialSet(currentMetalTypeForMaterial, {
                     transparent: !!alphaMap,
-                    alphaMap: alphaMap,
-                    alphaTest: alphaMap ? 0.5 : 0,
-                    vertexColors: true
+                    alphaMap,
+                    alphaTest: alphaMap ? 0.5 : 0
                 });
                 const mesh = new THREE.Mesh(geometry, material);
                 
@@ -4538,31 +4754,12 @@ class HeightfieldViewer {
             alphaMap = new THREE.CanvasTexture(canvas);
         }
 
-        // Use unique names to avoid redeclaration
-        let minZRect = Infinity, maxZRect = -Infinity;
-        let antiquingColorsRect = [];
-        for (let i = 2; i < positions.length; i += 3) {
-            if (positions[i] < minZRect) minZRect = positions[i];
-            if (positions[i] > maxZRect) maxZRect = positions[i];
-        }
-        const antiquingAmount = parseFloat(document.getElementById('antiquing-amount')?.value || 0.5);
-        for (let i = 2; i < positions.length; i += 3) {
-            const z = positions[i];
-            const t = (z - minZRect) / (maxZRect - minZRect + 1e-6);
-            const antiqued = 0.15 + (1 - 0.15) * ((1 - antiquingAmount) * t + antiquingAmount * (1 - t));
-            antiquingColorsRect.push(antiqued, antiqued, antiqued);
-        }
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(antiquingColorsRect, 3));
+        geometry.setAttribute('color', this.createOxidizedVertexColors(positions));
 
-        // Use the same MeshStandardMaterial settings as the jumpring, with envMapIntensity
-        const material = new THREE.MeshStandardMaterial({
-            color: METAL_MATERIALS['sterling-silver'].color,
-            metalness: this.envMapLoaded ? 1.0 : 0.2,
-            roughness: this.envMapLoaded ? 0.1 : 0.7,
-            side: THREE.DoubleSide,
-            envMapIntensity: this.envMapLoaded ? 1.0 : 0.0,
+        const currentMetalTypeForMaterial = this.currentMetalType || document.getElementById('metal-type')?.value || 'sterling-silver';
+        const material = this.createMatteReliefMaterial(currentMetalTypeForMaterial, {
             transparent: !!alphaMap,
-            alphaMap: alphaMap,
+            alphaMap,
             alphaTest: alphaMap ? 0.5 : 0,
             vertexColors: true
         });
@@ -4642,15 +4839,6 @@ class HeightfieldViewer {
 
     animate() {
         requestAnimationFrame(this.animate.bind(this));
-        
-        // Slowly rotate the main directional light for dynamic reflections
-        if (this.directionalLight) {
-            const time = Date.now() * 0.0005; // Slow rotation speed
-            const radius = 5;
-            this.directionalLight.position.x = Math.cos(time) * radius;
-            this.directionalLight.position.z = Math.sin(time) * radius;
-            this.directionalLight.position.y = 3; // Keep height constant
-        }
         
         if (this.isRotating && this.heightfield) {
             // Find the bottom edge Y (for circular/rectangular, it's -diameter/2 or -height/2)
@@ -4767,11 +4955,7 @@ class HeightfieldViewer {
     updateMetalMaterial(metalType) {
         if (!this.heightfield) return;
 
-        const normalizedMetalType = ({
-            'yellow brass': 'yellow-bronze',
-            'yellow bronze': 'yellow-bronze',
-            'white bronze': 'white-bronze'
-        })[metalType] || metalType;
+        const normalizedMetalType = this.normalizeMetalType(metalType);
 
         console.log('Updating metal material to:', metalType, 'normalized to:', normalizedMetalType);
         console.log('Available materials:', Object.keys(METAL_MATERIALS));
@@ -4779,16 +4963,18 @@ class HeightfieldViewer {
         // Store current metal type for variant ID lookup
         this.currentMetalType = normalizedMetalType;
 
-        const materialProps = METAL_MATERIALS[normalizedMetalType] || METAL_MATERIALS['sterling-silver'];
+        const materialProps = this.getMetalProfile(normalizedMetalType);
         
         if (this.currentObjectType === 'earrings' && this.heightfield.isGroup) {
             // For earrings, update both meshes in the group
             this.heightfield.children.forEach(mesh => {
                 if (mesh.material) {
-                    mesh.material.color.set(materialProps.color);
-                    mesh.material.metalness = materialProps.metalness;
-                    mesh.material.roughness = materialProps.roughness;
-                    mesh.material.envMapIntensity = materialProps.envMapIntensity;
+                    this.updateMaterialProperties(mesh.material, (material, index) => {
+                        material.color.set(materialProps.color);
+                        material.metalness = materialProps.metalness;
+                        material.roughness = index === 1 ? 0.07 : Math.max(materialProps.roughness, 0.36);
+                        material.envMapIntensity = index === 1 ? 0.78 : Math.min(materialProps.envMapIntensity, 0.5);
+                    });
                 }
             });
             
@@ -4796,26 +4982,32 @@ class HeightfieldViewer {
             if (this.earringJumprings) {
                 this.earringJumprings.forEach(jumpring => {
                     if (jumpring.material) {
-                        jumpring.material.color.set(materialProps.color);
-                        jumpring.material.metalness = materialProps.metalness;
-                        jumpring.material.roughness = materialProps.roughness;
-                        jumpring.material.envMapIntensity = materialProps.envMapIntensity;
+                        this.updateMaterialProperties(jumpring.material, (material) => {
+                            material.color.set(materialProps.color);
+                            material.metalness = materialProps.metalness;
+                            material.roughness = 0.07;
+                            material.envMapIntensity = 0.78;
+                        });
                     }
                 });
             }
         } else {
             // For single pendant
-            this.heightfield.material.color.set(materialProps.color);
-            this.heightfield.material.metalness = materialProps.metalness;
-            this.heightfield.material.roughness = materialProps.roughness;
-            this.heightfield.material.envMapIntensity = materialProps.envMapIntensity;
+            this.updateMaterialProperties(this.heightfield.material, (material, index) => {
+                material.color.set(materialProps.color);
+                material.metalness = materialProps.metalness;
+                material.roughness = index === 1 ? 0.07 : Math.max(materialProps.roughness, 0.36);
+                material.envMapIntensity = index === 1 ? 0.78 : Math.min(materialProps.envMapIntensity, 0.5);
+            });
         }
 
         if (this.jumpring) {
-            this.jumpring.material.color.set(materialProps.color);
-            this.jumpring.material.metalness = materialProps.metalness;
-            this.jumpring.material.roughness = materialProps.roughness;
-            this.jumpring.material.envMapIntensity = materialProps.envMapIntensity;
+            this.updateMaterialProperties(this.jumpring.material, (material) => {
+                material.color.set(materialProps.color);
+                material.metalness = materialProps.metalness;
+                material.roughness = 0.07;
+                material.envMapIntensity = 0.78;
+            });
         }
         
         // Update sprue text when metal type changes
@@ -5264,7 +5456,11 @@ class HeightfieldViewer {
             // For earrings, update both meshes in the group
             this.heightfield.children.forEach(mesh => {
                 if (mesh.material) {
-                    mesh.material.roughness = finishProps.roughness;
+                    this.updateMaterialProperties(mesh.material, (material, index) => {
+                        material.roughness = index === 1
+                            ? Math.min(finishProps.roughness, 0.16)
+                            : Math.max(finishProps.roughness, 0.34);
+                    });
                 }
             });
             
@@ -5272,17 +5468,25 @@ class HeightfieldViewer {
             if (this.earringJumprings) {
                 this.earringJumprings.forEach(jumpring => {
                     if (jumpring.material) {
-                        jumpring.material.roughness = finishProps.roughness;
+                        this.updateMaterialProperties(jumpring.material, (material) => {
+                            material.roughness = Math.min(finishProps.roughness, 0.16);
+                        });
                     }
                 });
             }
         } else {
             // For single pendant
-            this.heightfield.material.roughness = finishProps.roughness;
+            this.updateMaterialProperties(this.heightfield.material, (material, index) => {
+                material.roughness = index === 1
+                    ? Math.min(finishProps.roughness, 0.16)
+                    : Math.max(finishProps.roughness, 0.34);
+            });
         }
 
         if (this.jumpring) {
-            this.jumpring.material.roughness = finishProps.roughness;
+            this.updateMaterialProperties(this.jumpring.material, (material) => {
+                material.roughness = Math.min(finishProps.roughness, 0.16);
+            });
         }
     }
 
@@ -5295,13 +5499,9 @@ class HeightfieldViewer {
             'medium': 3,
             'large': 4
         }[size];
-        const ringGeometry = new THREE.TorusGeometry(ringRadius, 0.5, 16, 32);
-        const ringMaterial = new THREE.MeshStandardMaterial({
-            color: METAL_MATERIALS['sterling-silver'].color,
-            metalness: 1.0,
-            roughness: 0.1,
-            envMapIntensity: 1.0
-        });
+        const ringGeometry = new THREE.TorusGeometry(ringRadius, 0.5, 32, 96);
+        ringGeometry.computeVertexNormals();
+        const ringMaterial = this.createPolishedMetalMaterial(this.currentMetalType || 'sterling-silver');
         this.jumpring = new THREE.Mesh(ringGeometry, ringMaterial);
         this.jumpring.castShadow = true;
         this.jumpring.receiveShadow = true;
@@ -5652,13 +5852,13 @@ class HeightfieldViewer {
             platformSize = Math.max(this.pendantWidth, this.pendantHeight) * 1.5;
         }
         
-        const platformGeometry = new THREE.BoxGeometry(platformSize * 10, 2, platformSize * 10);
+        const platformGeometry = new THREE.BoxGeometry(platformSize * 10, 1, platformSize * 10);
         const platformMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0xf8f8f8, // Light gray color
+            color: 0xf7f4ef,
             metalness: 0.0,
-            roughness: 0.3,
+            roughness: 0.72,
             transparent: true,
-            opacity: 0.4 // Semi-transparent (40% opacity)
+            opacity: 0.82
         });
         
         this.platform = new THREE.Mesh(platformGeometry, platformMaterial);
